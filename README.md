@@ -1,30 +1,17 @@
-# UX/UI improvement
+# Squadra
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+Aplicacao para gerenciamento de cartas de jogadores e sorteio de times balanceados.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/ayanno-team/v0-ux-ui-improvement)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/kHCyogTDAIV)
+## Desenvolvimento
 
-## Overview
+1. Instale as dependencias:
+   - `npm ci`
+2. Execute em modo de desenvolvimento:
+   - `npm run dev`
+3. Acesse:
+   - `http://localhost:3000`
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+## Build de producao
 
-## Deployment
-
-Your project is live at:
-
-**[https://vercel.com/ayanno-team/v0-ux-ui-improvement](https://vercel.com/ayanno-team/v0-ux-ui-improvement)**
-
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.app/chat/kHCyogTDAIV](https://v0.app/chat/kHCyogTDAIV)**
-
-## How It Works
-
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+- `npm run build`
+- `npm run start`

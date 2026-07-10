@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     const {
       data: { user },
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       .in('id', playerIds)
 
     if (error) {
-      console.error('[v0] Bulk delete error:', error)
+      console.error('[app] Bulk delete error:', error)
       return NextResponse.json(
         { error: 'Failed to delete players' },
         { status: 500 }
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     })
   } catch (error) {
-    console.error('[v0] Bulk delete error:', error)
+    console.error('[app] Bulk delete error:', error)
     return NextResponse.json(
       { error: 'Failed to process bulk delete' },
       { status: 500 }

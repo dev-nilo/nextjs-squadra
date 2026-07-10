@@ -1,216 +1,220 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import {
-  Plus,
-  X,
-  Shuffle,
-  CheckCircle2,
-  Loader2,
-  List,
-  Grid3x3,
-  Cloud,
-  HardDrive,
-  User,
-  Search,
-  Trash2,
-  Pencil,
-} from "lucide-react";
+import type React from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { Plus, X, Shield, Trash2, User, Shuffle, CheckCircle2, Loader2, Pencil, Search, Grid3x3, List, Cloud, HardDrive } from "lucide-react";
 import { toast } from "sonner";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { UserMenu } from "@/components/auth/user-menu";
 import { createClient } from "@/lib/supabase/client";
+import { normalizePlayer } from "@/lib/player-utils";
+import { playerToSupabaseRow } from "@/lib/player-supabase";
+import type { Player, TeamData } from "@/types";
+import { Button, Input, Select, SelectItem, ButtonGroup } from "@nextui-org/react";
 
-import { Player, TeamData } from "@/types";
-import {
-  saveToLocalStorage,
-  loadFromLocalStorage,
-  calculateOVR,
-} from "@/lib/player-utils";
-import { generateTeams } from "@/lib/team-utils";
-
+// Import refactored components
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { MiniPlayerRow } from "@/components/player/MiniPlayerRow";
 import { PlayerModal } from "@/components/player/PlayerModal";
 import { TeamConfigModal } from "@/components/team/TeamConfigModal";
 import { DrawTeamsModal } from "@/components/team/DrawTeamsModal";
 
+const LOCAL_STORAGE_KEY = "fut-cards-players-v2";
+
+const saveToLocalStorage = (players: Player[]) => {
+  try {
+    if (typeof window === "undefined") return;
+    const minimized = players.map(p => ({
+      id: p.id,
+      name: p.name,
+      position: p.position,
+      image: typeof p.image === "string" && p.image.length < 200 ? p.image : null,
+    }));
+    let data = JSON.stringify(minimized);
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, data);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "QuotaExceededError") {
+        const limited = minimized.slice(0, 50);
+        data = JSON.stringify(limited);
+        localStorage.setItem(LOCAL_STORAGE_KEY, data);
+      } else {
+        throw e;
+      }
+    }
+  } catch (e) {
+    console.error("Error saving to local storage:", e);
+    toast.error("Erro ao salvar dados localmente");
+  }
+};
+
+const loadFromLocalStorage = (): Player[] => {
+  try {
+    if (typeof window === "undefined") return [];
+    const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!data) return [];
+    const parsed = JSON.parse(data);
+    if (!Array.isArray(parsed)) return [];
+    return parsed;
+  } catch (e) {
+    console.error("Error loading from local storage:", e);
+    return [];
+  }
+};
+
 export default function App() {
   const supabase = createClient();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [players, setPlayers] = useState<Player[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  
+  // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawModalOpen, setIsDrawModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isTeamConfigOpen, setIsTeamConfigOpen] = useState(false);
+  
   const [generatedTeams, setGeneratedTeams] = useState<TeamData[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
+  const [isOnline, setIsOnline] = useState(() => typeof navigator !== "undefined" ? navigator.onLine : true);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"name" | "rating" | "position">(
-    "rating"
-  );
+  const [sortBy, setSortBy] = useState<"name" | "rating" | "position">("rating");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  // Team configuration state
-  const [isTeamConfigOpen, setIsTeamConfigOpen] = useState(false);
   const [numTeams, setNumTeams] = useState(3);
   const [playersPerTeam, setPlayersPerTeam] = useState(5);
-
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
 
-  // Initialize: load local data immediately, sync with Supabase when user is authenticated
   useEffect(() => {
-    // Load local data immediately as fallback
-    const localPlayers = loadFromLocalStorage();
-    setPlayers(localPlayers);
-    setLoading(false);
-  }, []);
-
-  // Sync with Supabase when user authentication state changes
-  useEffect(() => {
-    const syncWithSupabase = async () => {
-      if (!user) return;
-
+    const loadPlayers = async () => {
+      setLoading(true);
       try {
-        setIsOnline(true);
-        console.log("[v0] Syncing with Supabase for user:", user.id);
+        if (user) {
+          const { data: playersData, error } = await supabase
+            .from("players")
+            .select("*")
+            .eq("user_id", user.id);
 
-        // Fetch players from Supabase for authenticated user
-        const { data: playersData, error } = await supabase
-          .from("players")
-          .select("*")
-          .eq("user_id", user.id);
-
-        if (error) {
-          console.error("[v0] Supabase fetch error:", error);
-          return;
-        }
-
-        if (playersData && playersData.length > 0) {
-          const cloudPlayers = playersData as Player[];
-          console.log(
-            `[v0] Loaded ${cloudPlayers.length} players from Supabase`
-          );
-          setPlayers(cloudPlayers);
-          saveToLocalStorage(cloudPlayers);
-        } else {
-          // If no cloud data but user is authenticated, upload local data
-          const localPlayers = loadFromLocalStorage();
-          if (localPlayers.length > 0) {
-            console.log("[v0] Uploading local players to cloud...");
-            for (const player of localPlayers) {
-              await supabase
-                .from("players")
-                .upsert({ ...player, user_id: user.id }, { onConflict: "id" });
-            }
-            console.log(
-              `[v0] Uploaded ${localPlayers.length} players to cloud`
-            );
+          if (error) {
+            const local = loadFromLocalStorage();
+            setPlayers(local);
+            setLoading(false);
+            return;
           }
+
+          if (playersData && playersData.length > 0) {
+            const cloudPlayers = playersData.map((p) => normalizePlayer(p) as Player);
+            setPlayers(cloudPlayers);
+            saveToLocalStorage(cloudPlayers);
+          } else {
+            const local = loadFromLocalStorage();
+            if (local.length > 0) {
+              const uploadedPlayers: Player[] = [];
+              for (const player of local) {
+                const row = playerToSupabaseRow(player, user.id);
+                const { data, error: upsertError } = await supabase
+                  .from("players")
+                  .upsert(row, { onConflict: "id" })
+                  .select()
+                  .single();
+
+                if (!upsertError && data) {
+                  uploadedPlayers.push(normalizePlayer(data) as Player);
+                } else {
+                  uploadedPlayers.push(player);
+                }
+              }
+              setPlayers(uploadedPlayers);
+              saveToLocalStorage(uploadedPlayers);
+            }
+          }
+        } else {
+          const local = loadFromLocalStorage();
+          setPlayers(local);
         }
-      } catch (error) {
-        console.error("[v0] Supabase sync error:", error);
+      } catch (e) {
+        console.error("Player load error:", e);
+      } finally {
+        setLoading(false);
       }
     };
-
-    syncWithSupabase();
+    loadPlayers();
   }, [user]);
 
-  // Handle online/offline status
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      toast.success("Conectado", {
-        description: "Sincronizando com a nuvem...",
-      });
+      toast.success("Conectado", { description: "Sincronizando com a nuvem..." });
     };
-
     const handleOffline = () => {
       setIsOnline(false);
-      toast.warning("Modo Offline", {
-        description: "Dados salvos localmente",
-      });
+      toast.warning("Modo Offline", { description: "Dados salvos localmente" });
     };
-
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
-
     return () => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
-  const handleEdit = (player: Player) => {
+  const handleEdit = useCallback((player: Player) => {
     setEditingPlayer(player);
     setIsModalOpen(true);
-  };
+  }, []);
 
   const handleOpenNew = () => {
     setEditingPlayer(null);
     setIsModalOpen(true);
   };
 
-  const handleSave = async (playerData: Omit<Player, "rating" | "user_id">) => {
-    const rating = calculateOVR(playerData.attributes);
-    const fullPlayerData = {
+  const handleSavePlayer = async (playerData: Omit<Player, "rating" | "user_id">) => {
+    const isNew = !players.some(p => p.id === playerData.id);
+    const attrs = playerData.attributes;
+    const values = Object.values(attrs);
+    const rating = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+    
+    const fullPlayer: Player = {
       ...playerData,
       rating,
-    } as Player;
+    };
 
-    const updatedPlayers = editingPlayer
-      ? players.map((p) => (p.id === fullPlayerData.id ? fullPlayerData : p))
-      : [...players, fullPlayerData];
+    const updatedPlayers = isNew 
+      ? [...players, fullPlayer]
+      : players.map((p) => (p.id === fullPlayer.id ? fullPlayer : p));
 
     setPlayers(updatedPlayers);
     saveToLocalStorage(updatedPlayers);
 
-    // Sync with Supabase if user is authenticated
     if (user && isOnline) {
       setIsSyncing(true);
       try {
-        const playerDataWithUser = { ...fullPlayerData, user_id: user.id };
-
-        if (editingPlayer) {
-          await supabase
-            .from("players")
-            .update(playerDataWithUser)
-            .eq("id", fullPlayerData.id);
+        const row = playerToSupabaseRow(fullPlayer, user.id);
+        if (!isNew) {
+          await supabase.from("players").update(row).eq("id", fullPlayer.id);
         } else {
-          await supabase.from("players").insert(playerDataWithUser);
+          const { data, error } = await supabase.from("players").insert(row).select().single();
+          if (!error && data) {
+            const normalized = normalizePlayer(data) as Player;
+            setPlayers((prev) => prev.map((p) => (p.id === fullPlayer.id ? normalized : p)));
+          }
         }
-
-        toast.success(editingPlayer ? "Carta Atualizada" : "Carta Criada", {
-          description: "Sincronizado com a nuvem",
-        });
+        toast.success(isNew ? "Carta Criada" : "Carta Atualizada", { description: "Sincronizado com a nuvem" });
       } catch (e) {
-        console.error("[v0] Error saving player to Supabase:", e);
-        toast.warning(
-          editingPlayer
-            ? "Carta Atualizada Localmente"
-            : "Carta Criada Localmente",
-          {
-            description: "Erro ao sincronizar com a nuvem",
-          },
-        );
+        toast.warning(isNew ? "Carta Criada Localmente" : "Carta Atualizada Localmente");
       } finally {
         setIsSyncing(false);
       }
     } else {
-      toast.success(editingPlayer ? "Carta Atualizada" : "Carta Criada", {
-        description: "Salvo localmente",
-      });
+      toast.success(isNew ? "Carta Criada" : "Carta Atualizada", { description: "Salvo localmente" });
     }
-
-    setIsModalOpen(false);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     const updatedPlayers = players.filter((p) => p.id !== id);
     setPlayers(updatedPlayers);
     saveToLocalStorage(updatedPlayers);
@@ -223,51 +227,35 @@ export default function App() {
 
     if (user && isOnline) {
       try {
-        await supabase
-          .from("players")
-          .delete()
-          .eq("id", id)
-          .eq("user_id", user.id);
-        toast.success("Carta Excluída", {
-          description: "Removida da nuvem",
-        });
+        await supabase.from("players").delete().eq("id", id).eq("user_id", user.id);
+        toast.success("Carta Excluída", { description: "Removida da nuvem" });
       } catch (e) {
-        console.error("[v0] Error deleting player from Supabase:", e);
-        toast.error("Erro ao sincronizar exclusão", {
-          description: "Removida localmente",
-        });
+        toast.error("Erro ao sincronizar exclusão", { description: "Removida localmente" });
       }
     } else {
-      toast.success("Carta Excluída", {
-        description: "Removida localmente",
-      });
+      toast.success("Carta Excluída", { description: "Removida localmente" });
     }
-  };
+  }, [players, user, isOnline, supabase]);
 
-  const handleToggleSelect = (id: string) => {
+  const handleToggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
-  };
+  }, []);
 
-  const handleToggleSelectAll = () => {
+  const handleToggleSelectAll = useCallback(() => {
     const allIds = new Set(players.map((p) => p.id));
-    const allSelected = players.every((p) => selectedIds.has(p.id));
-
-    if (allSelected) {
+    if (players.every((p) => selectedIds.has(p.id))) {
       setSelectedIds(new Set());
       toast.info("Seleção limpa");
     } else {
       setSelectedIds(allIds);
       toast.success(`${allIds.size} carta(s) selecionada(s)`);
     }
-  };
+  }, [players, selectedIds]);
 
   const handleDrawTeams = () => {
     const selectedPlayers = players.filter((p) => selectedIds.has(p.id));
@@ -275,12 +263,88 @@ export default function App() {
 
     if (selectedPlayers.length < minRequiredPlayers) {
       toast.error("Poucos Jogadores", {
-        description: `Selecione pelo menos ${minRequiredPlayers} jogadores (${numTeams} times × ${playersPerTeam} jogadores)`,
+        description: `Selecione pelo menos ${minRequiredPlayers} jogadores`,
       });
       return;
     }
 
-    const resultTeams = generateTeams(selectedPlayers, numTeams);
+    const shuffleArray = <T,>(array: T[]): T[] => {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    };
+
+    const shuffledPlayers = shuffleArray(selectedPlayers);
+    const ratingTiers: Player[][] = [[], [], [], [], []];
+    
+    shuffledPlayers.forEach((player) => {
+      if (player.rating >= 90) ratingTiers[0].push(player);
+      else if (player.rating >= 80) ratingTiers[1].push(player);
+      else if (player.rating >= 70) ratingTiers[2].push(player);
+      else if (player.rating >= 60) ratingTiers[3].push(player);
+      else ratingTiers[4].push(player);
+    });
+
+    const sortedPlayers = ratingTiers.flat();
+    const teams: Player[][] = Array.from({ length: numTeams }, () => []);
+    
+    const teamAttributeSums = Array.from({ length: numTeams }, () => ({
+      velocidade: 0, resistencia: 0, chute: 0, posicionamento: 0,
+      defesa: 0, drible: 0, passe: 0, fisico: 0,
+    }));
+
+    sortedPlayers.forEach((player) => {
+      const teamTotals = teamAttributeSums.map((sums) =>
+        Object.values(sums).reduce((a, b) => a + b, 0),
+      );
+
+      const minTotal = Math.min(...teamTotals);
+      const teamsWithMinTotal = teamTotals
+        .map((total, idx) => ({ total, idx }))
+        .filter((t) => t.total === minTotal);
+
+      const minIndex = teamsWithMinTotal[Math.floor(Math.random() * teamsWithMinTotal.length)].idx;
+      teams[minIndex].push(player);
+
+      const attrs = player.attributes ?? {
+        velocidade: 0, resistencia: 0, chute: 0, posicionamento: 0,
+        defesa: 0, drible: 0, passe: 0, fisico: 0,
+      };
+      
+      teamAttributeSums[minIndex].velocidade += attrs.velocidade;
+      teamAttributeSums[minIndex].resistencia += attrs.resistencia;
+      teamAttributeSums[minIndex].chute += attrs.chute;
+      teamAttributeSums[minIndex].posicionamento += attrs.posicionamento;
+      teamAttributeSums[minIndex].defesa += attrs.defesa;
+      teamAttributeSums[minIndex].drible += attrs.drible;
+      teamAttributeSums[minIndex].passe += attrs.passe;
+      teamAttributeSums[minIndex].fisico += attrs.fisico;
+    });
+
+    const teamColors = [
+      { color: "from-primary/30 to-content1", borderColor: "border-primary/40", headerColor: "text-primary" },
+      { color: "from-danger/20 to-content1", borderColor: "border-danger/40", headerColor: "text-danger" },
+      { color: "from-success/20 to-content1", borderColor: "border-success/40", headerColor: "text-success" },
+      { color: "from-warning/20 to-content1", borderColor: "border-warning/40", headerColor: "text-warning" },
+      { color: "from-secondary/20 to-content1", borderColor: "border-secondary/40", headerColor: "text-secondary" },
+      { color: "from-default/20 to-content1", borderColor: "border-default/40", headerColor: "text-default-foreground" },
+      { color: "from-primary/20 to-content1", borderColor: "border-primary/40", headerColor: "text-primary" },
+      { color: "from-danger/20 to-content1", borderColor: "border-danger/40", headerColor: "text-danger" },
+    ];
+
+    const resultTeams: TeamData[] = teams.map((teamMembers, idx) => ({
+      name: `TIME ${String.fromCharCode(65 + idx)}`,
+      members: teamMembers,
+      avg: teamMembers.length
+          ? Math.round(teamMembers.reduce((sum, p) => sum + (p.rating ?? 0), 0) / teamMembers.length)
+          : 0,
+      color: teamColors[idx].color,
+      borderColor: teamColors[idx].borderColor,
+      headerColor: teamColors[idx].headerColor,
+    }));
 
     setGeneratedTeams(resultTeams);
     setIsTeamConfigOpen(false);
@@ -289,57 +353,41 @@ export default function App() {
 
   const handleManualSync = async () => {
     if (!user) {
-      toast.error("Não Autenticado", {
-        description: "Autenticação necessária para sincronizar",
-      });
+      toast.error("Não Autenticado", { description: "Autenticação necessária para sincronizar" });
       return;
     }
-
     setIsSyncing(true);
-
     try {
-      // Iterate over all players and save them to Supabase
+      const syncedPlayers: Player[] = [];
       for (const player of players) {
-        const playerDataWithUser = { ...player, user_id: user.id };
-        await supabase
-          .from("players")
-          .upsert(playerDataWithUser, { onConflict: "id" });
+        const row = playerToSupabaseRow(player, user.id);
+        const { data, error } = await supabase.from("players").upsert(row, { onConflict: "id" }).select().single();
+        if (!error && data) {
+          syncedPlayers.push(normalizePlayer(data) as Player);
+        } else {
+          syncedPlayers.push(player);
+        }
       }
-      toast.success("Sincronização Completa", {
-        description: `${players.length} cartas sincronizadas com a nuvem`,
-      });
+      setPlayers(syncedPlayers);
+      saveToLocalStorage(syncedPlayers);
+      toast.success("Sincronização Completa", { description: `${players.length} cartas sincronizadas` });
     } catch (e) {
-      console.error("[v0] Sync error:", e);
-      toast.error("Erro na Sincronização", {
-        description: "Não foi possível sincronizar com a nuvem",
-      });
+      toast.error("Erro na Sincronização");
     } finally {
       setIsSyncing(false);
     }
   };
 
   const filteredPlayers = useMemo(() => {
-    const result = players.filter((player) => {
-      const matchesSearch = player.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      return matchesSearch;
-    });
-
-    // Sort based on selected criteria
+    const result = players.filter((player) => player.name.toLowerCase().includes(searchQuery.toLowerCase()));
     result.sort((a, b) => {
       switch (sortBy) {
-        case "name":
-          return a.name.localeCompare(b.name);
-        case "rating":
-          return b.rating - a.rating; // Higher rating first
-        case "position":
-          return a.position.localeCompare(b.position);
-        default:
-          return 0;
+        case "name": return a.name.localeCompare(b.name);
+        case "rating": return b.rating - a.rating;
+        case "position": return a.position.localeCompare(b.position);
+        default: return 0;
       }
     });
-
     return result;
   }, [players, searchQuery, sortBy]);
 
@@ -349,8 +397,8 @@ export default function App() {
         <Toaster position="top-right" richColors />
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-12 h-12 animate-spin text-muted-foreground" />
-            <p className="text-muted-foreground">Carregando...</p>
+            <Loader2 className="w-12 h-12 animate-spin text-default-500" />
+            <p className="text-default-500">Carregando...</p>
           </div>
         </div>
       </>
@@ -363,7 +411,7 @@ export default function App() {
         <Toaster position="top-right" richColors />
         <AuthModal
           open={!isAuthenticated}
-          onOpenChange={() => { }}
+          onOpenChange={() => {}}
           onSuccess={() => setIsAuthModalOpen(false)}
         />
       </>
@@ -374,122 +422,83 @@ export default function App() {
     <>
       <Toaster position="top-right" richColors />
       <div className="min-h-screen bg-background text-foreground">
-        <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-sm border-b border-border shadow-lg">
+        <header className="sticky top-0 z-40 bg-content1/95 backdrop-blur-sm border-b border-divider shadow-lg">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-            {/* Top row: Search and primary actions */}
             <div className="flex flex-col gap-3">
-              {/* Search bar takes full width on mobile, shared row on desktop */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 justify-between">
-                <div className="relative flex-1 min-w-0">
-                  <Search
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-                    size={18}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Buscar jogador..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-input/80 border border-border/50 rounded-lg text-foreground text-sm placeholder-muted-foreground focus:outline-none focus:border-ring focus:bg-input transition-colors"
-                  />
+                <div className="flex-1 w-full">
+                    <Input
+                        placeholder="Buscar jogador..."
+                        value={searchQuery}
+                        onValueChange={setSearchQuery}
+                        startContent={<Search size={18} className="text-default-400" />}
+                        className="w-full"
+                        size="sm"
+                    />
                 </div>
 
-                {/* Action buttons group */}
                 <div className="flex items-center gap-2 justify-between sm:justify-start w-full sm:w-auto">
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={sortBy}
-                      onChange={(e) =>
-                        setSortBy(
-                          e.target.value as "name" | "rating" | "position",
-                        )
-                      }
-                      className="flex-1 sm:flex-none px-3 py-2.5 bg-input/80 border border-border/50 rounded-lg text-foreground text-sm focus:outline-none focus:border-ring transition-colors"
-                    >
-                      <option value="rating">Rating ↓</option>
-                      <option value="name">Nome A-Z</option>
-                      <option value="position">Posição</option>
-                    </select>
+                  <Select
+                    selectedKeys={[sortBy]}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="w-32"
+                    size="sm"
+                    aria-label="Ordenar por"
+                  >
+                    <SelectItem key="rating" value="rating">Rating ↓</SelectItem>
+                    <SelectItem key="name" value="name">Nome A-Z</SelectItem>
+                    <SelectItem key="position" value="position">Posição</SelectItem>
+                  </Select>
 
-                    <button
-                      onClick={() =>
-                        setViewMode(viewMode === "grid" ? "list" : "grid")
-                      }
-                      className="p-2.5 bg-input/80 hover:bg-secondary/20 border border-border/50 rounded-lg text-muted-foreground hover:text-foreground transition-all"
-                      title={viewMode === "grid" ? "Modo lista" : "Modo grid"}
+                  <ButtonGroup size="sm" variant="flat">
+                    <Button
+                        isIconOnly
+                        onPress={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+                        aria-label={viewMode === "grid" ? "Modo lista" : "Modo grid"}
                     >
-                      {viewMode === "grid" ? (
-                        <List size={20} />
-                      ) : (
-                        <Grid3x3 size={20} />
-                      )}
-                    </button>
-
-                    <button
-                      onClick={handleManualSync}
-                      disabled={!isAuthenticated || isSyncing}
-                      className="p-2.5 bg-input/80 hover:bg-secondary/20 border border-border/50 rounded-lg text-muted-foreground hover:text-foreground transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                      title={
-                        isOnline
-                          ? "Sincronizar com nuvem"
-                          : "Offline - Salvando localmente"
-                      }
+                        {viewMode === "grid" ? <List size={20} /> : <Grid3x3 size={20} />}
+                    </Button>
+                    <Button
+                        isIconOnly
+                        onPress={handleManualSync}
+                        isDisabled={!isAuthenticated || isSyncing}
+                        aria-label={isOnline ? "Sincronizar com nuvem" : "Offline - Salvando localmente"}
                     >
-                      {isSyncing ? (
-                        <Loader2 size={18} className="animate-spin" />
-                      ) : isOnline ? (
-                        <Cloud size={18} />
-                      ) : (
-                        <HardDrive size={18} />
-                      )}
-                    </button>
-                  </div>
+                        {isSyncing ? <Loader2 size={18} className="animate-spin" /> : isOnline ? <Cloud size={18} /> : <HardDrive size={18} />}
+                    </Button>
+                  </ButtonGroup>
                   <UserMenu />
                 </div>
               </div>
 
-              {/* Bottom row: Secondary actions */}
               <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={handleToggleSelectAll}
-                  className="px-3 py-2 bg-input/80 hover:bg-secondary/20 border border-border/50 rounded-lg text-foreground text-sm transition-all flex items-center gap-2"
-                  title={
-                    players.every((p) => selectedIds.has(p.id))
-                      ? "Desmarcar todas"
-                      : "Selecionar todas"
-                  }
+                <Button
+                  onPress={handleToggleSelectAll}
+                  variant="flat"
+                  startContent={players.every((p) => selectedIds.has(p.id)) ? <X size={16} /> : <CheckCircle2 size={16} />}
+                  size="sm"
                 >
-                  {players.every((p) => selectedIds.has(p.id)) ? (
-                    <>
-                      <X size={16} />
-                      <span>Desmarcar Todas</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 size={16} />
-                      <span>Selecionar Todas</span>
-                    </>
-                  )}
-                </button>
+                  {players.every((p) => selectedIds.has(p.id)) ? "Desmarcar Todas" : "Selecionar Todas"}
+                </Button>
 
-                <button
-                  onClick={handleOpenNew}
-                  className="px-3 py-2 bg-primary hover:bg-primary/90 border border-primary rounded-lg text-primary-foreground text-sm transition-all flex items-center gap-2 font-medium"
+                <Button
+                  onPress={handleOpenNew}
+                  color="primary"
+                  startContent={<Plus size={16} />}
+                  size="sm"
                 >
-                  <Plus size={16} />
-                  <span>Nova Carta</span>
-                </button>
+                  Nova Carta
+                </Button>
 
                 {selectedIds.size > 0 && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setIsTeamConfigOpen(true)}
-                      className="px-3 py-2 bg-accent hover:bg-accent/90 border border-accent rounded-lg text-accent-foreground text-sm transition-all flex items-center gap-2 font-medium"
-                    >
-                      <Shuffle size={16} />
-                      <span>Sortear Times ({selectedIds.size})</span>
-                    </button>
-                  </div>
+                  <Button
+                    onPress={() => setIsTeamConfigOpen(true)}
+                    color="secondary"
+                    startContent={<Shuffle size={16} />}
+                    size="sm"
+                  >
+                    Sortear Times ({selectedIds.size})
+                  </Button>
                 )}
               </div>
             </div>
@@ -498,17 +507,13 @@ export default function App() {
 
         <main className="max-w-7xl mx-auto px-4 py-8">
           {filteredPlayers.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
+            <div className="text-center py-16 text-default-500">
               <User size={64} className="mx-auto mb-4 opacity-50" />
               <p className="text-lg">
-                {searchQuery
-                  ? "Nenhuma carta encontrada"
-                  : "Nenhuma carta criada ainda"}
+                {searchQuery ? "Nenhuma carta encontrada" : "Nenhuma carta criada ainda"}
               </p>
               <p className="text-sm mt-2">
-                {searchQuery
-                  ? "Tente ajustar a busca"
-                  : "Clique em 'Nova Carta' para começar"}
+                {searchQuery ? "Tente ajustar a busca" : "Clique em 'Nova Carta' para começar"}
               </p>
             </div>
           ) : viewMode === "grid" ? (
@@ -530,48 +535,41 @@ export default function App() {
                 <div
                   key={player.id}
                   onClick={() => handleToggleSelect(player.id)}
-                  className={`relative cursor-pointer transition-all group ${selectedIds.has(player.id)
-                      ? "ring-2 ring-primary rounded-lg bg-primary/5"
-                      : ""
-                    }`}
+                  className={`relative cursor-pointer transition-all group ${selectedIds.has(player.id) ? "ring-2 ring-primary rounded-lg bg-primary/10" : ""}`}
                 >
                   <MiniPlayerRow player={player} />
-
-                  {/* Selection indicator */}
+                  
                   {selectedIds.has(player.id) && (
-                    <div className="absolute top-1/2 -translate-y-1/2 left-2">
-                      <CheckCircle2
-                        size={20}
-                        className="text-primary"
-                        fill="currentColor"
-                      />
+                    <div className="absolute top-1/2 -translate-y-1/2 left-2 z-10 pointer-events-none">
+                      <CheckCircle2 size={20} className="text-primary" fill="currentColor" />
                     </div>
                   )}
 
-                  {/* Action buttons - always visible on mobile */}
-                  <div className="absolute top-1/2 -translate-y-1/2 right-2 flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(player);
-                      }}
-                      className="bg-primary text-primary-foreground p-1.5 rounded-full shadow hover:bg-primary/90 transition-colors"
-                      aria-label={`Editar ${player.name}`}
+                  <div className="absolute top-1/2 -translate-y-1/2 right-2 flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10">
+                    <Button
+                        isIconOnly
+                        size="sm"
+                        color="primary"
+                        radius="full"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(player);
+                        }}
                     >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(player.id);
-                      }}
-                      className="bg-destructive text-destructive-foreground p-1.5 rounded-full shadow hover:bg-destructive/90 transition-colors"
-                      aria-label={`Excluir ${player.name}`}
+                        <Pencil size={14} />
+                    </Button>
+                    <Button
+                        isIconOnly
+                        size="sm"
+                        color="danger"
+                        radius="full"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(player.id);
+                        }}
                     >
-                      <Trash2 size={14} />
-                    </button>
+                        <Trash2 size={14} />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -580,30 +578,31 @@ export default function App() {
         </main>
 
         <PlayerModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSave={handleSave}
-          initialData={editingPlayer}
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onSave={handleSavePlayer}
+            initialData={editingPlayer}
         />
 
         <TeamConfigModal
-          isOpen={isTeamConfigOpen}
-          onClose={() => setIsTeamConfigOpen(false)}
-          numTeams={numTeams}
-          setNumTeams={setNumTeams}
-          playersPerTeam={playersPerTeam}
-          setPlayersPerTeam={setPlayersPerTeam}
-          selectedCount={selectedIds.size}
-          onDraw={handleDrawTeams}
+            isOpen={isTeamConfigOpen}
+            onClose={() => setIsTeamConfigOpen(false)}
+            numTeams={numTeams}
+            setNumTeams={setNumTeams}
+            playersPerTeam={playersPerTeam}
+            setPlayersPerTeam={setPlayersPerTeam}
+            selectedCount={selectedIds.size}
+            onDraw={handleDrawTeams}
         />
 
         <DrawTeamsModal
-          isOpen={isDrawModalOpen}
-          onClose={() => setIsDrawModalOpen(false)}
-          generatedTeams={generatedTeams}
-          setGeneratedTeams={setGeneratedTeams}
-          onRedraw={handleDrawTeams}
+            isOpen={isDrawModalOpen}
+            onClose={() => setIsDrawModalOpen(false)}
+            generatedTeams={generatedTeams}
+            setGeneratedTeams={setGeneratedTeams}
+            onRedraw={handleDrawTeams}
         />
+
       </div>
     </>
   );

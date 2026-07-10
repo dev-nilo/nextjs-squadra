@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { normalizePlayer } from '@/lib/player-utils'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     const {
       data: { user },
@@ -24,29 +25,32 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
 
     if (error) {
-      console.error('[v0] Error fetching players:', error)
+      console.error('[app] Error fetching players:', error)
       return NextResponse.json(
         { error: 'Failed to fetch players' },
         { status: 500 }
       )
     }
 
+    const normalized = (players ?? []).map((p: any) => normalizePlayer(p))
+
     // Calculate statistics
     const stats = {
-      totalPlayers: players?.length || 0,
-      avgRating: players && players.length > 0
-        ? Math.round(
-            players.reduce((sum, p) => sum + (p.rating || 0), 0) /
-            players.length
-          )
-        : 0,
-      positions: players?.reduce(
-        (acc, p) => {
+      totalPlayers: normalized.length,
+      avgRating:
+        normalized.length > 0
+          ? Math.round(
+              normalized.reduce((sum, p) => sum + p.rating, 0) /
+                normalized.length,
+            )
+          : 0,
+      positions: normalized.reduce(
+        (acc: Record<string, number>, p: any) => {
           acc[p.position] = (acc[p.position] || 0) + 1
           return acc
         },
-        {} as Record<string, number>
-      ) || {},
+        {} as Record<string, number>,
+      ),
     }
 
     return NextResponse.json({
@@ -55,7 +59,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString()
     })
   } catch (error) {
-    console.error('[v0] Stats calculation error:', error)
+    console.error('[app] Stats calculation error:', error)
     return NextResponse.json(
       { error: 'Failed to calculate stats' },
       { status: 500 }

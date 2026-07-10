@@ -1,10 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { Player, PlayerPosition, Attributes } from "@/types";
 import { POSITIONS } from "@/lib/constants";
-import { calculateOVR, processImage } from "@/lib/player-utils";
+import { COUNTRY_OPTIONS, DEFAULT_COUNTRY_CODE, getCountryCode } from "@/lib/countries";
+import {
+    DEFAULT_ATTRIBUTES,
+    processImage,
+    normalizeAttributes,
+    calculateOVR,
+} from "@/lib/player-utils";
 import { StatSlider } from "./StatSlider";
-import { X, Upload, Save } from "lucide-react";
+import { Upload, Save } from "lucide-react";
 import { toast } from "sonner";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input, Select, SelectItem, Image } from "@nextui-org/react";
 
 interface PlayerModalProps {
     isOpen: boolean;
@@ -21,17 +28,9 @@ export const PlayerModal = ({
 }: PlayerModalProps) => {
     const [name, setName] = useState("");
     const [position, setPosition] = useState<PlayerPosition>("ATA");
+    const [nationality, setNationality] = useState(DEFAULT_COUNTRY_CODE);
     const [image, setImage] = useState<string | null>(null);
-    const [attributes, setAttributes] = useState<Attributes>({
-        velocidade: 60,
-        resistencia: 60,
-        chute: 60,
-        posicionamento: 60,
-        defesa: 60,
-        drible: 60,
-        passe: 60,
-        fisico: 60,
-    });
+    const [attributes, setAttributes] = useState<Attributes>(DEFAULT_ATTRIBUTES);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -40,23 +39,16 @@ export const PlayerModal = ({
             if (initialData) {
                 setName(initialData.name);
                 setPosition(initialData.position);
+                setNationality(getCountryCode(initialData.nationality));
                 setImage(initialData.image);
-                setAttributes(initialData.attributes);
+                setAttributes(normalizeAttributes(initialData.attributes));
             } else {
                 // Reset form
                 setName("");
                 setPosition("ATA");
+                setNationality(DEFAULT_COUNTRY_CODE);
                 setImage(null);
-                setAttributes({
-                    velocidade: 60,
-                    resistencia: 60,
-                    chute: 60,
-                    posicionamento: 60,
-                    defesa: 60,
-                    drible: 60,
-                    passe: 60,
-                    fisico: 60,
-                });
+                setAttributes(DEFAULT_ATTRIBUTES);
             }
         }
     }, [isOpen, initialData]);
@@ -81,9 +73,10 @@ export const PlayerModal = ({
         }
 
         const playerData = {
-            id: initialData?.id || Date.now().toString(),
+            id: initialData?.id || crypto.randomUUID(),
             name: name.trim(),
             position,
+            nationality,
             image,
             attributes: { ...attributes },
         };
@@ -92,187 +85,181 @@ export const PlayerModal = ({
         onClose();
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-card border border-border rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-card border-b border-border p-4 flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-foreground">
-                        {initialData ? "Editar Carta" : "Nova Carta"}
-                    </h2>
-                    <button
-                        onClick={onClose}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <X size={24} />
-                    </button>
-                </div>
+        <Modal 
+            isOpen={isOpen} 
+            onOpenChange={(open) => !open && onClose()} 
+            size="3xl"
+            scrollBehavior="inside"
+            backdrop="blur"
+        >
+            <ModalContent>
+                {(onClose) => (
+                    <>
+                        <ModalHeader className="flex flex-col gap-1">
+                            {initialData ? "Editar Carta" : "Nova Carta"}
+                        </ModalHeader>
 
-                <div className="p-6 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-secondary-foreground mb-2">
-                                    Nome do Jogador
-                                </label>
-                                <input
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    className="w-full px-4 py-2 bg-input border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                                    placeholder="Nome do jogador"
-                                />
-                            </div>
+                        <ModalBody>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                    <Input
+                                        label="Nome do Jogador"
+                                        value={name}
+                                        onValueChange={setName}
+                                        placeholder="Nome do jogador"
+                                        isRequired
+                                    />
 
-                            <div>
-                                <label className="block text-sm font-medium text-secondary-foreground mb-2">
-                                    Posição
-                                </label>
-                                <select
-                                    value={position}
-                                    onChange={(e) => setPosition(e.target.value as PlayerPosition)}
-                                    className="w-full px-4 py-2 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                                >
-                                    {POSITIONS.map((pos) => (
-                                        <option key={pos} value={pos}>
-                                            {pos}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-secondary-foreground mb-2">
-                                    Foto do Jogador
-                                </label>
-                                <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="flex items-center gap-2 px-4 py-2 bg-input hover:bg-secondary/20 border border-border rounded-lg text-foreground transition-colors"
+                                    <Select 
+                                        label="Posição" 
+                                        selectedKeys={[position]}
+                                        onChange={(e) => setPosition(e.target.value as PlayerPosition)}
                                     >
-                                        <Upload size={16} />
-                                        {image ? "Alterar" : "Adicionar"} Foto
-                                    </button>
-                                    {image && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setImage(null)}
-                                            className="px-4 py-2 bg-input hover:bg-secondary/20 border border-border rounded-lg text-muted-foreground transition-colors"
-                                        >
-                                            Remover
-                                        </button>
-                                    )}
+                                        {POSITIONS.map((pos) => (
+                                            <SelectItem key={pos} value={pos}>
+                                                {pos}
+                                            </SelectItem>
+                                        ))}
+                                    </Select>
+
+                                    <Select 
+                                        label="Nacionalidade" 
+                                        selectedKeys={[nationality]}
+                                        onChange={(e) => setNationality(e.target.value)}
+                                    >
+                                        {COUNTRY_OPTIONS.map((country) => (
+                                            <SelectItem key={country.code} value={country.code}>
+                                                {country.name}
+                                            </SelectItem>
+                                        ))}
+                                    </Select>
+
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm font-medium text-default-600">
+                                            Foto do Jogador
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                onPress={() => fileInputRef.current?.click()}
+                                                startContent={<Upload size={16} />}
+                                                variant="flat"
+                                            >
+                                                {image ? "Alterar Foto" : "Adicionar Foto"}
+                                            </Button>
+                                            {image && (
+                                                <Button
+                                                    color="danger"
+                                                    variant="flat"
+                                                    onPress={() => setImage(null)}
+                                                >
+                                                    Remover
+                                                </Button>
+                                            )}
+                                        </div>
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                            className="hidden"
+                                        />
+                                        {image && (
+                                            <div className="mt-2 p-4 bg-default-100 rounded-lg flex justify-center">
+                                                <Image
+                                                    src={image || "/placeholder.svg"}
+                                                    alt="Prévia"
+                                                    className="max-h-40 object-cover"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageUpload}
-                                    className="hidden"
-                                />
-                                {image && (
-                                    <div className="mt-2 p-4 bg-secondary/10 border border-border rounded-lg">
-                                        <img
-                                            src={image || "/placeholder.svg"}
-                                            alt="Prévia"
-                                            className="w-full h-40 object-cover rounded"
+
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-bold text-default-600">
+                                        Atributos (OVR: {calculateOVR(attributes)})
+                                    </h3>
+                                    <div className="space-y-4">
+                                        <StatSlider
+                                            label="Velocidade"
+                                            value={attributes.velocidade}
+                                            onChange={(val) =>
+                                                setAttributes({ ...attributes, velocidade: val })
+                                            }
+                                        />
+                                        <StatSlider
+                                            label="Resistência"
+                                            value={attributes.resistencia}
+                                            onChange={(val) =>
+                                                setAttributes({ ...attributes, resistencia: val })
+                                            }
+                                        />
+                                        <StatSlider
+                                            label="Chute"
+                                            value={attributes.chute}
+                                            onChange={(val) =>
+                                                setAttributes({ ...attributes, chute: val })
+                                            }
+                                        />
+                                        <StatSlider
+                                            label="Posicionamento"
+                                            value={attributes.posicionamento}
+                                            onChange={(val) =>
+                                                setAttributes({
+                                                    ...attributes,
+                                                    posicionamento: val,
+                                                })
+                                            }
+                                        />
+                                        <StatSlider
+                                            label="Defesa"
+                                            value={attributes.defesa}
+                                            onChange={(val) =>
+                                                setAttributes({ ...attributes, defesa: val })
+                                            }
+                                        />
+                                        <StatSlider
+                                            label="Drible"
+                                            value={attributes.drible}
+                                            onChange={(val) =>
+                                                setAttributes({ ...attributes, drible: val })
+                                            }
+                                        />
+                                        <StatSlider
+                                            label="Passe"
+                                            value={attributes.passe}
+                                            onChange={(val) =>
+                                                setAttributes({ ...attributes, passe: val })
+                                            }
+                                        />
+                                        <StatSlider
+                                            label="Físico"
+                                            value={attributes.fisico}
+                                            onChange={(val) =>
+                                                setAttributes({ ...attributes, fisico: val })
+                                            }
                                         />
                                     </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div>
-                                <h3 className="text-sm font-bold text-secondary-foreground mb-4">
-                                    Atributos (OVR: {calculateOVR(attributes)})
-                                </h3>
-                                <div className="space-y-3">
-                                    <StatSlider
-                                        label="Velocidade"
-                                        value={attributes.velocidade}
-                                        onChange={(val) =>
-                                            setAttributes({ ...attributes, velocidade: val })
-                                        }
-                                    />
-                                    <StatSlider
-                                        label="Resistência"
-                                        value={attributes.resistencia}
-                                        onChange={(val) =>
-                                            setAttributes({ ...attributes, resistencia: val })
-                                        }
-                                    />
-                                    <StatSlider
-                                        label="Chute"
-                                        value={attributes.chute}
-                                        onChange={(val) =>
-                                            setAttributes({ ...attributes, chute: val })
-                                        }
-                                    />
-                                    <StatSlider
-                                        label="Posicionamento"
-                                        value={attributes.posicionamento}
-                                        onChange={(val) =>
-                                            setAttributes({
-                                                ...attributes,
-                                                posicionamento: val,
-                                            })
-                                        }
-                                    />
-                                    <StatSlider
-                                        label="Defesa"
-                                        value={attributes.defesa}
-                                        onChange={(val) =>
-                                            setAttributes({ ...attributes, defesa: val })
-                                        }
-                                    />
-                                    <StatSlider
-                                        label="Drible"
-                                        value={attributes.drible}
-                                        onChange={(val) =>
-                                            setAttributes({ ...attributes, drible: val })
-                                        }
-                                    />
-                                    <StatSlider
-                                        label="Passe"
-                                        value={attributes.passe}
-                                        onChange={(val) =>
-                                            setAttributes({ ...attributes, passe: val })
-                                        }
-                                    />
-                                    <StatSlider
-                                        label="Físico"
-                                        value={attributes.fisico}
-                                        onChange={(val) =>
-                                            setAttributes({ ...attributes, fisico: val })
-                                        }
-                                    />
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </ModalBody>
 
-                    <div className="flex gap-3 pt-4 border-t border-border">
-                        <button
-                            type="submit"
-                            onClick={handleSubmit}
-                            className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-lg font-semibold transition-colors"
-                        >
-                            <Save size={20} />
-                            {initialData ? "Atualizar Carta" : "Criar Carta"}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-6 py-3 bg-input hover:bg-secondary/20 border border-border text-muted-foreground rounded-lg font-semibold transition-colors"
-                        >
-                            Cancelar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        <ModalFooter>
+                            <Button variant="light" onPress={onClose}>
+                                Cancelar
+                            </Button>
+                            <Button 
+                                color="primary" 
+                                onPress={handleSubmit}
+                                startContent={<Save size={20} />}
+                            >
+                                {initialData ? "Atualizar Carta" : "Criar Carta"}
+                            </Button>
+                        </ModalFooter>
+                    </>
+                )}
+            </ModalContent>
+        </Modal>
     );
 };

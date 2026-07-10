@@ -1,11 +1,135 @@
-import { Attributes, Player } from "@/types";
+import { Attributes, Player, PlayerPosition } from "@/types";
 import { toast } from "sonner";
 import { LOCAL_STORAGE_KEY } from "./constants";
+import { getCountryCode } from "./countries";
+
+export const DEFAULT_ATTRIBUTES: Attributes = {
+    velocidade: 60,
+    resistencia: 60,
+    chute: 60,
+    posicionamento: 60,
+    defesa: 60,
+    drible: 60,
+    passe: 60,
+    fisico: 60,
+};
+
+const STAT_KEYS: (keyof Attributes)[] = [
+    "velocidade",
+    "resistencia",
+    "chute",
+    "posicionamento",
+    "defesa",
+    "drible",
+    "passe",
+    "fisico",
+];
+
+export const coerceStat = (value: unknown): number | undefined => {
+    if (typeof value === "number" && Number.isFinite(value)) {
+        return value;
+    }
+    if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed === "") return undefined;
+        const n = Number(trimmed);
+        if (Number.isFinite(n)) return Math.round(n);
+    }
+    return undefined;
+};
 
 export const calculateOVR = (attrs: Attributes): number => {
     const values = Object.values(attrs);
     const sum = values.reduce((a, b) => a + b, 0);
     return Math.round(sum / values.length);
+};
+
+const parseNestedAttributes = (
+    raw: unknown,
+): Partial<Record<keyof Attributes, unknown>> | null => {
+    if (raw == null) return null;
+    if (typeof raw === "object" && !Array.isArray(raw)) {
+        return raw as Partial<Record<keyof Attributes, unknown>>;
+    }
+    if (typeof raw === "string") {
+        try {
+            const parsed: unknown = JSON.parse(raw);
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                return parsed as Partial<Record<keyof Attributes, unknown>>;
+            }
+        } catch {
+            return null;
+        }
+    }
+    return null;
+};
+
+export const mergePlayerAttributesFromRow = (
+    source: Partial<Player> & Partial<Attributes> & Record<string, unknown>,
+): Attributes => {
+    const nested = parseNestedAttributes(source.attributes);
+    const merged: Attributes = { ...DEFAULT_ATTRIBUTES };
+
+    for (const key of STAT_KEYS) {
+        const fromRoot = coerceStat(source[key]);
+        const fromNested = nested ? coerceStat(nested[key]) : undefined;
+        const v = fromRoot ?? fromNested;
+        if (v !== undefined) {
+            merged[key] = v;
+        }
+    }
+
+    return merged;
+};
+
+export const normalizeAttributes = (value: unknown): Attributes => {
+    const source =
+        value && typeof value === "object" && !Array.isArray(value)
+            ? (value as Partial<Record<keyof Attributes, unknown>>)
+            : {};
+
+    const merged: Attributes = { ...DEFAULT_ATTRIBUTES };
+    for (const key of STAT_KEYS) {
+        const v = coerceStat(source[key]);
+        if (v !== undefined) {
+            merged[key] = v;
+        }
+    }
+    return merged;
+};
+
+export const normalizePlayer = (player: unknown): Player => {
+    const source = (player ?? {}) as Partial<Player> &
+        Partial<Attributes> &
+        Record<string, unknown>;
+
+    const attributes = mergePlayerAttributesFromRow(source);
+
+    const rating =
+        coerceStat(source.rating) ??
+        coerceStat(source["ovr"]) ??
+        calculateOVR(attributes);
+
+    const image =
+        (typeof source.image === "string" && source.image.length > 0
+            ? source.image
+            : null) ??
+        (typeof source.image_url === "string" && source.image_url.length > 0
+            ? source.image_url
+            : null);
+
+    const position = (source.position as PlayerPosition | undefined) ?? "ATA";
+
+    return {
+        id: String(source.id ?? Date.now()),
+        name: typeof source.name === "string" && source.name.trim() ? source.name.trim() : "Jogador",
+        position,
+        nationality: getCountryCode(source.nationality),
+        image,
+        attributes,
+        rating,
+        user_id: source.user_id,
+    };
 };
 
 export const getStatColor = (value: number) => {
@@ -64,15 +188,87 @@ export const processImage = (file: File): Promise<string> => {
     });
 };
 
+const isQuotaExceededError = (e: unknown): boolean => {
+    if (e instanceof DOMException) {
+        return e.name === "QuotaExceededError" || e.code === 22;
+    }
+    if (e instanceof Error && /quota|exceeded/i.test(e.message)) {
+        return true;
+    }
+    return false;
+};
+
+let quotaSaveNoticeShown = false;
+
+const withoutDataUrlImages = (players: Player[]): Player[] =>
+    players.map((p) => ({
+        ...p,
+        image: p.image?.startsWith("data:") ? null : p.image,
+    }));
+
+const withoutAnyImages = (players: Player[]): Player[] =>
+    players.map((p) => ({
+        ...p,
+        image: null,
+    }));
+
 export const saveToLocalStorage = (players: Player[]) => {
     try {
         if (typeof window === "undefined") return;
-        const data = JSON.stringify(players);
-        localStorage.setItem(LOCAL_STORAGE_KEY, data);
-        console.log(`[v0] Saved ${players.length} players to localStorage`);
+
+        const normalized = players.map(normalizePlayer);
+
+        const tryWrite = (list: Player[]) => {
+            const data = JSON.stringify(list);
+            localStorage.setItem(LOCAL_STORAGE_KEY, data);
+        };
+
+        try {
+            tryWrite(normalized);
+            console.log(`[app] Saved ${normalized.length} players to localStorage`);
+            return;
+        } catch (first) {
+            if (!isQuotaExceededError(first)) throw first;
+        }
+
+        try {
+            tryWrite(withoutDataUrlImages(normalized));
+            console.warn(
+                "[app] Saved players to localStorage without inline (base64) images — storage quota",
+            );
+            if (!quotaSaveNoticeShown) {
+                quotaSaveNoticeShown = true;
+                toast.warning("Armazenamento local", {
+                    description:
+                        "O limite do navegador foi atingido. As imagens foram omitidas do backup local; com login, os dados seguem na nuvem.",
+                });
+            }
+            return;
+        } catch (second) {
+            if (!isQuotaExceededError(second)) throw second;
+        }
+
+        try {
+            tryWrite(withoutAnyImages(normalized));
+            console.warn("[app] Saved players to localStorage without images — storage quota");
+            if (!quotaSaveNoticeShown) {
+                quotaSaveNoticeShown = true;
+                toast.warning("Armazenamento local", {
+                    description:
+                        "O limite do navegador foi atingido. As imagens foram omitidas do backup local; com login, os dados seguem na nuvem.",
+                });
+            }
+            return;
+        } catch (third) {
+            throw third;
+        }
     } catch (e) {
-        console.error("[v0] Error saving to local storage:", e);
-        toast.error("Erro ao salvar dados localmente");
+        console.error("[app] Error saving to local storage:", e);
+        toast.error("Erro ao salvar dados localmente", {
+            description: isQuotaExceededError(e)
+                ? "Limite de armazenamento do navegador excedido."
+                : undefined,
+        });
     }
 };
 
@@ -85,14 +281,14 @@ export const loadFromLocalStorage = (): Player[] => {
         const parsed = JSON.parse(data);
         // Validate structure
         if (!Array.isArray(parsed)) {
-            console.warn("[v0] Invalid localStorage data, resetting");
+            console.warn("[app] Invalid localStorage data, resetting");
             return [];
         }
 
-        console.log(`[v0] Loaded ${parsed.length} players from localStorage`);
-        return parsed;
+        console.log(`[app] Loaded ${parsed.length} players from localStorage`);
+        return parsed.map(normalizePlayer);
     } catch (e) {
-        console.error("[v0] Error loading from local storage:", e);
+        console.error("[app] Error loading from local storage:", e);
         toast.error("Erro ao carregar dados locais");
         return [];
     }

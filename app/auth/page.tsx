@@ -3,9 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { LoginForm, SignUpForm } from "@/components/auth/auth-form"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Toaster } from "@/components/ui/sonner"
+import { Button, Card, CardHeader, CardBody, Divider } from "@nextui-org/react"
+import { Toaster } from "sonner"
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
@@ -19,19 +18,19 @@ export default function AuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Toaster />
       
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl font-bold">
+      <Card className="w-full max-w-md p-4">
+        <CardHeader className="flex flex-col gap-1 items-start">
+          <h2 className="text-2xl font-bold">
             {isLogin ? "Bem-vindo" : "Criar Conta"}
-          </CardTitle>
-          <CardDescription>
+          </h2>
+          <p className="text-sm text-default-500">
             {isLogin
               ? "Faça login em sua conta para continuar"
               : "Crie uma nova conta para começar"}
-          </CardDescription>
+          </p>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardBody className="space-y-6">
           {isLogin ? (
             <LoginForm onSuccess={handleSuccess} />
           ) : (
@@ -39,24 +38,22 @@ export default function AuthPage() {
           )}
 
           <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-background px-2 text-muted-foreground">
+            <Divider />
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <span className="bg-background px-2 text-sm text-default-500">
                 {isLogin ? "Não tem uma conta?" : "Já tem uma conta?"}
               </span>
             </div>
           </div>
 
           <Button
-            variant="outline"
-            className="w-full bg-transparent"
-            onClick={() => setIsLogin(!isLogin)}
+            variant="bordered"
+            className="w-full"
+            onPress={() => setIsLogin(!isLogin)}
           >
             {isLogin ? "Criar conta" : "Fazer login"}
           </Button>
-        </CardContent>
+        </CardBody>
       </Card>
     </div>
   )

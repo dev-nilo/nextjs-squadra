@@ -1,11 +1,7 @@
 "use client"
 
-import React from "react"
-
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import React, { useState } from "react"
+import { Button, Input } from "@nextui-org/react"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
@@ -22,7 +18,6 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Check Supabase configuration
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       toast.error("Configuração ausente", {
         description: "Supabase não está configurado. Adicione as variáveis de ambiente.",
@@ -51,7 +46,7 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
       })
       onSuccess?.()
     } catch (error) {
-      console.error("[v0] Login error:", error)
+      console.error("[app] Login error:", error)
       toast.error("Erro", {
         description: "Algo deu errado. Tente novamente.",
       })
@@ -62,36 +57,31 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
 
   return (
     <form onSubmit={handleLogin} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="seu@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={loading}
-          required
-          autoComplete="email"
-        />
-      </div>
+      <Input
+        label="Email"
+        id="email"
+        type="email"
+        placeholder="seu@email.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        isDisabled={loading}
+        isRequired
+        autoComplete="email"
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Senha</Label>
-        <Input
-          id="password"
-          type="password"
-          placeholder="Sua senha"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={loading}
-          required
-          autoComplete="current-password"
-        />
-      </div>
+      <Input
+        label="Senha"
+        id="password"
+        type="password"
+        placeholder="Sua senha"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        isDisabled={loading}
+        isRequired
+        autoComplete="current-password"
+      />
 
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      <Button type="submit" color="primary" className="w-full" isLoading={loading}>
         {loading ? "Entrando..." : "Entrar"}
       </Button>
     </form>
@@ -107,7 +97,6 @@ export function SignUpForm({ onSuccess }: AuthFormProps) {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Check Supabase configuration
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       toast.error("Configuração ausente", {
         description: "Supabase não está configurado. Adicione as variáveis de ambiente.",
@@ -153,7 +142,7 @@ export function SignUpForm({ onSuccess }: AuthFormProps) {
       })
       onSuccess?.()
     } catch (error) {
-      console.error("[v0] SignUp error:", error)
+      console.error("[app] SignUp error:", error)
       toast.error("Erro", {
         description: "Algo deu errado. Tente novamente.",
       })
@@ -164,50 +153,43 @@ export function SignUpForm({ onSuccess }: AuthFormProps) {
 
   return (
     <form onSubmit={handleSignUp} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="signup-email">Email</Label>
-        <Input
-          id="signup-email"
-          type="email"
-          placeholder="seu@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={loading}
-          required
-          autoComplete="email"
-        />
-      </div>
+      <Input
+        label="Email"
+        id="signup-email"
+        type="email"
+        placeholder="seu@email.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        isDisabled={loading}
+        isRequired
+        autoComplete="email"
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="signup-password">Senha</Label>
-        <Input
-          id="signup-password"
-          type="password"
-          placeholder="Mínimo 6 caracteres"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={loading}
-          required
-          autoComplete="new-password"
-        />
-      </div>
+      <Input
+        label="Senha"
+        id="signup-password"
+        type="password"
+        placeholder="Mínimo 6 caracteres"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        isDisabled={loading}
+        isRequired
+        autoComplete="new-password"
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="confirm-password">Confirmar Senha</Label>
-        <Input
-          id="confirm-password"
-          type="password"
-          placeholder="Repita sua senha"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          disabled={loading}
-          required
-          autoComplete="new-password"
-        />
-      </div>
+      <Input
+        label="Confirmar Senha"
+        id="confirm-password"
+        type="password"
+        placeholder="Repita sua senha"
+        value={confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
+        isDisabled={loading}
+        isRequired
+        autoComplete="new-password"
+      />
 
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      <Button type="submit" color="primary" className="w-full" isLoading={loading}>
         {loading ? "Criando conta..." : "Criar Conta"}
       </Button>
     </form>

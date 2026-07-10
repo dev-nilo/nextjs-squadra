@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Loader2 } from "lucide-react"
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 
@@ -22,7 +22,7 @@ export default function AuthCallbackPage() {
           const { error } = await supabase.auth.exchangeCodeForSession(code)
 
           if (error) {
-            console.error("[v0] Auth callback error:", error)
+            console.error("[app] Auth callback error:", error)
             toast.error("Erro ao autenticar", {
               description: error.message,
             })
@@ -35,7 +35,7 @@ export default function AuthCallbackPage() {
           router.push("/auth")
         }
       } catch (error) {
-        console.error("[v0] Callback error:", error)
+        console.error("[app] Callback error:", error)
         toast.error("Erro ao processar callback")
         router.push("/auth")
       }

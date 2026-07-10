@@ -15,6 +15,7 @@ export interface Player {
     id: string;
     name: string;
     position: PlayerPosition;
+    nationality: string;
     image: string | null;
     attributes: Attributes;
     rating: number;

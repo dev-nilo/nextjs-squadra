@@ -16,7 +16,7 @@ export function useAuth() {
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     if (!supabaseUrl || !supabaseKey) {
-      console.warn("[v0] Supabase not configured - using local-only mode")
+      console.warn("[app] Supabase not configured - using local-only mode")
       setError("Supabase não está configurado")
       setLoading(false)
       return
@@ -33,12 +33,12 @@ export function useAuth() {
         } = await supabase.auth.getUser()
 
         if (userError) {
-          console.warn("[v0] Auth warning:", userError.message)
+          console.warn("[app] Auth warning:", userError.message)
         }
 
         setUser(user || null)
       } catch (err) {
-        console.error("[v0] Session fetch error:", err)
+        console.error("[app] Session fetch error:", err)
         setError("Erro ao carregar sessão")
       } finally {
         setLoading(false)
@@ -51,7 +51,7 @@ export function useAuth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("[v0] Auth state changed:", event)
+      console.log("[app] Auth state changed:", event)
       setUser(session?.user || null)
       setLoading(false)
     })
@@ -70,7 +70,7 @@ export function useAuth() {
       if (error) throw error
       setUser(null)
     } catch (err) {
-      console.error("[v0] Logout error:", err)
+      console.error("[app] Logout error:", err)
       setError("Erro ao fazer logout")
     }
   }

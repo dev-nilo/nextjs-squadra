@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     })
   } catch (error) {
-    console.error('[v0] Team balancing error:', error)
+    console.error('[app] Team balancing error:', error)
     return NextResponse.json(
       { error: 'Failed to balance teams' },
       { status: 500 }

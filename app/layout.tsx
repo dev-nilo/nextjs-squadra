@@ -1,11 +1,14 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Bricolage_Grotesque } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
+import { Providers } from "./providers";
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const bricolage = Bricolage_Grotesque({ 
+    subsets: ["latin"],
+    variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   title: "Squadra",
@@ -37,10 +40,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body className={`font-sans antialiased`}>
-        {children}
-        <Analytics />
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body className={`${bricolage.variable} font-sans antialiased`}>
+        <Providers>
+          {children}
+          <Analytics />
+        </Providers>
       </body>
     </html>
   );
