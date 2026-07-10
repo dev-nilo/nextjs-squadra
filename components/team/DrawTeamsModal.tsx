@@ -111,9 +111,9 @@ export const DrawTeamsModal = ({
                                         key={idx}
                                         onDragOver={handleDragOver}
                                         onDrop={() => handleDrop(idx)}
-                                        className={`bg-gradient-to-b ${team.color} border-2 ${team.borderColor} overflow-hidden`}
+                                        className={`${team.color} border-1 ${team.borderColor} overflow-hidden shadow-none`}
                                     >
-                                        <CardHeader className={`flex-col items-center justify-center p-3 border-b ${team.borderColor} bg-black/20`}>
+                                        <CardHeader className={`flex-col items-center justify-center p-3 border-b-1 ${team.borderColor} bg-transparent`}>
                                             <h3 className={`text-xl font-black ${team.headerColor} tracking-tight`}>
                                                 {team.name}
                                             </h3>
@@ -128,7 +128,7 @@ export const DrawTeamsModal = ({
                                                     key={player.id}
                                                     draggable
                                                     onDragStart={() => handleDragStart(player.id, idx)}
-                                                    className="flex items-center gap-3 bg-content1 hover:bg-content2 border border-divider hover:border-primary/50 rounded-lg p-2 cursor-grab active:cursor-grabbing transition-all hover:shadow-md"
+                                                    className="flex items-center gap-3 bg-content1/50 hover:bg-content2/80 rounded-md p-2 cursor-grab active:cursor-grabbing transition-colors"
                                                 >
                                                     <Avatar 
                                                         src={player.image || undefined} 

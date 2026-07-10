@@ -325,14 +325,14 @@ export default function App() {
     });
 
     const teamColors = [
-      { color: "from-primary/30 to-content1", borderColor: "border-primary/40", headerColor: "text-primary" },
-      { color: "from-danger/20 to-content1", borderColor: "border-danger/40", headerColor: "text-danger" },
-      { color: "from-success/20 to-content1", borderColor: "border-success/40", headerColor: "text-success" },
-      { color: "from-warning/20 to-content1", borderColor: "border-warning/40", headerColor: "text-warning" },
-      { color: "from-secondary/20 to-content1", borderColor: "border-secondary/40", headerColor: "text-secondary" },
-      { color: "from-default/20 to-content1", borderColor: "border-default/40", headerColor: "text-default-foreground" },
-      { color: "from-primary/20 to-content1", borderColor: "border-primary/40", headerColor: "text-primary" },
-      { color: "from-danger/20 to-content1", borderColor: "border-danger/40", headerColor: "text-danger" },
+      { color: "bg-primary/10", borderColor: "border-primary/20", headerColor: "text-primary" },
+      { color: "bg-danger/10", borderColor: "border-danger/20", headerColor: "text-danger" },
+      { color: "bg-success/10", borderColor: "border-success/20", headerColor: "text-success" },
+      { color: "bg-warning/10", borderColor: "border-warning/20", headerColor: "text-warning" },
+      { color: "bg-secondary/10", borderColor: "border-secondary/20", headerColor: "text-secondary" },
+      { color: "bg-default/10", borderColor: "border-default/20", headerColor: "text-default-foreground" },
+      { color: "bg-primary/10", borderColor: "border-primary/20", headerColor: "text-primary" },
+      { color: "bg-danger/10", borderColor: "border-danger/20", headerColor: "text-danger" },
     ];
 
     const resultTeams: TeamData[] = teams.map((teamMembers, idx) => ({
