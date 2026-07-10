@@ -27,7 +27,6 @@ Este projeto utiliza as seguintes tecnologias, bibliotecas e ferramentas:
 
 ## Backend & Dados
 - **Supabase**: Backend-as-a-Service (Auth, Database, Realtime) - `@supabase/supabase-js`, `@supabase/ssr`
-- **Firebase**: (Presente nas dependências, versão 12.8.0)
 - **date-fns**: Manipulação de datas
 
 ## Outras Bibliotecas

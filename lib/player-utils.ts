@@ -225,7 +225,6 @@ export const saveToLocalStorage = (players: Player[]) => {
 
         try {
             tryWrite(normalized);
-            console.log(`[app] Saved ${normalized.length} players to localStorage`);
             return;
         } catch (first) {
             if (!isQuotaExceededError(first)) throw first;
@@ -285,7 +284,6 @@ export const loadFromLocalStorage = (): Player[] => {
             return [];
         }
 
-        console.log(`[app] Loaded ${parsed.length} players from localStorage`);
         return parsed.map(normalizePlayer);
     } catch (e) {
         console.error("[app] Error loading from local storage:", e);
