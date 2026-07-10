@@ -69,12 +69,17 @@ export const DrawTeamsModal = ({
             onOpenChange={(open) => !open && onClose()} 
             size="5xl" 
             scrollBehavior="inside"
-            backdrop="blur"
+            classNames={{
+                backdrop: "bg-black/60 backdrop-blur-md",
+                base: "bg-content1/40 backdrop-blur-xl border border-white/20 shadow-2xl",
+                header: "border-b border-white/10 bg-black/40",
+                body: "p-6 bg-transparent",
+            }}
         >
             <ModalContent>
                 {(onClose) => (
                     <>
-                        <ModalHeader className="flex flex-col gap-1 border-b border-divider bg-content1/50 backdrop-blur-md">
+                        <ModalHeader className="flex flex-col gap-1">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-2xl font-black">
                                     Times Sorteados
@@ -92,7 +97,7 @@ export const DrawTeamsModal = ({
                             </p>
                         </ModalHeader>
                         
-                        <ModalBody className="p-6 bg-content2/30">
+                        <ModalBody className="p-6">
                             <div className={`grid gap-6 ${generatedTeams.length <= 2
                                     ? "grid-cols-1 md:grid-cols-2"
                                     : generatedTeams.length === 3

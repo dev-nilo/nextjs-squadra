@@ -126,8 +126,6 @@ export const PlayerCard = ({
                     rounded-t-[2rem] rounded-b-xl 
                     shadow-2xl overflow-hidden 
                 `}
-                isPressable
-                disableAnimation
             >
                 {/* Background Textures */}
                 <div

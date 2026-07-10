@@ -23,7 +23,18 @@ export const TeamConfigModal = ({
     onDraw,
 }: TeamConfigModalProps) => {
     return (
-        <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()} size="md" backdrop="blur">
+        <Modal 
+            isOpen={isOpen} 
+            onOpenChange={(open) => !open && onClose()} 
+            size="md" 
+            classNames={{
+                backdrop: "bg-black/60 backdrop-blur-md",
+                base: "bg-content1/40 backdrop-blur-xl border border-white/20 shadow-2xl",
+                header: "border-b border-white/10 bg-black/40",
+                body: "py-6 gap-6 bg-transparent",
+                footer: "border-t border-white/10 bg-black/20"
+            }}
+        >
             <ModalContent>
                 {(onClose) => (
                     <>
@@ -31,7 +42,7 @@ export const TeamConfigModal = ({
                             Configurar Times
                         </ModalHeader>
                         
-                        <ModalBody className="py-6 gap-6">
+                        <ModalBody>
                             <Slider
                                 label="Número de Times"
                                 step={1}
