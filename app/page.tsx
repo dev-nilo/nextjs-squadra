@@ -143,7 +143,7 @@ export default function App() {
       }
     };
     loadPlayers();
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
     const handleOnline = () => {
