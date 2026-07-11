@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { Plus, X, Shield, Trash2, User, Shuffle, CheckCircle2, Loader2, Pencil, Search, Grid3x3, List, Cloud, HardDrive } from "lucide-react";
+import { Plus, X, Trash2, User, Shuffle, CheckCircle2, Loader2, Pencil, Search, Grid3x3, List, Cloud, HardDrive } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { useAuth } from "@/hooks/use-auth";

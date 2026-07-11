@@ -76,7 +76,7 @@ This document captures the visual design system of the **Squadra** Next.js appli
 - Secondary/Close: Text‑only, `text-muted-foreground` with hover `text-foreground`.
 
 ### Icons
-- Uses **lucide‑react** icons (`Shuffle`, `X`, `User`, `Shield`). Icons inherit current text colour for theming.
+- Uses **lucide‑react** icons (`Shuffle`, `X`, `User`). Icons inherit current text colour for theming.
 
 ---
 

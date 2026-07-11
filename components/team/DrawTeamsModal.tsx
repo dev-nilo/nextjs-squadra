@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { TeamData } from "@/types";
-import { Shuffle, User, Shield } from "lucide-react";
+import { Shuffle, User } from "lucide-react";
 import { Modal, ModalContent, ModalHeader, ModalBody, Button, Avatar, Card, CardHeader, CardBody } from "@nextui-org/react";
 
 interface DrawTeamsModalProps {
@@ -148,11 +148,6 @@ export const DrawTeamsModal = ({
                                                     </div>
                                                 </div>
                                             ))}
-                                            {team.members.length === 0 && (
-                                                <div className="h-full flex items-center justify-center text-default-400/50 p-4">
-                                                    <Shield size={32} />
-                                                </div>
-                                            )}
                                         </CardBody>
                                     </Card>
                                 ))}

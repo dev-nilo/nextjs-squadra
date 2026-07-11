@@ -2,7 +2,7 @@ import { Player } from "@/types";
 import { GK_LABELS, OUTFIELD_LABELS } from "@/lib/constants";
 import { getStatColor, normalizeAttributes } from "@/lib/player-utils";
 import { getCountryCode, getCountryName, getFlagUrl } from "@/lib/countries";
-import { CheckCircle2, Pencil, Trash2, User, Shield } from "lucide-react";
+import { CheckCircle2, Pencil, Trash2, User } from "lucide-react";
 import { Card, CardHeader, CardBody, Button } from "@nextui-org/react";
 
 interface PlayerCardProps {
@@ -202,14 +202,6 @@ export const PlayerCard = ({
                                 <span className={getStatColor(value)}>{value}</span>
                             </div>
                         ))}
-                    </div>
-
-                    {/* Decorative Shield */}
-                    <div
-                        className="absolute bottom-4 left-0 right-0 flex justify-center opacity-10 pointer-events-none"
-                        aria-hidden="true"
-                    >
-                        <Shield size={64} className="text-default-500 fill-default-300" />
                     </div>
                 </CardBody>
             </Card>
