@@ -29,16 +29,16 @@ export const TeamConfigModal = ({
             size="md" 
             classNames={{
                 backdrop: "bg-black/60 backdrop-blur-md",
-                base: "bg-content1/40 backdrop-blur-xl border border-white/20 shadow-2xl",
-                header: "border-b border-white/10 bg-black/40",
-                body: "py-6 gap-6 bg-transparent",
-                footer: "border-t border-white/10 bg-black/20"
+                base: "mx-2 sm:mx-auto w-[calc(100vw-1rem)] sm:w-full max-w-[calc(100vw-1rem)] sm:max-w-md bg-content1/40 backdrop-blur-xl border border-white/20 shadow-2xl",
+                header: "border-b border-white/10 bg-black/40 px-3 sm:px-6",
+                body: "py-4 sm:py-6 gap-4 sm:gap-6 bg-transparent px-3 sm:px-6",
+                footer: "border-t border-white/10 bg-black/20 px-3 sm:px-6 flex-col-reverse sm:flex-row gap-2"
             }}
         >
             <ModalContent>
                 {(onClose) => (
                     <>
-                        <ModalHeader className="flex flex-col gap-1 text-2xl font-black">
+                        <ModalHeader className="flex flex-col gap-1 text-xl sm:text-2xl font-black">
                             Configurar Times
                         </ModalHeader>
                         
@@ -51,7 +51,7 @@ export const TeamConfigModal = ({
                                 value={numTeams}
                                 onChange={(value) => setNumTeams(value as number)}
                                 showSteps={true}
-                                className="max-w-md"
+                                className="w-full"
                                 color="primary"
                             />
 
@@ -63,19 +63,19 @@ export const TeamConfigModal = ({
                                 value={playersPerTeam}
                                 onChange={(value) => setPlayersPerTeam(value as number)}
                                 showSteps={true}
-                                className="max-w-md"
+                                className="w-full"
                                 color="primary"
                             />
 
                             <Card className="bg-default-100/50" shadow="none">
                                 <CardBody className="gap-2 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="font-semibold">Total de Jogadores Necessários:</span>
-                                        <span>{numTeams * playersPerTeam}</span>
+                                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-2">
+                                        <span className="font-semibold text-default-600">Necessários:</span>
+                                        <span className="font-bold">{numTeams * playersPerTeam}</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span className="font-semibold">Jogadores Selecionados:</span>
-                                        <span>{selectedCount}</span>
+                                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-2">
+                                        <span className="font-semibold text-default-600">Selecionados:</span>
+                                        <span className="font-bold">{selectedCount}</span>
                                     </div>
                                     
                                     {selectedCount >= numTeams * playersPerTeam ? (
@@ -92,7 +92,7 @@ export const TeamConfigModal = ({
                         </ModalBody>
 
                         <ModalFooter>
-                            <Button variant="light" onPress={onClose}>
+                            <Button variant="light" onPress={onClose} className="w-full sm:w-auto">
                                 Cancelar
                             </Button>
                             <Button 
@@ -100,7 +100,7 @@ export const TeamConfigModal = ({
                                 onPress={onDraw} 
                                 isDisabled={selectedCount < numTeams * playersPerTeam}
                                 startContent={<Shuffle size={20} />}
-                                className="font-semibold"
+                                className="font-semibold w-full sm:w-auto"
                             >
                                 Sortear
                             </Button>

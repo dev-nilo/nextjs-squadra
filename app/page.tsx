@@ -9,8 +9,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { UserMenu } from "@/components/auth/user-menu";
 import { createClient } from "@/lib/supabase/client";
-import { normalizePlayer } from "@/lib/player-utils";
-import { playerToSupabaseRow } from "@/lib/player-supabase";
+import {
+  normalizePlayer,
+  saveToLocalStorage,
+  loadFromLocalStorage,
+} from "@/lib/player-utils";
+import { syncPlayerRow, preparePlayerForCloud } from "@/lib/player-supabase";
+import { isDataUrlImage } from "@/lib/player-image";
 import type { Player, TeamData } from "@/types";
 import { Button, Input, Select, SelectItem, ButtonGroup } from "@nextui-org/react";
 
@@ -20,49 +25,6 @@ import { MiniPlayerRow } from "@/components/player/MiniPlayerRow";
 import { PlayerModal } from "@/components/player/PlayerModal";
 import { TeamConfigModal } from "@/components/team/TeamConfigModal";
 import { DrawTeamsModal } from "@/components/team/DrawTeamsModal";
-
-const LOCAL_STORAGE_KEY = "fut-cards-players-v2";
-
-const saveToLocalStorage = (players: Player[]) => {
-  try {
-    if (typeof window === "undefined") return;
-    const minimized = players.map(p => ({
-      id: p.id,
-      name: p.name,
-      position: p.position,
-      image: typeof p.image === "string" && p.image.length < 200 ? p.image : null,
-    }));
-    let data = JSON.stringify(minimized);
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, data);
-    } catch (e) {
-      if (e instanceof DOMException && e.name === "QuotaExceededError") {
-        const limited = minimized.slice(0, 50);
-        data = JSON.stringify(limited);
-        localStorage.setItem(LOCAL_STORAGE_KEY, data);
-      } else {
-        throw e;
-      }
-    }
-  } catch (e) {
-    console.error("Error saving to local storage:", e);
-    toast.error("Erro ao salvar dados localmente");
-  }
-};
-
-const loadFromLocalStorage = (): Player[] => {
-  try {
-    if (typeof window === "undefined") return [];
-    const data = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (!data) return [];
-    const parsed = JSON.parse(data);
-    if (!Array.isArray(parsed)) return [];
-    return parsed;
-  } catch (e) {
-    console.error("Error loading from local storage:", e);
-    return [];
-  }
-};
 
 export default function App() {
   const supabase = createClient();
@@ -107,7 +69,42 @@ export default function App() {
           }
 
           if (playersData && playersData.length > 0) {
-            const cloudPlayers = playersData.map((p) => normalizePlayer(p) as Player);
+            const localById = new Map(loadFromLocalStorage().map((p) => [p.id, p]));
+            let cloudPlayers = playersData.map((p) => {
+              const normalized = normalizePlayer(p) as Player;
+              const local = localById.get(normalized.id);
+              // Keep local nationality until the DB column exists / is populated
+              if (local?.nationality && (!normalized.nationality || normalized.nationality === "BR")) {
+                if (!("nationality" in (p as object)) || (p as { nationality?: string | null }).nationality == null) {
+                  return { ...normalized, nationality: local.nationality };
+                }
+              }
+              // Prefer local nationality when cloud defaulted to BR but local has something else
+              if (local?.nationality && local.nationality !== "BR" && normalized.nationality === "BR") {
+                return { ...normalized, nationality: local.nationality };
+              }
+              return normalized;
+            });
+
+            // Prefer Storage URLs; if upload fails, keep whatever image we have (incl. data URL in DB)
+            const migrated: Player[] = [];
+            for (const player of cloudPlayers) {
+              if (isDataUrlImage(player.image)) {
+                try {
+                  const withUrl = await preparePlayerForCloud(supabase, user.id, player);
+                  if (withUrl.image !== player.image && withUrl.image && !isDataUrlImage(withUrl.image)) {
+                    await supabase.from("players").update({ image_url: withUrl.image }).eq("id", withUrl.id);
+                  }
+                  migrated.push(withUrl);
+                } catch {
+                  migrated.push(player);
+                }
+              } else {
+                migrated.push(player);
+              }
+            }
+            cloudPlayers = migrated;
+
             setPlayers(cloudPlayers);
             saveToLocalStorage(cloudPlayers);
           } else {
@@ -115,16 +112,11 @@ export default function App() {
             if (local.length > 0) {
               const uploadedPlayers: Player[] = [];
               for (const player of local) {
-                const row = playerToSupabaseRow(player, user.id);
-                const { data, error: upsertError } = await supabase
-                  .from("players")
-                  .upsert(row, { onConflict: "id" })
-                  .select()
-                  .single();
-
-                if (!upsertError && data) {
-                  uploadedPlayers.push(normalizePlayer(data) as Player);
-                } else {
+                try {
+                  const { id } = await syncPlayerRow(supabase, player, user.id, "upsert");
+                  uploadedPlayers.push(id && id !== player.id ? { ...player, id } : player);
+                } catch (uploadErr) {
+                  console.warn("[app] Upload/sync failed for player:", uploadErr);
                   uploadedPlayers.push(player);
                 }
               }
@@ -178,10 +170,14 @@ export default function App() {
     const values = Object.values(attrs);
     const rating = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
     
-    const fullPlayer: Player = {
+    let fullPlayer: Player = {
       ...playerData,
       rating,
     };
+
+    if (user && isOnline) {
+      fullPlayer = await preparePlayerForCloud(supabase, user.id, fullPlayer);
+    }
 
     const updatedPlayers = isNew 
       ? [...players, fullPlayer]
@@ -193,19 +189,24 @@ export default function App() {
     if (user && isOnline) {
       setIsSyncing(true);
       try {
-        const row = playerToSupabaseRow(fullPlayer, user.id);
-        if (!isNew) {
-          await supabase.from("players").update(row).eq("id", fullPlayer.id);
-        } else {
-          const { data, error } = await supabase.from("players").insert(row).select().single();
-          if (!error && data) {
-            const normalized = normalizePlayer(data) as Player;
-            setPlayers((prev) => prev.map((p) => (p.id === fullPlayer.id ? normalized : p)));
-          }
+        const { id } = await syncPlayerRow(
+          supabase,
+          fullPlayer,
+          user.id,
+          isNew ? "insert" : "update",
+        );
+        if (id && id !== fullPlayer.id) {
+          const remapped = { ...fullPlayer, id };
+          const next = updatedPlayers.map((p) => (p.id === fullPlayer.id ? remapped : p));
+          setPlayers(next);
+          saveToLocalStorage(next);
         }
         toast.success(isNew ? "Carta Criada" : "Carta Atualizada", { description: "Sincronizado com a nuvem" });
       } catch (e) {
-        toast.warning(isNew ? "Carta Criada Localmente" : "Carta Atualizada Localmente");
+        console.error("[app] Failed to sync player:", e);
+        toast.warning(isNew ? "Carta Criada Localmente" : "Carta Atualizada Localmente", {
+          description: "Salvo no navegador; a nuvem recusou o sync.",
+        });
       } finally {
         setIsSyncing(false);
       }
@@ -360,11 +361,12 @@ export default function App() {
     try {
       const syncedPlayers: Player[] = [];
       for (const player of players) {
-        const row = playerToSupabaseRow(player, user.id);
-        const { data, error } = await supabase.from("players").upsert(row, { onConflict: "id" }).select().single();
-        if (!error && data) {
-          syncedPlayers.push(normalizePlayer(data) as Player);
-        } else {
+        try {
+          const prepared = await preparePlayerForCloud(supabase, user.id, player);
+          const { id } = await syncPlayerRow(supabase, prepared, user.id, "upsert");
+          syncedPlayers.push(id && id !== prepared.id ? { ...prepared, id } : prepared);
+        } catch (syncErr) {
+          console.warn("[app] Sync failed for player:", syncErr);
           syncedPlayers.push(player);
         }
       }
@@ -394,8 +396,8 @@ export default function App() {
   if (authLoading || loading) {
     return (
       <>
-        <Toaster position="top-right" richColors />
-        <div className="min-h-screen bg-background flex items-center justify-center">
+        <Toaster position="top-center" richColors />
+        <div className="min-h-screen bg-background flex items-center justify-center px-4">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="w-12 h-12 animate-spin text-default-500" />
             <p className="text-default-500">Carregando...</p>
@@ -408,7 +410,7 @@ export default function App() {
   if (!isAuthenticated) {
     return (
       <>
-        <Toaster position="top-right" richColors />
+        <Toaster position="top-center" richColors />
         <AuthModal
           open={!isAuthenticated}
           onOpenChange={() => {}}
@@ -420,28 +422,28 @@ export default function App() {
 
   return (
     <>
-      <Toaster position="top-right" richColors />
-      <div className="min-h-screen bg-background text-foreground">
+      <Toaster position="top-center" richColors />
+      <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
         <header className="sticky top-0 z-40 bg-content1/95 backdrop-blur-sm border-b border-divider shadow-lg">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4">
             <div className="flex flex-col gap-3">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 justify-between">
-                <div className="flex-1 w-full">
+                <div className="flex-1 w-full min-w-0">
                     <Input
                         placeholder="Buscar jogador..."
                         value={searchQuery}
                         onValueChange={setSearchQuery}
-                        startContent={<Search size={18} className="text-default-400" />}
+                        startContent={<Search size={18} className="text-default-400 shrink-0" />}
                         className="w-full"
                         size="sm"
                     />
                 </div>
 
-                <div className="flex items-center gap-2 justify-between sm:justify-start w-full sm:w-auto">
+                <div className="flex flex-wrap items-center gap-2 justify-between sm:justify-start w-full sm:w-auto">
                   <Select
                     selectedKeys={[sortBy]}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="w-32"
+                    className="flex-1 min-w-[7.5rem] sm:flex-none sm:w-32"
                     size="sm"
                     aria-label="Ordenar por"
                   >
@@ -450,7 +452,7 @@ export default function App() {
                     <SelectItem key="position" value="position">Posição</SelectItem>
                   </Select>
 
-                  <ButtonGroup size="sm" variant="flat">
+                  <ButtonGroup size="sm" variant="flat" className="shrink-0">
                     <Button
                         isIconOnly
                         onPress={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
@@ -477,8 +479,10 @@ export default function App() {
                   variant="flat"
                   startContent={players.every((p) => selectedIds.has(p.id)) ? <X size={16} /> : <CheckCircle2 size={16} />}
                   size="sm"
+                  className="min-w-0"
                 >
-                  {players.every((p) => selectedIds.has(p.id)) ? "Desmarcar Todas" : "Selecionar Todas"}
+                  <span className="sm:hidden">{players.every((p) => selectedIds.has(p.id)) ? "Desmarcar" : "Selecionar"}</span>
+                  <span className="hidden sm:inline">{players.every((p) => selectedIds.has(p.id)) ? "Desmarcar Todas" : "Selecionar Todas"}</span>
                 </Button>
 
                 <Button
@@ -487,7 +491,8 @@ export default function App() {
                   startContent={<Plus size={16} />}
                   size="sm"
                 >
-                  Nova Carta
+                  <span className="sm:hidden">Nova</span>
+                  <span className="hidden sm:inline">Nova Carta</span>
                 </Button>
 
                 {selectedIds.size > 0 && (
@@ -496,8 +501,10 @@ export default function App() {
                     color="secondary"
                     startContent={<Shuffle size={16} />}
                     size="sm"
+                    className="min-w-0"
                   >
-                    Sortear Times ({selectedIds.size})
+                    <span className="sm:hidden">Sortear ({selectedIds.size})</span>
+                    <span className="hidden sm:inline">Sortear Times ({selectedIds.size})</span>
                   </Button>
                 )}
               </div>
@@ -505,11 +512,11 @@ export default function App() {
           </div>
         </header>
 
-        <main className="max-w-7xl mx-auto px-4 py-8">
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
           {filteredPlayers.length === 0 ? (
-            <div className="text-center py-16 text-default-500">
+            <div className="text-center py-12 sm:py-16 text-default-500 px-2">
               <User size={64} className="mx-auto mb-4 opacity-50" />
-              <p className="text-lg">
+              <p className="text-base sm:text-lg">
                 {searchQuery ? "Nenhuma carta encontrada" : "Nenhuma carta criada ainda"}
               </p>
               <p className="text-sm mt-2">
@@ -517,7 +524,7 @@ export default function App() {
               </p>
             </div>
           ) : viewMode === "grid" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 justify-items-center">
               {filteredPlayers.map((player) => (
                 <PlayerCard
                   key={player.id}
@@ -537,40 +544,40 @@ export default function App() {
                   onClick={() => handleToggleSelect(player.id)}
                   className={`relative cursor-pointer transition-all group ${selectedIds.has(player.id) ? "ring-2 ring-primary rounded-lg bg-primary/10" : ""}`}
                 >
-                  <MiniPlayerRow player={player} />
-                  
-                  {selectedIds.has(player.id) && (
-                    <div className="absolute top-1/2 -translate-y-1/2 left-2 z-10 pointer-events-none">
-                      <CheckCircle2 size={20} className="text-primary" fill="currentColor" />
-                    </div>
-                  )}
-
-                  <div className="absolute top-1/2 -translate-y-1/2 right-2 flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10">
-                    <Button
-                        isIconOnly
-                        size="sm"
-                        color="primary"
-                        radius="full"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(player);
-                        }}
-                    >
-                        <Pencil size={14} />
-                    </Button>
-                    <Button
-                        isIconOnly
-                        size="sm"
-                        color="danger"
-                        radius="full"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(player.id);
-                        }}
-                    >
-                        <Trash2 size={14} />
-                    </Button>
-                  </div>
+                  <MiniPlayerRow
+                    player={player}
+                    isSelected={selectedIds.has(player.id)}
+                    actions={
+                      <div className="flex gap-1.5 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        <Button
+                            isIconOnly
+                            size="sm"
+                            color="primary"
+                            radius="full"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(player);
+                            }}
+                            aria-label={`Editar ${player.name}`}
+                        >
+                            <Pencil size={14} />
+                        </Button>
+                        <Button
+                            isIconOnly
+                            size="sm"
+                            color="danger"
+                            radius="full"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(player.id);
+                            }}
+                            aria-label={`Excluir ${player.name}`}
+                        >
+                            <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    }
+                  />
                 </div>
               ))}
             </div>

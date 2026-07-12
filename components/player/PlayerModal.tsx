@@ -92,16 +92,22 @@ export const PlayerModal = ({
             size="3xl"
             scrollBehavior="inside"
             backdrop="blur"
+            classNames={{
+                base: "mx-2 sm:mx-auto w-[calc(100vw-1rem)] sm:w-full max-w-[calc(100vw-1rem)] sm:max-w-3xl",
+                header: "px-3 sm:px-6",
+                body: "px-3 sm:px-6",
+                footer: "px-3 sm:px-6 flex-col-reverse sm:flex-row gap-2",
+            }}
         >
             <ModalContent>
                 {(onClose) => (
                     <>
-                        <ModalHeader className="flex flex-col gap-1">
+                        <ModalHeader className="flex flex-col gap-1 text-lg sm:text-xl">
                             {initialData ? "Editar Carta" : "Nova Carta"}
                         </ModalHeader>
 
                         <ModalBody>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                                 <div className="space-y-4">
                                     <Input
                                         label="Nome do Jogador"
@@ -126,7 +132,12 @@ export const PlayerModal = ({
                                     <Select 
                                         label="Nacionalidade" 
                                         selectedKeys={[nationality]}
-                                        onChange={(e) => setNationality(e.target.value)}
+                                        onSelectionChange={(keys) => {
+                                            const value = Array.from(keys)[0];
+                                            if (typeof value === "string" && value) {
+                                                setNationality(value);
+                                            }
+                                        }}
                                     >
                                         {COUNTRY_OPTIONS.map((country) => (
                                             <SelectItem key={country.code} value={country.code}>
@@ -139,11 +150,12 @@ export const PlayerModal = ({
                                         <label className="text-sm font-medium text-default-600">
                                             Foto do Jogador
                                         </label>
-                                        <div className="flex gap-2">
+                                        <div className="flex flex-wrap gap-2">
                                             <Button
                                                 onPress={() => fileInputRef.current?.click()}
                                                 startContent={<Upload size={16} />}
                                                 variant="flat"
+                                                className="flex-1 sm:flex-none min-w-0"
                                             >
                                                 {image ? "Alterar Foto" : "Adicionar Foto"}
                                             </Button>
@@ -152,6 +164,7 @@ export const PlayerModal = ({
                                                     color="danger"
                                                     variant="flat"
                                                     onPress={() => setImage(null)}
+                                                    className="flex-1 sm:flex-none"
                                                 >
                                                     Remover
                                                 </Button>
@@ -165,22 +178,22 @@ export const PlayerModal = ({
                                             className="hidden"
                                         />
                                         {image && (
-                                            <div className="mt-2 p-4 bg-default-100 rounded-lg flex justify-center">
+                                            <div className="mt-2 p-3 sm:p-4 bg-default-100 rounded-lg flex justify-center">
                                                 <Image
                                                     src={image || "/placeholder.svg"}
                                                     alt="Prévia"
-                                                    className="max-h-40 object-cover"
+                                                    className="max-h-32 sm:max-h-40 object-cover"
                                                 />
                                             </div>
                                         )}
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
+                                <div className="space-y-3 sm:space-y-4">
                                     <h3 className="text-sm font-bold text-default-600">
                                         Atributos (OVR: {calculateOVR(attributes)})
                                     </h3>
-                                    <div className="space-y-4">
+                                    <div className="space-y-3 sm:space-y-4">
                                         <StatSlider
                                             label="Velocidade"
                                             value={attributes.velocidade}
@@ -246,13 +259,14 @@ export const PlayerModal = ({
                         </ModalBody>
 
                         <ModalFooter>
-                            <Button variant="light" onPress={onClose}>
+                            <Button variant="light" onPress={onClose} className="w-full sm:w-auto">
                                 Cancelar
                             </Button>
                             <Button 
                                 color="primary" 
                                 onPress={handleSubmit}
                                 startContent={<Save size={20} />}
+                                className="w-full sm:w-auto"
                             >
                                 {initialData ? "Atualizar Carta" : "Criar Carta"}
                             </Button>

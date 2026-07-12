@@ -20,7 +20,7 @@ export default function AuthPage() {
       
       <Card className="w-full max-w-md p-4">
         <CardHeader className="flex flex-col gap-1 items-start">
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-xl sm:text-2xl font-bold">
             {isLogin ? "Bem-vindo" : "Criar Conta"}
           </h2>
           <p className="text-sm text-default-500">

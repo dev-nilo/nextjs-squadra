@@ -64,9 +64,9 @@ export const PlayerCard = ({
             onClick={() => onToggleSelect(player.id)}
             onKeyDown={handleKeyDown}
             className={`
-                relative group w-full max-w-64 aspect-[2/3] 
+                relative group w-full max-w-[17rem] sm:max-w-64 mx-auto aspect-[2/3] 
                 transition-all duration-300 ease-out
-                hover:scale-105 hover:z-10 
+                sm:hover:scale-105 sm:hover:z-10 
                 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
                 cursor-pointer select-none
             `}
@@ -74,16 +74,16 @@ export const PlayerCard = ({
             {/* Selection Indicator */}
             {isSelected && (
                 <div
-                    className="absolute -top-3 -left-3 z-50 bg-primary text-primary-foreground p-1 rounded-full shadow-lg animate-in zoom-in duration-200"
+                    className="absolute top-1 left-1 sm:-top-2 sm:-left-2 z-50 bg-primary text-primary-foreground p-1 rounded-full shadow-lg animate-in zoom-in duration-200"
                     aria-hidden="true"
                 >
-                    <CheckCircle2 size={24} />
+                    <CheckCircle2 size={22} />
                 </div>
             )}
 
             {/* Action Buttons - Always visible on mobile, hover on desktop */}
             <div
-                className="absolute -top-2 -right-2 z-50 flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+                className="absolute top-1 right-1 sm:top-2 sm:right-2 z-50 flex gap-1.5 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
                 role="toolbar"
                 aria-label="Ações da carta"
             >
@@ -133,16 +133,16 @@ export const PlayerCard = ({
                     aria-hidden="true"
                 />
                 
-                <CardHeader className="flex h-[50%] relative z-10 p-4 items-start justify-between bg-transparent">
+                <CardHeader className="flex h-[50%] relative z-10 p-3 sm:p-4 items-start justify-between bg-transparent">
                     {/* Stats Column */}
-                    <div className="flex flex-col items-center justify-start pt-2 w-1/4 gap-1">
-                        <span className="text-4xl font-black text-primary tracking-tighter leading-none">
+                    <div className="flex flex-col items-center justify-start pt-1 sm:pt-2 w-1/4 gap-0.5 sm:gap-1">
+                        <span className="text-3xl sm:text-4xl font-black text-primary tracking-tighter leading-none">
                             {player.rating}
                         </span>
-                        <span className="text-lg font-bold text-foreground/80 tracking-wide">
+                        <span className="text-base sm:text-lg font-bold text-foreground/80 tracking-wide">
                             {player.position}
                         </span>
-                        <div className="w-8 h-px bg-primary/50 my-2" aria-hidden="true" />
+                        <div className="w-8 h-px bg-primary/50 my-1 sm:my-2" aria-hidden="true" />
                         <img
                             src={getFlagUrl(countryCode)}
                             alt={countryName}
@@ -153,7 +153,7 @@ export const PlayerCard = ({
                     </div>
 
                     {/* Player Image */}
-                    <div className="w-3/4 h-full pl-4 flex items-center justify-center">
+                    <div className="w-3/4 h-full pl-2 sm:pl-4 flex items-center justify-center">
                         {player.image ? (
                             <img
                                 src={player.image}
@@ -172,12 +172,12 @@ export const PlayerCard = ({
 
                 <CardBody className="p-0 flex flex-col justify-between overflow-hidden bg-transparent z-10">
                     {/* Player Name Section */}
-                    <div className="flex flex-col items-center px-4">
+                    <div className="flex flex-col items-center px-3 sm:px-4">
                         <div
                             className="w-[90%] h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"
                             aria-hidden="true"
                         />
-                        <h2 className="text-xl font-black text-foreground uppercase tracking-tight py-2 truncate max-w-[90%] text-center">
+                        <h2 className="text-lg sm:text-xl font-black text-foreground uppercase tracking-tight py-1.5 sm:py-2 truncate max-w-[90%] text-center">
                             {player.name}
                         </h2>
                         <div
@@ -188,7 +188,7 @@ export const PlayerCard = ({
 
                     {/* Attributes Grid */}
                     <div
-                        className="grid grid-cols-2 gap-x-4 gap-y-1 px-6 py-4 text-sm font-bold flex-1"
+                        className="grid grid-cols-2 gap-x-3 sm:gap-x-4 gap-y-0.5 sm:gap-y-1 px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-bold flex-1"
                         role="list"
                         aria-label="Atributos do jogador"
                     >

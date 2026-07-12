@@ -63,49 +63,54 @@ export const DrawTeamsModal = ({
 
     if (!generatedTeams) return null;
 
+    const gridCols =
+        generatedTeams.length <= 2
+            ? "grid-cols-1 sm:grid-cols-2"
+            : generatedTeams.length === 3
+                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                : generatedTeams.length <= 6
+                    ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                    : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5";
+
     return (
         <Modal 
             isOpen={isOpen} 
             onOpenChange={(open) => !open && onClose()} 
-            size="5xl" 
+            size="5xl"
             scrollBehavior="inside"
             classNames={{
                 backdrop: "bg-black/60 backdrop-blur-md",
-                base: "bg-content1/40 backdrop-blur-xl border border-white/20 shadow-2xl",
-                header: "border-b border-white/10 bg-black/40",
-                body: "p-6 bg-transparent",
+                base: "mx-2 sm:mx-auto w-[calc(100vw-1rem)] sm:w-full max-w-[calc(100vw-1rem)] sm:max-w-5xl bg-content1/40 backdrop-blur-xl border border-white/20 shadow-2xl",
+                header: "border-b border-white/10 bg-black/40 px-3 sm:px-6",
+                body: "p-3 sm:p-6 bg-transparent",
             }}
         >
             <ModalContent>
                 {(onClose) => (
                     <>
-                        <ModalHeader className="flex flex-col gap-1">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-2xl font-black">
+                        <ModalHeader className="flex flex-col gap-2 sm:gap-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+                                <h2 className="text-xl sm:text-2xl font-black">
                                     Times Sorteados
                                 </h2>
                                 <Button 
                                     color="primary" 
                                     onPress={onRedraw}
-                                    startContent={<Shuffle size={20} />}
+                                    startContent={<Shuffle size={18} />}
+                                    size="sm"
+                                    className="w-full sm:w-auto shrink-0"
                                 >
                                     Sortear Novamente
                                 </Button>
                             </div>
-                            <p className="text-sm text-default-500 font-normal">
-                                Arraste jogadores entre os times para reorganizar manualmente
+                            <p className="text-xs sm:text-sm text-default-500 font-normal">
+                                <span className="hidden sm:inline">Arraste jogadores entre os times para reorganizar manualmente</span>
+                                <span className="sm:hidden">Toque e arraste para reorganizar (melhor no desktop)</span>
                             </p>
                         </ModalHeader>
                         
-                        <ModalBody className="p-6">
-                            <div className={`grid gap-6 ${generatedTeams.length <= 2
-                                    ? "grid-cols-1 md:grid-cols-2"
-                                    : generatedTeams.length === 3
-                                        ? "grid-cols-1 md:grid-cols-3"
-                                        : generatedTeams.length <= 6
-                                            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
-                                            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5"
-                                }`}>
+                        <ModalBody>
+                            <div className={`grid gap-3 sm:gap-4 lg:gap-6 ${gridCols}`}>
                                 {generatedTeams.map((team, idx) => (
                                     <Card 
                                         key={idx}
@@ -113,22 +118,22 @@ export const DrawTeamsModal = ({
                                         onDrop={() => handleDrop(idx)}
                                         className={`${team.color} border-1 ${team.borderColor} overflow-hidden shadow-none`}
                                     >
-                                        <CardHeader className={`flex-col items-center justify-center p-3 border-b-1 ${team.borderColor} bg-transparent`}>
-                                            <h3 className={`text-xl font-black ${team.headerColor} tracking-tight`}>
+                                        <CardHeader className={`flex-col items-center justify-center p-2.5 sm:p-3 border-b-1 ${team.borderColor} bg-transparent`}>
+                                            <h3 className={`text-lg sm:text-xl font-black ${team.headerColor} tracking-tight`}>
                                                 {team.name}
                                             </h3>
                                             <span className="text-xs font-bold text-default-400 mt-1">
-                                                {team.members.length} Jogadores
+                                                {team.members.length} Jogadores · MÉDIA {team.avg}
                                             </span>
                                         </CardHeader>
 
-                                        <CardBody className="p-2 space-y-2 min-h-[200px] overflow-visible">
+                                        <CardBody className="p-2 space-y-2 min-h-[160px] sm:min-h-[200px] overflow-visible">
                                             {team.members.map((player) => (
                                                 <div
                                                     key={player.id}
                                                     draggable
                                                     onDragStart={() => handleDragStart(player.id, idx)}
-                                                    className="flex items-center gap-3 bg-content1/50 hover:bg-content2/80 rounded-md p-2 cursor-grab active:cursor-grabbing transition-colors"
+                                                    className="flex items-center gap-2 sm:gap-3 bg-content1/50 hover:bg-content2/80 rounded-md p-2 cursor-grab active:cursor-grabbing transition-colors touch-manipulation"
                                                 >
                                                     <Avatar 
                                                         src={player.image || undefined} 
@@ -143,7 +148,7 @@ export const DrawTeamsModal = ({
                                                             {player.name}
                                                         </div>
                                                         <div className="text-[10px] uppercase font-bold text-default-500">
-                                                            {player.position}
+                                                            {player.position} · {player.rating}
                                                         </div>
                                                     </div>
                                                 </div>

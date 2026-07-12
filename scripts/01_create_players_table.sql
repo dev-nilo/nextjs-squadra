@@ -5,6 +5,7 @@ create table if not exists public.players (
   name text not null,
   image_url text,
   position text not null,
+  nationality text not null default 'BR',
   ovr integer not null default 60,
   velocidade integer not null default 60,
   resistencia integer not null default 60,

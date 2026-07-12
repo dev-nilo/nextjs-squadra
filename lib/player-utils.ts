@@ -180,7 +180,8 @@ export const processImage = (file: File): Promise<string> => {
                 ctx.imageSmoothingQuality = "high";
                 ctx.drawImage(img, offsetX, offsetY, renderW, renderH);
 
-                resolve(canvas.toDataURL("image/png"));
+                // JPEG is much smaller than PNG — helps localStorage quota and Supabase payloads
+                resolve(canvas.toDataURL("image/jpeg", 0.82));
             };
             img.src = e.target?.result as string;
         };
@@ -200,6 +201,7 @@ const isQuotaExceededError = (e: unknown): boolean => {
 
 let quotaSaveNoticeShown = false;
 
+/** Never persist base64 in localStorage — only remote URLs (or null). */
 const withoutDataUrlImages = (players: Player[]): Player[] =>
     players.map((p) => ({
         ...p,
@@ -216,45 +218,28 @@ export const saveToLocalStorage = (players: Player[]) => {
     try {
         if (typeof window === "undefined") return;
 
-        const normalized = players.map(normalizePlayer);
+        // Strip inline base64 first so we stay under the ~5MB browser quota.
+        const forLocal = withoutDataUrlImages(players.map(normalizePlayer));
 
         const tryWrite = (list: Player[]) => {
-            const data = JSON.stringify(list);
-            localStorage.setItem(LOCAL_STORAGE_KEY, data);
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(list));
         };
 
         try {
-            tryWrite(normalized);
+            tryWrite(forLocal);
             return;
         } catch (first) {
             if (!isQuotaExceededError(first)) throw first;
         }
 
         try {
-            tryWrite(withoutDataUrlImages(normalized));
-            console.warn(
-                "[app] Saved players to localStorage without inline (base64) images — storage quota",
-            );
-            if (!quotaSaveNoticeShown) {
-                quotaSaveNoticeShown = true;
-                toast.warning("Armazenamento local", {
-                    description:
-                        "O limite do navegador foi atingido. As imagens foram omitidas do backup local; com login, os dados seguem na nuvem.",
-                });
-            }
-            return;
-        } catch (second) {
-            if (!isQuotaExceededError(second)) throw second;
-        }
-
-        try {
-            tryWrite(withoutAnyImages(normalized));
+            tryWrite(withoutAnyImages(forLocal));
             console.warn("[app] Saved players to localStorage without images — storage quota");
             if (!quotaSaveNoticeShown) {
                 quotaSaveNoticeShown = true;
                 toast.warning("Armazenamento local", {
                     description:
-                        "O limite do navegador foi atingido. As imagens foram omitidas do backup local; com login, os dados seguem na nuvem.",
+                        "Limite do navegador atingido. Fotos ficam só na nuvem (URLs); rode o script do bucket se ainda não configurou o Storage.",
                 });
             }
             return;

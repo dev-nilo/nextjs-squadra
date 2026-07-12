@@ -15,7 +15,7 @@ export const StatSlider = ({ label, value, onChange }: StatSliderProps) => (
         minValue={1} 
         value={value}
         onChange={(val) => onChange(val as number)}
-        className="max-w-md"
+        className="w-full"
         size="sm"
         color="primary"
         renderValue={({ children, ...props }) => (

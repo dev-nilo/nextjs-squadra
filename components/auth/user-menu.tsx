@@ -29,17 +29,17 @@ export function UserMenu() {
       <DropdownTrigger>
         <Avatar
           as="button"
-          className="transition-transform"
+          className="transition-transform shrink-0"
           name={initials}
           size="sm"
           color="secondary"
         />
       </DropdownTrigger>
-      <DropdownMenu aria-label="Ações da conta" variant="flat">
+      <DropdownMenu aria-label="Ações da conta" variant="flat" className="min-w-[14rem] max-w-[min(20rem,calc(100vw-2rem))]">
         <DropdownSection showDivider>
           <DropdownItem key="profile" className="h-14 gap-2" textValue="Sua conta" isReadOnly>
             <p className="font-semibold">Logado como</p>
-            <p className="font-semibold truncate">{user.email}</p>
+            <p className="font-semibold truncate max-w-[16rem]">{user.email}</p>
           </DropdownItem>
         </DropdownSection>
         

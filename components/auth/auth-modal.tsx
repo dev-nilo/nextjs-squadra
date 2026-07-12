@@ -19,7 +19,16 @@ export function AuthModal({ open, onOpenChange, onSuccess }: AuthModalProps) {
   }
 
   return (
-    <Modal isOpen={open} onOpenChange={onOpenChange} size="md">
+    <Modal
+      isOpen={open}
+      onOpenChange={onOpenChange}
+      size="md"
+      classNames={{
+        base: "mx-2 sm:mx-auto w-[calc(100vw-1rem)] sm:w-full max-w-[calc(100vw-1rem)] sm:max-w-md",
+        header: "px-4 sm:px-6",
+        body: "px-4 sm:px-6 pb-6",
+      }}
+    >
       <ModalContent>
         {(onClose) => (
           <>
