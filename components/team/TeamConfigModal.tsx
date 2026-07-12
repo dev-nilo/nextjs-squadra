@@ -1,5 +1,13 @@
 import { Shuffle } from "lucide-react";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Slider, Card, CardBody } from "@nextui-org/react";
+import {
+    Modal,
+    ModalContent,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+    Button,
+    Slider,
+} from "@nextui-org/react";
 
 interface TeamConfigModalProps {
     isOpen: boolean;
@@ -22,26 +30,34 @@ export const TeamConfigModal = ({
     selectedCount,
     onDraw,
 }: TeamConfigModalProps) => {
+    const required = numTeams * playersPerTeam;
+    const hasEnough = selectedCount >= required;
+
     return (
-        <Modal 
-            isOpen={isOpen} 
-            onOpenChange={(open) => !open && onClose()} 
-            size="md" 
+        <Modal
+            isOpen={isOpen}
+            onOpenChange={(open) => !open && onClose()}
+            size="md"
+            backdrop="blur"
             classNames={{
-                backdrop: "bg-black/60 backdrop-blur-md",
-                base: "mx-2 sm:mx-auto w-[calc(100vw-1rem)] sm:w-full max-w-[calc(100vw-1rem)] sm:max-w-md bg-content1/40 backdrop-blur-xl border border-white/20 shadow-2xl",
-                header: "border-b border-white/10 bg-black/40 px-3 sm:px-6",
-                body: "py-4 sm:py-6 gap-4 sm:gap-6 bg-transparent px-3 sm:px-6",
-                footer: "border-t border-white/10 bg-black/20 px-3 sm:px-6 flex-col-reverse sm:flex-row gap-2"
+                base: "mx-2 sm:mx-auto w-[calc(100vw-1rem)] sm:w-full max-w-[calc(100vw-1rem)] sm:max-w-md bg-content1",
+                header: "px-4 sm:px-6 border-b border-divider",
+                body: "px-4 sm:px-6 py-5 sm:py-6 gap-5",
+                footer: "px-4 sm:px-6 border-t border-divider flex-col-reverse sm:flex-row gap-2",
             }}
         >
             <ModalContent>
-                {(onClose) => (
+                {(onModalClose) => (
                     <>
-                        <ModalHeader className="flex flex-col gap-1 text-xl sm:text-2xl font-black">
-                            Configurar Times
+                        <ModalHeader className="flex flex-col gap-1">
+                            <h2 className="text-xl sm:text-2xl font-black text-foreground">
+                                Configurar Times
+                            </h2>
+                            <p className="text-sm text-default-500 font-normal">
+                                Defina quantos times e jogadores por time
+                            </p>
                         </ModalHeader>
-                        
+
                         <ModalBody>
                             <Slider
                                 label="Número de Times"
@@ -50,9 +66,11 @@ export const TeamConfigModal = ({
                                 minValue={2}
                                 value={numTeams}
                                 onChange={(value) => setNumTeams(value as number)}
-                                showSteps={true}
+                                showSteps
+                                showTooltip
                                 className="w-full"
                                 color="primary"
+                                getValue={(v) => `${v}`}
                             />
 
                             <Slider
@@ -62,44 +80,49 @@ export const TeamConfigModal = ({
                                 minValue={1}
                                 value={playersPerTeam}
                                 onChange={(value) => setPlayersPerTeam(value as number)}
-                                showSteps={true}
+                                showSteps
+                                showTooltip
                                 className="w-full"
                                 color="primary"
+                                getValue={(v) => `${v}`}
                             />
 
-                            <Card className="bg-default-100/50" shadow="none">
-                                <CardBody className="gap-2 text-sm">
-                                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-2">
-                                        <span className="font-semibold text-default-600">Necessários:</span>
-                                        <span className="font-bold">{numTeams * playersPerTeam}</span>
-                                    </div>
-                                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-2">
-                                        <span className="font-semibold text-default-600">Selecionados:</span>
-                                        <span className="font-bold">{selectedCount}</span>
-                                    </div>
-                                    
-                                    {selectedCount >= numTeams * playersPerTeam ? (
-                                        <p className="text-success font-semibold mt-2">
-                                            ✓ Quantidade suficiente
-                                        </p>
-                                    ) : (
-                                        <p className="text-danger font-semibold mt-2">
-                                            ✗ Faltam {numTeams * playersPerTeam - selectedCount} jogadores
-                                        </p>
-                                    )}
-                                </CardBody>
-                            </Card>
+                            <div className="rounded-xl border border-divider bg-default-50 p-4 space-y-2.5">
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-default-600 font-medium">Necessários</span>
+                                    <span className="font-black text-foreground tabular-nums">{required}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-default-600 font-medium">Selecionados</span>
+                                    <span className="font-black text-foreground tabular-nums">{selectedCount}</span>
+                                </div>
+                                <div
+                                    className={`mt-1 rounded-lg px-3 py-2 text-sm font-semibold ${
+                                        hasEnough
+                                            ? "bg-success/10 text-success"
+                                            : "bg-danger/10 text-danger"
+                                    }`}
+                                >
+                                    {hasEnough
+                                        ? "✓ Quantidade suficiente"
+                                        : `✗ Faltam ${required - selectedCount} jogadores`}
+                                </div>
+                            </div>
                         </ModalBody>
 
                         <ModalFooter>
-                            <Button variant="light" onPress={onClose} className="w-full sm:w-auto">
+                            <Button
+                                variant="flat"
+                                onPress={onModalClose}
+                                className="w-full sm:w-auto"
+                            >
                                 Cancelar
                             </Button>
-                            <Button 
-                                color="primary" 
-                                onPress={onDraw} 
-                                isDisabled={selectedCount < numTeams * playersPerTeam}
-                                startContent={<Shuffle size={20} />}
+                            <Button
+                                color="primary"
+                                onPress={onDraw}
+                                isDisabled={!hasEnough}
+                                startContent={<Shuffle size={18} />}
                                 className="font-semibold w-full sm:w-auto"
                             >
                                 Sortear
