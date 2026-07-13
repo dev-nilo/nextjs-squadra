@@ -91,19 +91,52 @@ async function writeRow(
     mode: "insert" | "update" | "upsert",
     playerId: string,
 ): Promise<WriteResult> {
+    const userId = row.user_id;
+
     if (mode === "insert") {
         const { data, error } = await supabase.from("players").insert(row).select("id").single();
         return { data, error };
     }
+
     if (mode === "update") {
-        const { error } = await supabase.from("players").update(row).eq("id", playerId);
-        return { error };
+        // Never update another tenant's row — always scope by user_id
+        const { data, error } = await supabase
+            .from("players")
+            .update(row)
+            .eq("id", playerId)
+            .eq("user_id", userId)
+            .select("id")
+            .maybeSingle();
+        return { data, error };
     }
-    const { data, error } = await supabase
-        .from("players")
-        .upsert(row, { onConflict: "id" })
-        .select("id")
-        .single();
+
+    // Prefer update-or-insert scoped to this user (avoids writing into another user's row)
+    if (isUuid(playerId)) {
+        const existing = await supabase
+            .from("players")
+            .select("id")
+            .eq("id", playerId)
+            .eq("user_id", userId)
+            .maybeSingle();
+
+        if (existing.data?.id) {
+            const { data, error } = await supabase
+                .from("players")
+                .update(row)
+                .eq("id", playerId)
+                .eq("user_id", userId)
+                .select("id")
+                .maybeSingle();
+            return { data, error };
+        }
+    }
+
+    // Insert as this user. If the UUID is already taken by another tenant, create a new id.
+    let { data, error } = await supabase.from("players").insert(row).select("id").single();
+    if (error && (error.code === "23505" || /duplicate|unique/i.test(error.message || ""))) {
+        const { id: _drop, ...withoutId } = row;
+        ({ data, error } = await supabase.from("players").insert(withoutId).select("id").single());
+    }
     return { data, error };
 }
 
@@ -116,7 +149,15 @@ export async function syncPlayerRow(
     userId: string,
     mode: "insert" | "update" | "upsert",
 ): Promise<{ id?: string; usedNationality: boolean }> {
-    const prepared = await preparePlayerForCloud(supabase, userId, player);
+    // Refuse to sync a player known to belong to another user
+    if (player.user_id && player.user_id !== userId) {
+        throw new Error("Não é permitido sincronizar jogador de outro usuário");
+    }
+
+    const prepared = await preparePlayerForCloud(supabase, userId, {
+        ...player,
+        user_id: userId,
+    });
     const fullRow = playerToSupabaseRow(prepared, userId, { includeNationality: true });
 
     let result = await writeRow(supabase, fullRow, mode, prepared.id);

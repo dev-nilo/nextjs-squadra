@@ -65,9 +65,17 @@ export function useAuth() {
   const logout = async () => {
     const supabase = createClient()
     try {
+      const previousUserId = user?.id
       const { error } = await supabase.auth.signOut()
       if (error) throw error
       setUser(null)
+      // Clear in-memory session; per-user localStorage keys remain isolated
+      if (typeof window !== "undefined") {
+        // Soft signal for the main app to reset — user.id change already clears state
+        window.dispatchEvent(
+          new CustomEvent("squadra:logout", { detail: { userId: previousUserId } }),
+        )
+      }
     } catch (err) {
       console.error("[app] Logout error:", err)
       setError("Erro ao fazer logout")

@@ -2,6 +2,20 @@
 
 Aplicação Next.js para cadastrar jogadores (estilo carta) e sortear times balanceados. Pode funcionar só no navegador (localStorage) ou sincronizar com o Supabase se você estiver logado.
 
+## Isolamento por usuário (multi-tenant)
+
+Cada conta só vê/edita/apaga **os próprios** jogadores:
+
+- Consultas e writes no Supabase sempre filtrados por `user_id = auth.uid()`
+- Cache local (`localStorage`) separado por usuário (`fut-cards-players-v2:user:<id>`)
+- Sem upload automático de dados de outro usuário/guest para a nuvem da conta atual
+
+Rode no SQL Editor do Supabase (obrigatório em produção):
+
+```bash
+scripts/06_harden_user_isolation.sql
+```
+
 ## Desenvolvimento
 
 1. Instale as dependências:
@@ -10,6 +24,59 @@ Aplicação Next.js para cadastrar jogadores (estilo carta) e sortear times bala
    - `npm run dev`
 3. Acesse:
    - `http://localhost:3000`
+
+## Auth Supabase (confirmação de email)
+
+Se o link do email redirecionar com `otp_expired` / `Email link is invalid or has expired`, configure o projeto assim:
+
+### 1. URL Configuration (Dashboard → Authentication → URL Configuration)
+
+- **Site URL**
+  - Local: `http://localhost:3000`
+  - Produção: `https://SEU-DOMINIO.vercel.app`
+- **Redirect URLs** (adicione todas):
+  - `http://localhost:3000/**`
+  - `http://localhost:3000/auth/callback`
+  - `http://localhost:3000/auth/confirm`
+  - `https://SEU-DOMINIO.vercel.app/**`
+  - `https://SEU-DOMINIO.vercel.app/auth/callback`
+  - `https://SEU-DOMINIO.vercel.app/auth/confirm`
+
+Se `redirect_to` no email for só `http://localhost:3000` (sem `/auth/callback`), o redirect enviado pelo app foi rejeitado pela allowlist.
+
+### 2. Template de confirmação (anti-prefetch)
+
+Scanners (Outlook Safe Links, etc.) abrem `{{ .ConfirmationURL }}` sozinhos e queimam o token.
+
+Em **Authentication → Email Templates → Confirm sign up**, use:
+
+```html
+<h2>Confirme seu email</h2>
+<p>Clique no link abaixo. Na página aberta, pressione o botão Confirmar.</p>
+<p>
+  <a href="{{ .SiteURL }}/auth/confirm?confirmation_url={{ .ConfirmationURL }}">
+    Confirmar email
+  </a>
+</p>
+```
+
+Alternativa com `token_hash` (também suportada pela app):
+
+```html
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup">
+  Confirmar email
+</a>
+```
+
+### 3. Variável opcional em produção
+
+No Vercel, defina `NEXT_PUBLIC_SITE_URL=https://SEU-DOMINIO.vercel.app` para os emails não apontarem para localhost.
+
+### 4. Depois de ajustar
+
+1. Apague o usuário pendente em Authentication → Users (se necessário).
+2. Cadastre de novo **ou** use **Reenviar email de confirmação**.
+3. Abra o email **mais recente** e confirme pelo botão na página `/auth/confirm`.
 
 ## Build de produção
 

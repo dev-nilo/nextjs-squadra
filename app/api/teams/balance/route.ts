@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 
 interface Attributes {
   velocidade: number
@@ -18,6 +19,7 @@ interface Player {
   image: string | null
   attributes: Attributes
   rating: number
+  user_id?: string
 }
 
 interface BalanceRequest {
@@ -27,6 +29,15 @@ interface BalanceRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { players, teamCount = 2 }: BalanceRequest = await request.json()
 
     if (!players || players.length === 0) {
@@ -36,36 +47,44 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Balance teams based on total attribute sum
+    // Reject payloads that claim ownership of another tenant's players
+    const foreign = players.find((p) => p.user_id && p.user_id !== user.id)
+    if (foreign) {
+      return NextResponse.json(
+        { error: 'Forbidden: players from another user' },
+        { status: 403 }
+      )
+    }
+
     const teamsArray = Array.from({ length: teamCount }, () => ({
       members: [] as Player[],
       totalRating: 0,
       avgRating: 0,
     }))
 
-    // Sort players by rating in descending order
     const sortedPlayers = [...players].sort((a, b) => b.rating - a.rating)
 
-    // Distribute players using a snake draft algorithm
     sortedPlayers.forEach((player, index) => {
-      const teamIndex = Math.floor(index / teamCount) % teamCount
-      const actualIndex = index % teamCount === 0 ? index / teamCount : teamCount - (index % teamCount)
+      const actualIndex =
+        Math.floor(index / teamCount) % 2 === 0
+          ? index % teamCount
+          : teamCount - 1 - (index % teamCount)
       const team = teamsArray[actualIndex % teamCount]
-      
+
       team.members.push(player)
       team.totalRating += player.rating
     })
 
-    // Calculate averages
-    teamsArray.forEach(team => {
-      team.avgRating = team.members.length > 0 
-        ? Math.round(team.totalRating / team.members.length)
-        : 0
+    teamsArray.forEach((team) => {
+      team.avgRating =
+        team.members.length > 0
+          ? Math.round(team.totalRating / team.members.length)
+          : 0
     })
 
     return NextResponse.json({
       teams: teamsArray,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     })
   } catch (error) {
     console.error('[app] Team balancing error:', error)

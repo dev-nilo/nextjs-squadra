@@ -25,6 +25,12 @@ export const GK_LABELS = {
 export const POSITIONS: PlayerPosition[] = ["GOL", "FIX", "ALA", "ATA"];
 
 export const LOCAL_STORAGE_KEY = "fut-cards-players-v2";
+export const LOCAL_STORAGE_KEY_LEGACY = "fut-cards-players-v2";
+
+/** Per-user cache key — never share player data across accounts on the same browser. */
+export function getLocalStorageKey(userId?: string | null): string {
+    return userId ? `${LOCAL_STORAGE_KEY}:user:${userId}` : `${LOCAL_STORAGE_KEY}:guest`;
+}
 
 export const TEAM_COLORS = [
     {

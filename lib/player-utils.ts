@@ -1,6 +1,6 @@
 import { Attributes, Player, PlayerPosition } from "@/types";
 import { toast } from "sonner";
-import { LOCAL_STORAGE_KEY } from "./constants";
+import { getLocalStorageKey, LOCAL_STORAGE_KEY_LEGACY } from "./constants";
 import { getCountryCode } from "./countries";
 
 export const DEFAULT_ATTRIBUTES: Attributes = {
@@ -128,7 +128,7 @@ export const normalizePlayer = (player: unknown): Player => {
         image,
         attributes,
         rating,
-        user_id: source.user_id,
+        user_id: typeof source.user_id === "string" ? source.user_id : undefined,
     };
 };
 
@@ -180,7 +180,6 @@ export const processImage = (file: File): Promise<string> => {
                 ctx.imageSmoothingQuality = "high";
                 ctx.drawImage(img, offsetX, offsetY, renderW, renderH);
 
-                // JPEG is much smaller than PNG — helps localStorage quota and Supabase payloads
                 resolve(canvas.toDataURL("image/jpeg", 0.82));
             };
             img.src = e.target?.result as string;
@@ -201,7 +200,6 @@ const isQuotaExceededError = (e: unknown): boolean => {
 
 let quotaSaveNoticeShown = false;
 
-/** Never persist base64 in localStorage — only remote URLs (or null). */
 const withoutDataUrlImages = (players: Player[]): Player[] =>
     players.map((p) => ({
         ...p,
@@ -214,15 +212,26 @@ const withoutAnyImages = (players: Player[]): Player[] =>
         image: null,
     }));
 
-export const saveToLocalStorage = (players: Player[]) => {
+/** Keep only rows that belong to this user (or have no owner yet under this scoped key). */
+export function filterPlayersForUser(players: Player[], userId: string | null | undefined): Player[] {
+    if (!userId) {
+        return players.filter((p) => !p.user_id);
+    }
+    return players.filter((p) => !p.user_id || p.user_id === userId);
+}
+
+export const saveToLocalStorage = (players: Player[], userId?: string | null) => {
     try {
         if (typeof window === "undefined") return;
 
-        // Strip inline base64 first so we stay under the ~5MB browser quota.
-        const forLocal = withoutDataUrlImages(players.map(normalizePlayer));
+        const scoped = filterPlayersForUser(players, userId).map((p) =>
+            userId ? { ...normalizePlayer(p), user_id: userId } : normalizePlayer(p),
+        );
+        const forLocal = withoutDataUrlImages(scoped);
+        const key = getLocalStorageKey(userId);
 
         const tryWrite = (list: Player[]) => {
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(list));
+            localStorage.setItem(key, JSON.stringify(list));
         };
 
         try {
@@ -256,23 +265,44 @@ export const saveToLocalStorage = (players: Player[]) => {
     }
 };
 
-export const loadFromLocalStorage = (): Player[] => {
+export const loadFromLocalStorage = (userId?: string | null): Player[] => {
     try {
         if (typeof window === "undefined") return [];
-        const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+        const key = getLocalStorageKey(userId);
+        let data = localStorage.getItem(key);
+
+        // One-time migration: legacy unscoped key → guest only (never into another account)
+        if (!data && !userId) {
+            const legacy = localStorage.getItem(LOCAL_STORAGE_KEY_LEGACY);
+            if (legacy) {
+                data = legacy;
+                localStorage.setItem(getLocalStorageKey(null), legacy);
+                localStorage.removeItem(LOCAL_STORAGE_KEY_LEGACY);
+            }
+        }
+
         if (!data) return [];
 
         const parsed = JSON.parse(data);
-        // Validate structure
         if (!Array.isArray(parsed)) {
             console.warn("[app] Invalid localStorage data, resetting");
             return [];
         }
 
-        return parsed.map(normalizePlayer);
+        return filterPlayersForUser(parsed.map(normalizePlayer), userId);
     } catch (e) {
         console.error("[app] Error loading from local storage:", e);
         toast.error("Erro ao carregar dados locais");
         return [];
+    }
+};
+
+/** Clear cache for a specific user (or guest). */
+export const clearLocalStorageForUser = (userId?: string | null) => {
+    try {
+        if (typeof window === "undefined") return;
+        localStorage.removeItem(getLocalStorageKey(userId));
+    } catch (e) {
+        console.error("[app] Error clearing local storage:", e);
     }
 };
