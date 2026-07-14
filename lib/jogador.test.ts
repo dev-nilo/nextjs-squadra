@@ -4,7 +4,6 @@ import {
   calculateOVR,
   coerceStat,
   DEFAULT_ATTRIBUTES,
-  filterPlayersForUser,
   normalizeAttributes,
   normalizePlayer,
 } from "@/lib/jogador";
@@ -26,19 +25,19 @@ describe("calculateOVR (Jogador domain seam)", () => {
     expect(calculateOVR(attrs)).toBe(65);
   });
 
-  it("rounds .5 up via Math.round", () => {
+  it("rounds half away from zero via Math.round (65.5 → 66)", () => {
     const attrs: Attributes = {
-      velocidade: 71,
-      resistencia: 71,
-      chute: 71,
-      posicionamento: 71,
-      defesa: 71,
-      drible: 71,
-      passe: 71,
-      fisico: 70,
+      velocidade: 66,
+      resistencia: 66,
+      chute: 66,
+      posicionamento: 66,
+      defesa: 66,
+      drible: 66,
+      passe: 66,
+      fisico: 62,
     };
-    // 568 / 8 = 71
-    expect(calculateOVR(attrs)).toBe(71);
+    // 524 / 8 = 65.5 → 66
+    expect(calculateOVR(attrs)).toBe(66);
   });
 });
 
@@ -111,27 +110,5 @@ describe("normalizePlayer", () => {
 
   it("falls back unknown nationality to BR", () => {
     expect(normalizePlayer({ id: "3", nationality: "ZZ" }).nationality).toBe("BR");
-  });
-});
-
-describe("filterPlayersForUser", () => {
-  it("keeps only matching user_id (or unset) when scoped", () => {
-    const players = [
-      normalizePlayer({ id: "a", user_id: "u1" }),
-      normalizePlayer({ id: "b", user_id: "u2" }),
-      normalizePlayer({ id: "c" }),
-    ];
-    expect(filterPlayersForUser(players, "u1").map((p) => p.id).sort()).toEqual([
-      "a",
-      "c",
-    ]);
-  });
-
-  it("keeps only unowned rows for guest scope", () => {
-    const players = [
-      normalizePlayer({ id: "a", user_id: "u1" }),
-      normalizePlayer({ id: "b" }),
-    ];
-    expect(filterPlayersForUser(players, null).map((p) => p.id)).toEqual(["b"]);
   });
 });

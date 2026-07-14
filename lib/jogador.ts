@@ -132,14 +132,3 @@ export const normalizePlayer = (player: unknown): Player => {
     user_id: typeof source.user_id === "string" ? source.user_id : undefined,
   };
 };
-
-/** Keep only rows that belong to this user (or have no owner yet under this scoped key). */
-export function filterPlayersForUser(
-  players: Player[],
-  userId: string | null | undefined,
-): Player[] {
-  if (!userId) {
-    return players.filter((p) => !p.user_id);
-  }
-  return players.filter((p) => !p.user_id || p.user_id === userId);
-}

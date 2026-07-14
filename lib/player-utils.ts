@@ -1,10 +1,18 @@
 import { Player } from "@/types";
 import { toast } from "sonner";
 import { getLocalStorageKey, LOCAL_STORAGE_KEY_LEGACY } from "./constants";
-import {
-  filterPlayersForUser,
-  normalizePlayer,
-} from "./jogador";
+import { normalizePlayer } from "./jogador";
+
+/** Keep only rows that belong to this user (or have no owner yet under this scoped key). */
+export function filterPlayersForUser(
+  players: Player[],
+  userId: string | null | undefined,
+): Player[] {
+  if (!userId) {
+    return players.filter((p) => !p.user_id);
+  }
+  return players.filter((p) => !p.user_id || p.user_id === userId);
+}
 
 export const processImage = (file: File): Promise<string> => {
   return new Promise((resolve) => {
