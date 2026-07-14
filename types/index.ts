@@ -28,5 +28,3 @@ export interface Time {
     members: Player[];
     avg: number;
 }
-
-export type TeamData = Time;

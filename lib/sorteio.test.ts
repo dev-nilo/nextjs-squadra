@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Attributes, Player } from "@/types";
-import { drawTeams, teamAverage } from "@/lib/sorteio";
+import { sortearTimes, teamAverage } from "@/lib/sorteio";
 
 const attrs = (n: number): Attributes => ({
   velocidade: n,
@@ -33,7 +33,7 @@ const alwaysZero = () => 0;
 /** Keeps array order under Fisher-Yates (j === i) and picks the last tied team. */
 const preserveOrder = () => 0.999999;
 
-describe("drawTeams (Sorteio seam)", () => {
+describe("sortearTimes (Sorteio seam)", () => {
   it("returns the requested number of Times with TIME A/B names", () => {
     const players = [
       player("p1", 80, 80),
@@ -42,7 +42,7 @@ describe("drawTeams (Sorteio seam)", () => {
       player("p4", 50, 50),
     ];
 
-    const times = drawTeams(players, 2, { random: alwaysZero });
+    const times = sortearTimes(players, 2, { random: alwaysZero });
 
     expect(times).toHaveLength(2);
     expect(times[0].name).toBe("TIME A");
@@ -59,14 +59,14 @@ describe("drawTeams (Sorteio seam)", () => {
       player("p6", 40, 40),
     ];
 
-    const times = drawTeams(players, 3, { random: alwaysZero });
+    const times = sortearTimes(players, 3, { random: alwaysZero });
     const ids = times.flatMap((t) => t.members.map((m) => m.id)).sort();
 
     expect(ids).toEqual(["p1", "p2", "p3", "p4", "p5", "p6"]);
   });
 
   it("exposes only domain fields on Time (no presentation tokens)", () => {
-    const times = drawTeams(
+    const times = sortearTimes(
       [player("a", 70, 70), player("b", 70, 70)],
       2,
       { random: alwaysZero },
@@ -88,7 +88,7 @@ describe("drawTeams (Sorteio seam)", () => {
       player("d", 60, 10),
     ];
 
-    const times = drawTeams(players, 2, { random: alwaysZero });
+    const times = sortearTimes(players, 2, { random: alwaysZero });
 
     // With equal attribute values, assignment alternates; alwaysZero picks lowest index on ties.
     // Order after tier sort (ratings 90→60): a,b,c,d → teams [a,c] and [b,d]
@@ -107,7 +107,7 @@ describe("drawTeams (Sorteio seam)", () => {
       player("weak2", 70, 10),
     ];
 
-    const times = drawTeams(players, 2, { random: preserveOrder });
+    const times = sortearTimes(players, 2, { random: preserveOrder });
     const sums = times.map((t) =>
       t.members.reduce(
         (s, p) => s + Object.values(p.attributes).reduce((a, b) => a + b, 0),

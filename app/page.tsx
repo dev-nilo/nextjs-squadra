@@ -18,7 +18,7 @@ import {
 import { syncPlayerRow, preparePlayerForCloud } from "@/lib/player-supabase";
 import { isDataUrlImage } from "@/lib/player-image";
 import type { Player, Time } from "@/types";
-import { drawTeams } from "@/lib/sorteio";
+import { sortearTimes } from "@/lib/sorteio";
 import { Button, Input, Select, SelectItem, ButtonGroup } from "@nextui-org/react";
 
 // Import refactored components
@@ -284,7 +284,7 @@ export default function App() {
       return;
     }
 
-    setGeneratedTeams(drawTeams(selectedPlayers, numTeams));
+    setGeneratedTeams(sortearTimes(selectedPlayers, numTeams));
     setIsTeamConfigOpen(false);
     setIsDrawModalOpen(true);
   };

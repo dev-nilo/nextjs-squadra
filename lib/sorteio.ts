@@ -2,7 +2,7 @@ import type { Attributes, Player, Time } from "@/types";
 
 export type RandomFn = () => number;
 
-export type DrawTeamsOptions = {
+export type SorteioOptions = {
   /** Returns a float in [0, 1). Defaults to Math.random. */
   random?: RandomFn;
 };
@@ -38,10 +38,10 @@ export const teamAverage = (members: Player[]): number =>
  * Sorteio: distribute Jogadores into Times with attribute-sum balancing.
  * Caller validates mínimo por time before calling.
  */
-export const drawTeams = (
+export const sortearTimes = (
   selectedPlayers: Player[],
   numTeams: number,
-  options: DrawTeamsOptions = {},
+  options: SorteioOptions = {},
 ): Time[] => {
   const random = options.random ?? Math.random;
 
