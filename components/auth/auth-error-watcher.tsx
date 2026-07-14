@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { applySessaoToast, classifyAuthUrlError } from "@/lib/sessao";
+import { applySessaoToast, resultFromAuthUrlError } from "@/lib/sessao";
 
 /**
  * Surfaces Supabase auth errors that land on `/` (e.g. otp_expired after email verify).
@@ -27,17 +27,11 @@ export function AuthErrorWatcher() {
     if (!errorCode) return;
     shown.current = true;
 
-    const classified = classifyAuthUrlError({
-      errorCode,
-      errorDescription: description,
-    });
-
     applySessaoToast(
-      {
-        ok: false,
-        code: classified.kind === "expired_link" ? "expired_link" : "confirm_url_error",
-        message: classified.message,
-      },
+      resultFromAuthUrlError({
+        errorCode,
+        errorDescription: description,
+      }),
       "watcher",
       toast,
     );

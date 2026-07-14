@@ -204,6 +204,37 @@ export async function logout(auth: SessaoAuth): Promise<SessaoResult> {
   }
 }
 
+export async function getCurrentUser(
+  auth: SessaoAuth,
+): Promise<{ user: User | null; error: { message: string } | null }> {
+  const { data, error } = await auth.getUser();
+  return { user: data.user ?? null, error };
+}
+
+export function subscribeSession(
+  auth: SessaoAuth,
+  onChange: (user: User | null) => void,
+): () => void {
+  const {
+    data: { subscription },
+  } = auth.onAuthStateChange((_event, session) => {
+    onChange(session?.user ?? null);
+  });
+  return () => subscription.unsubscribe();
+}
+
+export function resultFromAuthUrlError(input: {
+  errorCode: string | null;
+  errorDescription: string | null;
+}): SessaoResult {
+  const classified = classifyAuthUrlError(input);
+  return {
+    ok: false,
+    code: classified.kind === "expired_link" ? "expired_link" : "confirm_url_error",
+    message: classified.message,
+  };
+}
+
 export async function completeEmailConfirmation(
   auth: SessaoAuth,
   params: {

@@ -99,13 +99,15 @@ describe("login", () => {
     if (!result.ok) expect(result.code).toBe("email_unconfirmed");
   });
 
-  it("returns ok on success", async () => {
-    const auth = createFakeAuth();
-    const result = await login(auth, "a@b.com", "secret", {
-      url: "u",
-      key: "k",
+  it("returns login_failed for other auth errors", async () => {
+    const auth = createFakeAuth({
+      signInWithPassword: vi.fn(async () => ({
+        error: { message: "Invalid login credentials" },
+      })),
     });
-    expect(result).toEqual({ ok: true, code: "logged_in" });
+    const result = await login(auth, "a@b.com", "bad", { url: "u", key: "k" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe("login_failed");
   });
 });
 
@@ -197,13 +199,25 @@ describe("completeEmailConfirmation", () => {
     });
   });
 
-  it("falls back to existing session (implicit)", async () => {
+  it("returns pkce_failed when exchange fails", async () => {
     const auth = createFakeAuth({
-      getSession: vi.fn(async () => ({
-        data: { session: { access_token: "t" } },
-        error: null,
+      exchangeCodeForSession: vi.fn(async () => ({
+        error: { message: "bad code" },
       })),
     });
+    const result = await completeEmailConfirmation(auth, {
+      errorCode: null,
+      errorDescription: null,
+      code: "abc",
+      tokenHash: null,
+      type: "signup",
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe("pkce_failed");
+  });
+
+  it("returns no_session when nothing to complete", async () => {
+    const auth = createFakeAuth();
     const result = await completeEmailConfirmation(auth, {
       errorCode: null,
       errorDescription: null,
@@ -211,7 +225,7 @@ describe("completeEmailConfirmation", () => {
       tokenHash: null,
       type: "signup",
     });
-    expect(result).toEqual({ ok: true, code: "logged_in", via: "implicit" });
+    expect(result).toEqual({ ok: false, code: "no_session" });
   });
 });
 

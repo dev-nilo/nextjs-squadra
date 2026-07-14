@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import {
+  getCurrentUser,
   isSupabaseConfigured,
   logout as sessaoLogout,
+  subscribeSession,
   toSessaoAuth,
 } from "@/lib/sessao";
 
@@ -26,16 +28,11 @@ export function useAuth() {
 
     const initAuth = async () => {
       try {
-        const {
-          data: { user: nextUser },
-          error: userError,
-        } = await auth.getUser();
-
+        const { user: nextUser, error: userError } = await getCurrentUser(auth);
         if (userError) {
           console.warn("[app] Auth warning:", userError.message);
         }
-
-        setUser(nextUser || null);
+        setUser(nextUser);
       } catch (err) {
         console.error("[app] Session fetch error:", err);
         setError("Erro ao carregar sessão");
@@ -45,17 +42,12 @@ export function useAuth() {
     };
 
     initAuth();
-
-    const {
-      data: { subscription },
-    } = auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
+    const unsubscribe = subscribeSession(auth, (next) => {
+      setUser(next);
       setLoading(false);
     });
 
-    return () => {
-      subscription?.unsubscribe();
-    };
+    return unsubscribe;
   }, []);
 
   const logout = async () => {

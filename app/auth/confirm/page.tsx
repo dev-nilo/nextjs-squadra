@@ -9,7 +9,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import {
   applySessaoToast,
-  confirmEmailWithToken,
+  completeEmailConfirmation,
   decodeAuthDescription,
   toSessaoAuth,
 } from "@/lib/sessao";
@@ -42,11 +42,13 @@ function ConfirmContent() {
 
     setLoading(true);
     try {
-      const result = await confirmEmailWithToken(
-        toSessaoAuth(createClient()),
+      const result = await completeEmailConfirmation(toSessaoAuth(createClient()), {
+        errorCode: null,
+        errorDescription: null,
+        code: null,
         tokenHash,
         type,
-      );
+      });
       applySessaoToast(result, "confirm", toast);
       if (!result.ok) {
         if (result.code === "otp_failed") {
