@@ -10,13 +10,14 @@ import { AuthModal } from "@/components/auth/auth-modal";
 import { AuthErrorWatcher } from "@/components/auth/auth-error-watcher";
 import { UserMenu } from "@/components/auth/user-menu";
 import { createClient } from "@/lib/supabase/client";
+import { calculateOVR } from "@/lib/jogador";
 import {
-  saveToLocalStorage,
-  loadFromLocalStorage,
-} from "@/lib/player-utils";
-import { calculateOVR, normalizePlayer } from "@/lib/jogador";
-import { syncPlayerRow, preparePlayerForCloud } from "@/lib/player-supabase";
-import { isDataUrlImage } from "@/lib/player-image";
+  createElencoDeps,
+  deleteJogador,
+  loadElenco,
+  saveJogador,
+  syncElenco,
+} from "@/lib/elenco";
 import type { Player, Time } from "@/types";
 import { sortearTimes } from "@/lib/sorteio";
 import { Button, Input, Select, SelectItem, ButtonGroup } from "@nextui-org/react";
@@ -29,7 +30,7 @@ import { TeamConfigModal } from "@/components/team/TeamConfigModal";
 import { DrawTeamsModal } from "@/components/team/DrawTeamsModal";
 
 export default function App() {
-  const supabase = createClient();
+  const elenco = useMemo(() => createElencoDeps(createClient()), []);
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [players, setPlayers] = useState<Player[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -67,72 +68,8 @@ export default function App() {
           setPlayers([]);
           return;
         }
-
-        // Remove legacy shared cache so it can never leak into another account
-        try {
-          localStorage.removeItem("fut-cards-players-v2");
-        } catch {
-          /* ignore */
-        }
-
-        const { data: playersData, error } = await supabase
-          .from("players")
-          .select("*")
-          .eq("user_id", user.id);
-
-        if (error) {
-          console.error("[app] Failed to load players for user:", error);
-          // Only fall back to THIS user's local cache — never a shared/global key
-          setPlayers(loadFromLocalStorage(user.id));
-          return;
-        }
-
-        if (playersData && playersData.length > 0) {
-          const localById = new Map(loadFromLocalStorage(user.id).map((p) => [p.id, p]));
-          let cloudPlayers: Player[] = playersData.map((p) => {
-            const normalized = normalizePlayer({ ...p, user_id: user.id }) as Player;
-            const local = localById.get(normalized.id);
-            if (local?.nationality && (!normalized.nationality || normalized.nationality === "BR")) {
-              if (!("nationality" in (p as object)) || (p as { nationality?: string | null }).nationality == null) {
-                return { ...normalized, nationality: local.nationality, user_id: user.id };
-              }
-            }
-            if (local?.nationality && local.nationality !== "BR" && normalized.nationality === "BR") {
-              return { ...normalized, nationality: local.nationality, user_id: user.id };
-            }
-            return { ...normalized, user_id: user.id };
-          });
-
-          const migrated: Player[] = [];
-          for (const player of cloudPlayers) {
-            if (isDataUrlImage(player.image)) {
-              try {
-                const withUrl = await preparePlayerForCloud(supabase, user.id, player);
-                if (withUrl.image !== player.image && withUrl.image && !isDataUrlImage(withUrl.image)) {
-                  await supabase
-                    .from("players")
-                    .update({ image_url: withUrl.image })
-                    .eq("id", withUrl.id)
-                    .eq("user_id", user.id);
-                }
-                migrated.push({ ...withUrl, user_id: user.id });
-              } catch {
-                migrated.push({ ...player, user_id: user.id });
-              }
-            } else {
-              migrated.push({ ...player, user_id: user.id });
-            }
-          }
-          cloudPlayers = migrated;
-
-          setPlayers(cloudPlayers);
-          saveToLocalStorage(cloudPlayers, user.id);
-        } else {
-          // Empty cloud: use only this user's scoped local cache.
-          // NEVER auto-upload guest/other-user local data into this account.
-          const local = loadFromLocalStorage(user.id);
-          setPlayers(local);
-        }
+        const roster = await loadElenco(elenco, user.id);
+        setPlayers(roster);
       } catch (e) {
         console.error("Player load error:", e);
         setPlayers([]);
@@ -141,7 +78,7 @@ export default function App() {
       }
     };
     loadPlayers();
-  }, [user?.id]);
+  }, [user?.id, elenco]);
 
   useEffect(() => {
     const handleOnline = () => {
@@ -176,45 +113,41 @@ export default function App() {
       return;
     }
 
-    const isNew = !players.some(p => p.id === playerData.id);
+    const isNew = !players.some((p) => p.id === playerData.id);
     const rating = calculateOVR(playerData.attributes);
-    
-    let fullPlayer: Player = {
+    const fullPlayer: Player = {
       ...playerData,
       rating,
       user_id: user.id,
     };
 
-    if (isOnline) {
-      fullPlayer = await preparePlayerForCloud(supabase, user.id, fullPlayer);
-      fullPlayer = { ...fullPlayer, user_id: user.id };
-    }
-
-    const updatedPlayers = isNew 
-      ? [...players, fullPlayer]
-      : players.map((p) => (p.id === fullPlayer.id ? fullPlayer : p));
-
-    setPlayers(updatedPlayers);
-    saveToLocalStorage(updatedPlayers, user.id);
+    // Optimistic paint before cloud round-trip
+    setPlayers(
+      isNew
+        ? [...players, fullPlayer]
+        : players.map((p) => (p.id === fullPlayer.id ? fullPlayer : p)),
+    );
 
     if (isOnline) {
       setIsSyncing(true);
       try {
-        const { id } = await syncPlayerRow(
-          supabase,
-          fullPlayer,
-          user.id,
-          isNew ? "insert" : "update",
-        );
-        if (id && id !== fullPlayer.id) {
-          const remapped = { ...fullPlayer, id, user_id: user.id };
-          const next = updatedPlayers.map((p) => (p.id === fullPlayer.id ? remapped : p));
-          setPlayers(next);
-          saveToLocalStorage(next, user.id);
-        }
-        toast.success(isNew ? "Carta Criada" : "Carta Atualizada", { description: "Sincronizado com a nuvem" });
+        const { roster } = await saveJogador(elenco, user.id, fullPlayer, {
+          roster: players,
+          isNew,
+          online: true,
+        });
+        setPlayers(roster);
+        toast.success(isNew ? "Carta Criada" : "Carta Atualizada", {
+          description: "Sincronizado com a nuvem",
+        });
       } catch (e) {
         console.error("[app] Failed to sync player:", e);
+        const { roster } = await saveJogador(elenco, user.id, fullPlayer, {
+          roster: players,
+          isNew,
+          online: false,
+        });
+        setPlayers(roster);
         toast.warning(isNew ? "Carta Criada Localmente" : "Carta Atualizada Localmente", {
           description: "Salvo no navegador; a nuvem recusou o sync.",
         });
@@ -222,34 +155,50 @@ export default function App() {
         setIsSyncing(false);
       }
     } else {
-      toast.success(isNew ? "Carta Criada" : "Carta Atualizada", { description: "Salvo localmente" });
+      const { roster } = await saveJogador(elenco, user.id, fullPlayer, {
+        roster: players,
+        isNew,
+        online: false,
+      });
+      setPlayers(roster);
+      toast.success(isNew ? "Carta Criada" : "Carta Atualizada", {
+        description: "Salvo localmente",
+      });
     }
   };
 
-  const handleDelete = useCallback(async (id: string) => {
-    if (!user) return;
+  const handleDelete = useCallback(
+    async (id: string) => {
+      if (!user) return;
 
-    const updatedPlayers = players.filter((p) => p.id !== id);
-    setPlayers(updatedPlayers);
-    saveToLocalStorage(updatedPlayers, user.id);
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
 
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
-
-    if (isOnline) {
       try {
-        await supabase.from("players").delete().eq("id", id).eq("user_id", user.id);
-        toast.success("Carta Excluída", { description: "Removida da nuvem" });
+        const roster = await deleteJogador(elenco, user.id, id, {
+          roster: players,
+          online: isOnline,
+        });
+        setPlayers(roster);
+        toast.success("Carta Excluída", {
+          description: isOnline ? "Removida da nuvem" : "Removida localmente",
+        });
       } catch (e) {
-        toast.error("Erro ao sincronizar exclusão", { description: "Removida localmente" });
+        const roster = await deleteJogador(elenco, user.id, id, {
+          roster: players,
+          online: false,
+        });
+        setPlayers(roster);
+        toast.error("Erro ao sincronizar exclusão", {
+          description: "Removida localmente",
+        });
       }
-    } else {
-      toast.success("Carta Excluída", { description: "Removida localmente" });
-    }
-  }, [players, user, isOnline, supabase]);
+    },
+    [players, user, isOnline, elenco],
+  );
 
   const handleToggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -294,30 +243,11 @@ export default function App() {
     }
     setIsSyncing(true);
     try {
-      const syncedPlayers: Player[] = [];
-      for (const player of players) {
-        if (player.user_id && player.user_id !== user.id) {
-          console.warn("[app] Skipping player from another user:", player.id);
-          continue;
-        }
-        try {
-          const prepared = await preparePlayerForCloud(supabase, user.id, {
-            ...player,
-            user_id: user.id,
-          });
-          const { id } = await syncPlayerRow(supabase, prepared, user.id, "upsert");
-          syncedPlayers.push({
-            ...(id && id !== prepared.id ? { ...prepared, id } : prepared),
-            user_id: user.id,
-          });
-        } catch (syncErr) {
-          console.warn("[app] Sync failed for player:", syncErr);
-          syncedPlayers.push({ ...player, user_id: user.id });
-        }
-      }
+      const syncedPlayers = await syncElenco(elenco, user.id, players);
       setPlayers(syncedPlayers);
-      saveToLocalStorage(syncedPlayers, user.id);
-      toast.success("Sincronização Completa", { description: `${syncedPlayers.length} cartas sincronizadas` });
+      toast.success("Sincronização Completa", {
+        description: `${syncedPlayers.length} cartas sincronizadas`,
+      });
     } catch (e) {
       toast.error("Erro na Sincronização");
     } finally {

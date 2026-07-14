@@ -103,7 +103,6 @@ types/        → tipos TypeScript (Player, Team, etc.)
 | `loading.tsx` | Loading enquanto a página carrega |
 | `auth/page.tsx` | Tela de login/cadastro |
 | `auth/callback/` | Volta do login OAuth do Supabase |
-| `api/players/...` | APIs: apagar em lote, stats |
 | `globals.css` | Estilos globais (Tailwind) |
 
 A `page.tsx` é o “cérebro” da UI: guarda a lista de jogadores, seleção, modais e decide se salva no localStorage ou no Supabase.
@@ -119,6 +118,7 @@ A `page.tsx` é o “cérebro” da UI: guarda a lista de jogadores, seleção, 
 ### `lib/` — regras e integrações
 
 - **`supabase/`** — como falar com o banco: no browser (`client`), no servidor (`server`) e no proxy
+- **`elenco.ts`** — Elenco: load/save/delete/sync (auth-only)
 - **`jogador.ts`** — regras puras do Jogador (normalize, OVR)
 - **`player-utils.ts`** — localStorage e processImage (I/O)
 - **`player-supabase.ts`** — converter jogador ↔ linha do banco
