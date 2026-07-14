@@ -2,7 +2,9 @@
 
 import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
-import { TeamData } from "@/types";
+import { Time } from "@/types";
+import { teamAverage } from "@/lib/sorteio";
+import { getTeamPresentation } from "@/lib/constants";
 import { Download, Loader2, Shuffle, User } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -17,15 +19,10 @@ import {
 interface DrawTeamsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    generatedTeams: TeamData[] | null;
-    setGeneratedTeams: (teams: TeamData[]) => void;
+    generatedTeams: Time[] | null;
+    setGeneratedTeams: (teams: Time[]) => void;
     onRedraw: () => void;
 }
-
-const calcAvg = (members: TeamData["members"]) =>
-    members.length
-        ? Math.round(members.reduce((sum, p) => sum + (p.rating ?? 0), 0) / members.length)
-        : 0;
 
 export const DrawTeamsModal = ({
     isOpen,
@@ -73,11 +70,11 @@ export const DrawTeamsModal = ({
         const newGeneratedTeams = generatedTeams.map((team, index) => {
             if (index === fromTeam) {
                 const members = team.members.filter((p) => p.id !== playerId);
-                return { ...team, members, avg: calcAvg(members) };
+                return { ...team, members, avg: teamAverage(members) };
             }
             if (index === toTeam) {
                 const members = [...team.members, playerToMove];
-                return { ...team, members, avg: calcAvg(members) };
+                return { ...team, members, avg: teamAverage(members) };
             }
             return team;
         });
@@ -214,7 +211,9 @@ export const DrawTeamsModal = ({
                                     </div>
 
                                     <div className={`grid gap-3 sm:gap-4 ${gridCols}`}>
-                                        {generatedTeams.map((team, idx) => (
+                                        {generatedTeams.map((team, idx) => {
+                                            const presentation = getTeamPresentation(idx);
+                                            return (
                                             <div
                                                 key={idx}
                                                 onDragOver={(e) => handleDragOver(e, idx)}
@@ -223,16 +222,16 @@ export const DrawTeamsModal = ({
                                                 className={`
                                                     rounded-xl border-2 overflow-hidden bg-content1
                                                     transition-colors
-                                                    ${team.borderColor}
-                                                    ${team.color}
+                                                    ${presentation.borderColor}
+                                                    ${presentation.color}
                                                     ${dragOverTeam === idx ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}
                                                 `}
                                             >
                                                 <div
-                                                    className={`flex flex-col items-center justify-center px-3 py-3 border-b ${team.borderColor} bg-content1/80`}
+                                                    className={`flex flex-col items-center justify-center px-3 py-3 border-b ${presentation.borderColor} bg-content1/80`}
                                                 >
                                                     <h3
-                                                        className={`text-base sm:text-lg font-black tracking-tight ${team.headerColor}`}
+                                                        className={`text-base sm:text-lg font-black tracking-tight ${presentation.headerColor}`}
                                                     >
                                                         {team.name}
                                                     </h3>
@@ -291,7 +290,8 @@ export const DrawTeamsModal = ({
                                                     )}
                                                 </div>
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
 

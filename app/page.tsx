@@ -17,7 +17,8 @@ import {
 } from "@/lib/player-utils";
 import { syncPlayerRow, preparePlayerForCloud } from "@/lib/player-supabase";
 import { isDataUrlImage } from "@/lib/player-image";
-import type { Player, TeamData } from "@/types";
+import type { Player, Time } from "@/types";
+import { drawTeams } from "@/lib/sorteio";
 import { Button, Input, Select, SelectItem, ButtonGroup } from "@nextui-org/react";
 
 // Import refactored components
@@ -39,7 +40,7 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isTeamConfigOpen, setIsTeamConfigOpen] = useState(false);
   
-  const [generatedTeams, setGeneratedTeams] = useState<TeamData[] | null>(null);
+  const [generatedTeams, setGeneratedTeams] = useState<Time[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(() => typeof navigator !== "undefined" ? navigator.onLine : true);
@@ -283,85 +284,7 @@ export default function App() {
       return;
     }
 
-    const shuffleArray = <T,>(array: T[]): T[] => {
-      const shuffled = [...array];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      return shuffled;
-    };
-
-    const shuffledPlayers = shuffleArray(selectedPlayers);
-    const ratingTiers: Player[][] = [[], [], [], [], []];
-    
-    shuffledPlayers.forEach((player) => {
-      if (player.rating >= 90) ratingTiers[0].push(player);
-      else if (player.rating >= 80) ratingTiers[1].push(player);
-      else if (player.rating >= 70) ratingTiers[2].push(player);
-      else if (player.rating >= 60) ratingTiers[3].push(player);
-      else ratingTiers[4].push(player);
-    });
-
-    const sortedPlayers = ratingTiers.flat();
-    const teams: Player[][] = Array.from({ length: numTeams }, () => []);
-    
-    const teamAttributeSums = Array.from({ length: numTeams }, () => ({
-      velocidade: 0, resistencia: 0, chute: 0, posicionamento: 0,
-      defesa: 0, drible: 0, passe: 0, fisico: 0,
-    }));
-
-    sortedPlayers.forEach((player) => {
-      const teamTotals = teamAttributeSums.map((sums) =>
-        Object.values(sums).reduce((a, b) => a + b, 0),
-      );
-
-      const minTotal = Math.min(...teamTotals);
-      const teamsWithMinTotal = teamTotals
-        .map((total, idx) => ({ total, idx }))
-        .filter((t) => t.total === minTotal);
-
-      const minIndex = teamsWithMinTotal[Math.floor(Math.random() * teamsWithMinTotal.length)].idx;
-      teams[minIndex].push(player);
-
-      const attrs = player.attributes ?? {
-        velocidade: 0, resistencia: 0, chute: 0, posicionamento: 0,
-        defesa: 0, drible: 0, passe: 0, fisico: 0,
-      };
-      
-      teamAttributeSums[minIndex].velocidade += attrs.velocidade;
-      teamAttributeSums[minIndex].resistencia += attrs.resistencia;
-      teamAttributeSums[minIndex].chute += attrs.chute;
-      teamAttributeSums[minIndex].posicionamento += attrs.posicionamento;
-      teamAttributeSums[minIndex].defesa += attrs.defesa;
-      teamAttributeSums[minIndex].drible += attrs.drible;
-      teamAttributeSums[minIndex].passe += attrs.passe;
-      teamAttributeSums[minIndex].fisico += attrs.fisico;
-    });
-
-    const teamColors = [
-      { color: "bg-primary/10", borderColor: "border-primary/20", headerColor: "text-primary" },
-      { color: "bg-danger/10", borderColor: "border-danger/20", headerColor: "text-danger" },
-      { color: "bg-success/10", borderColor: "border-success/20", headerColor: "text-success" },
-      { color: "bg-warning/10", borderColor: "border-warning/20", headerColor: "text-warning" },
-      { color: "bg-secondary/10", borderColor: "border-secondary/20", headerColor: "text-secondary" },
-      { color: "bg-default/10", borderColor: "border-default/20", headerColor: "text-default-foreground" },
-      { color: "bg-primary/10", borderColor: "border-primary/20", headerColor: "text-primary" },
-      { color: "bg-danger/10", borderColor: "border-danger/20", headerColor: "text-danger" },
-    ];
-
-    const resultTeams: TeamData[] = teams.map((teamMembers, idx) => ({
-      name: `TIME ${String.fromCharCode(65 + idx)}`,
-      members: teamMembers,
-      avg: teamMembers.length
-          ? Math.round(teamMembers.reduce((sum, p) => sum + (p.rating ?? 0), 0) / teamMembers.length)
-          : 0,
-      color: teamColors[idx].color,
-      borderColor: teamColors[idx].borderColor,
-      headerColor: teamColors[idx].headerColor,
-    }));
-
-    setGeneratedTeams(resultTeams);
+    setGeneratedTeams(drawTeams(selectedPlayers, numTeams));
     setIsTeamConfigOpen(false);
     setIsDrawModalOpen(true);
   };

@@ -22,11 +22,11 @@ export interface Player {
     user_id?: string;
 }
 
-export interface TeamData {
+/** Domain Time from a Sorteio — presentation tokens live in the UI. */
+export interface Time {
     name: string;
     members: Player[];
     avg: number;
-    color: string;
-    borderColor: string;
-    headerColor: string;
 }
+
+export type TeamData = Time;
