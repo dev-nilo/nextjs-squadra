@@ -122,11 +122,11 @@ export async function saveJogador(
   userId: string,
   jogador: Player,
   options: {
-    roster: Player[];
+    players: Player[];
     isNew: boolean;
     online: boolean;
   },
-): Promise<{ roster: Player[]; player: Player }> {
+): Promise<{ players: Player[]; player: Player; synced: boolean }> {
   assertUserId(userId);
 
   let fullPlayer: Player = { ...jogador, user_id: userId };
@@ -137,42 +137,49 @@ export async function saveJogador(
     };
   }
 
-  let roster = options.isNew
-    ? [...options.roster, fullPlayer]
-    : options.roster.map((p) => (p.id === fullPlayer.id ? fullPlayer : p));
+  let players = options.isNew
+    ? [...options.players, fullPlayer]
+    : options.players.map((p) => (p.id === fullPlayer.id ? fullPlayer : p));
 
-  deps.saveLocal(roster, userId);
+  deps.saveLocal(players, userId);
 
+  let synced = false;
   if (options.online) {
-    const { id } = await deps.syncRow(
-      fullPlayer,
-      userId,
-      options.isNew ? "insert" : "update",
-    );
-    if (id && id !== fullPlayer.id) {
-      const previousId = fullPlayer.id;
-      fullPlayer = { ...fullPlayer, id, user_id: userId };
-      roster = roster.map((p) => (p.id === previousId ? fullPlayer : p));
-      deps.saveLocal(roster, userId);
+    try {
+      const { id } = await deps.syncRow(
+        fullPlayer,
+        userId,
+        options.isNew ? "insert" : "update",
+      );
+      synced = true;
+      if (id && id !== fullPlayer.id) {
+        const previousId = fullPlayer.id;
+        fullPlayer = { ...fullPlayer, id, user_id: userId };
+        players = players.map((p) => (p.id === previousId ? fullPlayer : p));
+        deps.saveLocal(players, userId);
+      }
+    } catch (err) {
+      console.error("[elenco] Failed to sync jogador:", err);
+      synced = false;
     }
   }
 
-  return { roster, player: fullPlayer };
+  return { players, player: fullPlayer, synced };
 }
 
 export async function deleteJogador(
   deps: ElencoDeps,
   userId: string,
   id: string,
-  options: { roster: Player[]; online: boolean },
+  options: { players: Player[]; online: boolean },
 ): Promise<Player[]> {
   assertUserId(userId);
-  const roster = options.roster.filter((p) => p.id !== id);
-  deps.saveLocal(roster, userId);
+  const players = options.players.filter((p) => p.id !== id);
+  deps.saveLocal(players, userId);
   if (options.online) {
     await deps.deleteCloud(userId, id);
   }
-  return roster;
+  return players;
 }
 
 export async function syncElenco(

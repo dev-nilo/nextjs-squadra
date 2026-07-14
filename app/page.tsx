@@ -68,8 +68,7 @@ export default function App() {
           setPlayers([]);
           return;
         }
-        const roster = await loadElenco(elenco, user.id);
-        setPlayers(roster);
+        setPlayers(await loadElenco(elenco, user.id));
       } catch (e) {
         console.error("Player load error:", e);
         setPlayers([]);
@@ -121,49 +120,32 @@ export default function App() {
       user_id: user.id,
     };
 
-    // Optimistic paint before cloud round-trip
-    setPlayers(
-      isNew
-        ? [...players, fullPlayer]
-        : players.map((p) => (p.id === fullPlayer.id ? fullPlayer : p)),
-    );
-
-    if (isOnline) {
-      setIsSyncing(true);
-      try {
-        const { roster } = await saveJogador(elenco, user.id, fullPlayer, {
-          roster: players,
-          isNew,
-          online: true,
-        });
-        setPlayers(roster);
+    if (isOnline) setIsSyncing(true);
+    try {
+      const { players: next, synced } = await saveJogador(elenco, user.id, fullPlayer, {
+        players,
+        isNew,
+        online: isOnline,
+      });
+      setPlayers(next);
+      if (isOnline && synced) {
         toast.success(isNew ? "Carta Criada" : "Carta Atualizada", {
           description: "Sincronizado com a nuvem",
         });
-      } catch (e) {
-        console.error("[app] Failed to sync player:", e);
-        const { roster } = await saveJogador(elenco, user.id, fullPlayer, {
-          roster: players,
-          isNew,
-          online: false,
-        });
-        setPlayers(roster);
+      } else if (isOnline && !synced) {
         toast.warning(isNew ? "Carta Criada Localmente" : "Carta Atualizada Localmente", {
           description: "Salvo no navegador; a nuvem recusou o sync.",
         });
-      } finally {
-        setIsSyncing(false);
+      } else {
+        toast.success(isNew ? "Carta Criada" : "Carta Atualizada", {
+          description: "Salvo localmente",
+        });
       }
-    } else {
-      const { roster } = await saveJogador(elenco, user.id, fullPlayer, {
-        roster: players,
-        isNew,
-        online: false,
-      });
-      setPlayers(roster);
-      toast.success(isNew ? "Carta Criada" : "Carta Atualizada", {
-        description: "Salvo localmente",
-      });
+    } catch (e) {
+      console.error("[app] Failed to save player:", e);
+      toast.error("Erro ao salvar carta");
+    } finally {
+      if (isOnline) setIsSyncing(false);
     }
   };
 
@@ -171,6 +153,8 @@ export default function App() {
     async (id: string) => {
       if (!user) return;
 
+      const optimistic = players.filter((p) => p.id !== id);
+      setPlayers(optimistic);
       setSelectedIds((prev) => {
         const next = new Set(prev);
         next.delete(id);
@@ -178,20 +162,20 @@ export default function App() {
       });
 
       try {
-        const roster = await deleteJogador(elenco, user.id, id, {
-          roster: players,
+        const next = await deleteJogador(elenco, user.id, id, {
+          players,
           online: isOnline,
         });
-        setPlayers(roster);
+        setPlayers(next);
         toast.success("Carta Excluída", {
           description: isOnline ? "Removida da nuvem" : "Removida localmente",
         });
       } catch (e) {
-        const roster = await deleteJogador(elenco, user.id, id, {
-          roster: players,
+        const next = await deleteJogador(elenco, user.id, id, {
+          players,
           online: false,
         });
-        setPlayers(roster);
+        setPlayers(next);
         toast.error("Erro ao sincronizar exclusão", {
           description: "Removida localmente",
         });

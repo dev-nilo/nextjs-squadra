@@ -124,7 +124,7 @@ describe("loadElenco", () => {
 });
 
 describe("saveJogador", () => {
-  it("prepares and syncs when online, remaps id, updates local roster", async () => {
+  it("prepares and syncs when online, remaps id, updates local players", async () => {
     const existing = [player("old")];
     const incoming = player("temp-id", { name: "Novo" });
     const deps = createDeps({
@@ -132,37 +132,58 @@ describe("saveJogador", () => {
       syncRow: vi.fn(async () => ({ id: "cloud-id" })),
     });
 
-    const { roster, player: saved } = await saveJogador(deps, "user-1", incoming, {
-      roster: existing,
+    const { players, player: saved } = await saveJogador(deps, "user-1", incoming, {
+      players: existing,
       isNew: true,
       online: true,
     });
 
     expect(saved.id).toBe("cloud-id");
-    expect(roster.map((p) => p.id).sort()).toEqual(["cloud-id", "old"]);
-    expect(deps.saveLocal).toHaveBeenCalledWith(roster, "user-1");
+    expect(players.map((p) => p.id).sort()).toEqual(["cloud-id", "old"]);
+    expect(deps.saveLocal).toHaveBeenCalledWith(players, "user-1");
+  });
+
+  it("keeps prepared local player when cloud sync fails", async () => {
+    const deps = createDeps({
+      prepareForCloud: vi.fn(async (_u, p) => ({
+        ...p,
+        image: "https://cdn.example/ok.png",
+      })),
+      syncRow: vi.fn(async () => {
+        throw new Error("cloud down");
+      }),
+    });
+    const { players, player: saved, synced } = await saveJogador(
+      deps,
+      "user-1",
+      player("p1", { image: "data:image/png;base64,x" }),
+      { players: [], isNew: true, online: true },
+    );
+    expect(synced).toBe(false);
+    expect(saved.image).toBe("https://cdn.example/ok.png");
+    expect(players[0].image).toBe("https://cdn.example/ok.png");
   });
 
   it("skips cloud when offline but still updates local", async () => {
     const deps = createDeps();
     const incoming = player("p1");
-    const { roster } = await saveJogador(deps, "user-1", incoming, {
-      roster: [],
+    const { players } = await saveJogador(deps, "user-1", incoming, {
+      players: [],
       isNew: true,
       online: false,
     });
-    expect(roster).toHaveLength(1);
+    expect(players).toHaveLength(1);
     expect(deps.syncRow).not.toHaveBeenCalled();
     expect(deps.saveLocal).toHaveBeenCalled();
   });
 });
 
 describe("deleteJogador", () => {
-  it("removes from roster, saves local, deletes cloud when online", async () => {
+  it("removes from players, saves local, deletes cloud when online", async () => {
     const deps = createDeps();
-    const roster = [player("a"), player("b")];
+    const players = [player("a"), player("b")];
     const next = await deleteJogador(deps, "user-1", "a", {
-      roster,
+      players,
       online: true,
     });
     expect(next.map((p) => p.id)).toEqual(["b"]);
@@ -172,7 +193,7 @@ describe("deleteJogador", () => {
 });
 
 describe("syncElenco", () => {
-  it("upserts each jogador and returns synced roster", async () => {
+  it("upserts each jogador and returns synced players", async () => {
     const deps = createDeps({
       syncRow: vi.fn(async (p) => ({ id: `synced-${p.id}` })),
     });
