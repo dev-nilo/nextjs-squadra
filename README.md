@@ -123,6 +123,7 @@ A `page.tsx` é o “cérebro” da UI: guarda a lista de jogadores, seleção, 
 - **`player-utils.ts`** — localStorage e processImage (I/O)
 - **`player-supabase.ts`** — converter jogador ↔ linha do banco
 - **`sorteio.ts`** — Sorteio: balancear/sortear Times (attribute-sum)
+- **`sessao.ts`** — Sessão: login, signup, logout, confirmação de email
 - **`constants.ts`** / **`countries.ts`** — constantes e lista de países
 
 ### `hooks/` e `types/`

@@ -1,65 +1,38 @@
-"use client"
+"use client";
 
-import React, { useState } from "react"
-import { Button, Input } from "@nextui-org/react"
-import { toast } from "sonner"
-import { createClient } from "@/lib/supabase/client"
-import { getEmailRedirectTo } from "@/lib/auth-url"
+import React, { useState } from "react";
+import { Button, Input } from "@nextui-org/react";
+import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
+import { getEmailRedirectTo } from "@/lib/auth-url";
+import {
+  applySessaoToast,
+  login,
+  resendConfirmation,
+  signup,
+  toSessaoAuth,
+} from "@/lib/sessao";
 
 interface AuthFormProps {
-  onSuccess?: () => void
+  onSuccess?: () => void;
 }
 
 export function LoginForm({ onSuccess }: AuthFormProps) {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      toast.error("Configuração ausente", {
-        description: "Supabase não está configurado. Adicione as variáveis de ambiente.",
-      })
-      return
-    }
-
-    setLoading(true)
-    const supabase = createClient()
-
+    e.preventDefault();
+    setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) {
-        const needsConfirm =
-          error.message.toLowerCase().includes("email not confirmed") ||
-          error.message.toLowerCase().includes("not confirmed")
-
-        toast.error(needsConfirm ? "Email não confirmado" : "Erro ao fazer login", {
-          description: needsConfirm
-            ? "Confirme o email pelo link enviado (ou peça um novo reenvio)."
-            : error.message,
-        })
-        return
-      }
-
-      toast.success("Login realizado com sucesso!", {
-        description: "Bem-vindo de volta!",
-      })
-      onSuccess?.()
-    } catch (error) {
-      console.error("[app] Login error:", error)
-      toast.error("Erro", {
-        description: "Algo deu errado. Tente novamente.",
-      })
+      const result = await login(toSessaoAuth(createClient()), email, password);
+      applySessaoToast(result, "login", toast);
+      if (result.ok) onSuccess?.();
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleLogin} className="space-y-4">
@@ -91,116 +64,50 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
         {loading ? "Entrando..." : "Entrar"}
       </Button>
     </form>
-  )
+  );
 }
 
 export function SignUpForm({ onSuccess }: AuthFormProps) {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
-  const [resending, setResending] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
 
   const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      toast.error("Configuração ausente", {
-        description: "Supabase não está configurado. Adicione as variáveis de ambiente.",
-      })
-      return
-    }
-
-    if (password !== confirmPassword) {
-      toast.error("Senhas não conferem", {
-        description: "Por favor, verifique suas senhas.",
-      })
-      return
-    }
-
-    if (password.length < 6) {
-      toast.error("Senha muito curta", {
-        description: "A senha deve ter pelo menos 6 caracteres.",
-      })
-      return
-    }
-
-    setLoading(true)
-    const supabase = createClient()
-
+    e.preventDefault();
+    setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: getEmailRedirectTo(),
-        },
-      })
-
-      if (error) {
-        toast.error("Erro ao criar conta", {
-          description: error.message,
-        })
-        return
+      const result = await signup(
+        toSessaoAuth(createClient()),
+        { email, password, confirmPassword },
+        getEmailRedirectTo(),
+      );
+      applySessaoToast(result, "signup", toast);
+      if (result.ok) {
+        setPendingEmail(email);
+        onSuccess?.();
       }
-
-      if (data.user && (!data.user.identities || data.user.identities.length === 0)) {
-        toast.error("Email já cadastrado", {
-          description: "Tente fazer login ou recuperar a senha.",
-        })
-        return
-      }
-
-      setPendingEmail(email)
-      toast.success("Conta criada!", {
-        description: "Abra o email e clique em Confirmar. Se o link expirar, use Reenviar abaixo.",
-        duration: 8000,
-      })
-      onSuccess?.()
-    } catch (error) {
-      console.error("[app] SignUp error:", error)
-      toast.error("Erro", {
-        description: "Algo deu errado. Tente novamente.",
-      })
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleResend = async () => {
-    const target = pendingEmail || email
-    if (!target) {
-      toast.error("Informe o email para reenviar a confirmação")
-      return
-    }
-
-    setResending(true)
-    const supabase = createClient()
+    const target = pendingEmail || email;
+    setResending(true);
     try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email: target,
-        options: {
-          emailRedirectTo: getEmailRedirectTo(),
-        },
-      })
-
-      if (error) {
-        toast.error("Não foi possível reenviar", { description: error.message })
-        return
-      }
-
-      toast.success("Email reenviado", {
-        description: "Use o link mais recente. Links antigos deixam de valer.",
-      })
-    } catch (error) {
-      console.error("[app] Resend error:", error)
-      toast.error("Erro ao reenviar email")
+      const result = await resendConfirmation(
+        toSessaoAuth(createClient()),
+        target,
+        getEmailRedirectTo(),
+      );
+      applySessaoToast(result, "resend", toast);
     } finally {
-      setResending(false)
+      setResending(false);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSignUp} className="space-y-4">
@@ -256,5 +163,5 @@ export function SignUpForm({ onSuccess }: AuthFormProps) {
         </Button>
       )}
     </form>
-  )
+  );
 }
