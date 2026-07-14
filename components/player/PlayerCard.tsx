@@ -1,6 +1,7 @@
 import { Player } from "@/types";
 import { GK_LABELS, OUTFIELD_LABELS } from "@/lib/constants";
-import { getStatColor, normalizeAttributes } from "@/lib/player-utils";
+import { getStatColor } from "@/lib/stat-color";
+import { normalizeAttributes } from "@/lib/jogador";
 import { getCountryCode, getCountryName, getFlagUrl } from "@/lib/countries";
 import { CheckCircle2, Pencil, Trash2, User } from "lucide-react";
 import { Card, CardHeader, CardBody, Button } from "@nextui-org/react";

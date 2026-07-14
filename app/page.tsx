@@ -11,10 +11,10 @@ import { AuthErrorWatcher } from "@/components/auth/auth-error-watcher";
 import { UserMenu } from "@/components/auth/user-menu";
 import { createClient } from "@/lib/supabase/client";
 import {
-  normalizePlayer,
   saveToLocalStorage,
   loadFromLocalStorage,
 } from "@/lib/player-utils";
+import { calculateOVR, normalizePlayer } from "@/lib/jogador";
 import { syncPlayerRow, preparePlayerForCloud } from "@/lib/player-supabase";
 import { isDataUrlImage } from "@/lib/player-image";
 import type { Player, Time } from "@/types";
@@ -177,9 +177,7 @@ export default function App() {
     }
 
     const isNew = !players.some(p => p.id === playerData.id);
-    const attrs = playerData.attributes;
-    const values = Object.values(attrs);
-    const rating = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+    const rating = calculateOVR(playerData.attributes);
     
     let fullPlayer: Player = {
       ...playerData,

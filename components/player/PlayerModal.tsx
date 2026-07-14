@@ -2,12 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import { Player, PlayerPosition, Attributes } from "@/types";
 import { POSITIONS } from "@/lib/constants";
 import { COUNTRY_OPTIONS, DEFAULT_COUNTRY_CODE, getCountryCode } from "@/lib/countries";
+import { processImage } from "@/lib/player-utils";
 import {
     DEFAULT_ATTRIBUTES,
-    processImage,
     normalizeAttributes,
     calculateOVR,
-} from "@/lib/player-utils";
+} from "@/lib/jogador";
 import { StatSlider } from "./StatSlider";
 import { Upload, Save } from "lucide-react";
 import { toast } from "sonner";

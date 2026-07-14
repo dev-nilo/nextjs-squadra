@@ -1,5 +1,5 @@
 import { Slider } from "@nextui-org/react";
-import { getStatColor } from "@/lib/player-utils";
+import { getStatColor } from "@/lib/stat-color";
 
 interface StatSliderProps {
     label: string;
