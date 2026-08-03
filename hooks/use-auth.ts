@@ -13,14 +13,14 @@ import {
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(() => isSupabaseConfigured());
+  const [error, setError] = useState<string | null>(() =>
+    isSupabaseConfigured() ? null : "Supabase não está configurado",
+  );
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
       console.warn("[app] Supabase not configured - using local-only mode");
-      setError("Supabase não está configurado");
-      setLoading(false);
       return;
     }
 

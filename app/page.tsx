@@ -55,20 +55,20 @@ export default function App() {
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
 
   useEffect(() => {
-    // Hard reset UI state whenever the authenticated user changes
-    setPlayers([]);
-    setSelectedIds(new Set());
-    setGeneratedTeams(null);
-    setEditingPlayer(null);
-
+    const userId = user?.id;
     const loadPlayers = async () => {
+      // Hard reset UI state whenever the authenticated user changes
+      setPlayers([]);
+      setSelectedIds(new Set());
+      setGeneratedTeams(null);
+      setEditingPlayer(null);
       setLoading(true);
       try {
-        if (!user) {
+        if (!userId) {
           setPlayers([]);
           return;
         }
-        setPlayers(await loadElenco(elenco, user.id));
+        setPlayers(await loadElenco(elenco, userId));
       } catch (e) {
         console.error("Player load error:", e);
         setPlayers([]);

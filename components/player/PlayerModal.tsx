@@ -35,7 +35,7 @@ export const PlayerModal = ({
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (isOpen) {
+        const applyFormState = () => {
             if (initialData) {
                 setName(initialData.name);
                 setPosition(initialData.position);
@@ -50,6 +50,9 @@ export const PlayerModal = ({
                 setImage(null);
                 setAttributes(DEFAULT_ATTRIBUTES);
             }
+        };
+        if (isOpen) {
+            applyFormState();
         }
     }, [isOpen, initialData]);
 
