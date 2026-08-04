@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, Input } from "@nextui-org/react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { getEmailRedirectTo } from "@/lib/auth-url";
@@ -157,7 +158,7 @@ export function SignUpForm({ onSuccess }: AuthFormProps) {
           variant="flat"
           className="w-full"
           isLoading={resending}
-          onPress={handleResend}
+          onClick={handleResend}
         >
           Reenviar email de confirmação
         </Button>

@@ -2,7 +2,7 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button, Card, CardBody, CardHeader } from "@nextui-org/react";
+import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2, Mail } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import type { EmailOtpType } from "@supabase/supabase-js";
@@ -66,20 +66,20 @@ function ConfirmContent() {
   };
 
   return (
-    <Card className="w-full max-w-md p-2 sm:p-4">
-      <CardHeader className="flex flex-col items-start gap-2">
+    <div className="w-full max-w-md rounded-2xl bg-content1 p-2 shadow-2xl sm:p-4">
+      <div className="flex flex-col items-start gap-2 px-2 pb-4 pt-2">
         <div className="flex items-center gap-2 text-primary">
           <Mail size={22} />
           <h1 className="text-xl sm:text-2xl font-black text-foreground">
             Confirmar email
           </h1>
         </div>
-        <p className="text-sm text-default-500 font-normal">
+        <p className="text-sm font-normal text-default-500">
           Clique no botão abaixo para ativar sua conta. Isso evita que o link expire
           automaticamente por scanners de email.
         </p>
-      </CardHeader>
-      <CardBody className="gap-4">
+      </div>
+      <div className="flex flex-col gap-4 px-2 pb-2">
         {error && (
           <div className="rounded-lg bg-danger/10 text-danger text-sm px-3 py-2 font-medium">
             {decodeAuthDescription(error)}
@@ -99,17 +99,17 @@ function ConfirmContent() {
           className="w-full font-semibold"
           isDisabled={!canConfirm || loading}
           isLoading={loading}
-          startContent={!loading ? <CheckCircle2 size={18} /> : undefined}
-          onPress={handleConfirm}
+          startContent={<CheckCircle2 size={18} />}
+          onClick={handleConfirm}
         >
           Confirmar minha conta
         </Button>
 
-        <Button variant="flat" className="w-full" onPress={() => router.push("/auth")}>
+        <Button variant="flat" className="w-full" onClick={() => router.push("/auth")}>
           Voltar ao login
         </Button>
-      </CardBody>
-    </Card>
+      </div>
+    </div>
   );
 }
 

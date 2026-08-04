@@ -20,7 +20,9 @@ import {
 } from "@/lib/elenco";
 import type { Player, Time } from "@/types";
 import { sortearTimes } from "@/lib/sorteio";
-import { Button, Input, Select, SelectItem, ButtonGroup } from "@nextui-org/react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 
 // Import refactored components
 import { PlayerCard } from "@/components/player/PlayerCard";
@@ -292,7 +294,7 @@ export default function App() {
                     <Input
                         placeholder="Buscar jogador..."
                         value={searchQuery}
-                        onValueChange={setSearchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         startContent={<Search size={18} className="text-default-400 shrink-0" />}
                         className="w-full"
                         size="sm"
@@ -301,41 +303,47 @@ export default function App() {
 
                 <div className="flex flex-wrap items-center gap-2 justify-between sm:justify-start w-full sm:w-auto">
                   <Select
-                    selectedKeys={[sortBy]}
+                    value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
                     className="flex-1 min-w-[7.5rem] sm:flex-none sm:w-32"
                     size="sm"
                     aria-label="Ordenar por"
                   >
-                    <SelectItem key="rating" value="rating">Rating ↓</SelectItem>
-                    <SelectItem key="name" value="name">Nome A-Z</SelectItem>
-                    <SelectItem key="position" value="position">Posição</SelectItem>
+                    <option value="rating">Rating ↓</option>
+                    <option value="name">Nome A-Z</option>
+                    <option value="position">Posição</option>
                   </Select>
 
-                  <ButtonGroup size="sm" variant="flat" className="shrink-0">
+                  <div className="flex shrink-0 overflow-hidden rounded-xl">
                     <Button
                         isIconOnly
-                        onPress={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+                        variant="flat"
+                        size="sm"
+                        className="rounded-r-none"
+                        onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
                         aria-label={viewMode === "grid" ? "Modo lista" : "Modo grid"}
                     >
                         {viewMode === "grid" ? <List size={20} /> : <Grid3x3 size={20} />}
                     </Button>
                     <Button
                         isIconOnly
-                        onPress={handleManualSync}
+                        variant="flat"
+                        size="sm"
+                        className="rounded-l-none border-l border-default-300"
+                        onClick={handleManualSync}
                         isDisabled={!isAuthenticated || isSyncing}
                         aria-label={isOnline ? "Sincronizar com nuvem" : "Offline - Salvando localmente"}
                     >
                         {isSyncing ? <Loader2 size={18} className="animate-spin" /> : isOnline ? <Cloud size={18} /> : <HardDrive size={18} />}
                     </Button>
-                  </ButtonGroup>
+                  </div>
                   <UserMenu />
                 </div>
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
                 <Button
-                  onPress={handleToggleSelectAll}
+                  onClick={handleToggleSelectAll}
                   variant="flat"
                   startContent={players.every((p) => selectedIds.has(p.id)) ? <X size={16} /> : <CheckCircle2 size={16} />}
                   size="sm"
@@ -346,7 +354,7 @@ export default function App() {
                 </Button>
 
                 <Button
-                  onPress={handleOpenNew}
+                  onClick={handleOpenNew}
                   color="primary"
                   startContent={<Plus size={16} />}
                   size="sm"
@@ -357,7 +365,7 @@ export default function App() {
 
                 {selectedIds.size > 0 && (
                   <Button
-                    onPress={() => setIsTeamConfigOpen(true)}
+                    onClick={() => setIsTeamConfigOpen(true)}
                     color="secondary"
                     startContent={<Shuffle size={16} />}
                     size="sm"

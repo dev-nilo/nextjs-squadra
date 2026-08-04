@@ -2,6 +2,100 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --background: 255 255 255;
+  --foreground: 17 24 28;
+  --divider: 219 219 219;
+  --focus: 129 179 77;
+
+  --content1: 255 255 255;
+  --content1-foreground: 17 24 28;
+  --content2: 244 244 245;
+  --content2-foreground: 39 39 42;
+  --content3: 228 228 231;
+  --content3-foreground: 63 63 70;
+  --content4: 212 212 216;
+  --content4-foreground: 82 82 91;
+
+  --default-50: 250 250 250;
+  --default-100: 244 244 245;
+  --default-200: 228 228 231;
+  --default-300: 212 212 216;
+  --default-400: 161 161 170;
+  --default-500: 113 113 122;
+  --default-600: 82 82 91;
+  --default-700: 63 63 70;
+  --default-800: 39 39 42;
+  --default-900: 24 24 27;
+  --default: 212 212 216;
+  --default-foreground: 0 0 0;
+
+  --primary-50: 242 247 237;
+  --primary-100: 230 240 219;
+  --primary-200: 205 224 184;
+  --primary-300: 180 209 148;
+  --primary-400: 154 194 112;
+  --primary-500: 129 179 77;
+  --primary-600: 103 143 61;
+  --primary-700: 78 107 46;
+  --primary-800: 52 71 31;
+  --primary-900: 26 36 15;
+  --primary: 129 179 77;
+  --primary-foreground: 255 255 255;
+
+  --secondary: 120 40 200;
+  --secondary-foreground: 255 255 255;
+  --success: 23 201 100;
+  --success-foreground: 0 0 0;
+  --warning: 245 165 36;
+  --warning-600: 196 132 29;
+  --warning-foreground: 0 0 0;
+  --danger: 243 18 96;
+  --danger-foreground: 255 255 255;
+}
+
+.dark {
+  --background: 0 0 0;
+  --foreground: 236 237 238;
+  --divider: 38 38 38;
+
+  --content1: 24 24 27;
+  --content1-foreground: 250 250 250;
+  --content2: 39 39 42;
+  --content2-foreground: 244 244 245;
+  --content3: 63 63 70;
+  --content3-foreground: 228 228 231;
+  --content4: 82 82 91;
+  --content4-foreground: 212 212 216;
+
+  --default-50: 24 24 27;
+  --default-100: 39 39 42;
+  --default-200: 63 63 70;
+  --default-300: 82 82 91;
+  --default-400: 113 113 122;
+  --default-500: 161 161 170;
+  --default-600: 212 212 216;
+  --default-700: 228 228 231;
+  --default-800: 244 244 245;
+  --default-900: 250 250 250;
+  --default: 63 63 70;
+  --default-foreground: 255 255 255;
+
+  --primary-50: 18 25 11;
+  --primary-100: 26 36 15;
+  --primary-200: 52 71 31;
+  --primary-300: 78 107 46;
+  --primary-400: 103 143 61;
+  --primary-500: 129 179 77;
+  --primary-600: 154 194 112;
+  --primary-700: 180 209 148;
+  --primary-800: 205 224 184;
+  --primary-900: 230 240 219;
+
+  --secondary: 147 83 211;
+  --warning-600: 249 201 124;
+}
+
 @layer base {
   html,
   body {

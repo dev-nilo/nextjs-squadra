@@ -4,7 +4,7 @@ import { getStatColor } from "@/lib/stat-color";
 import { normalizeAttributes } from "@/lib/jogador";
 import { getCountryCode, getCountryName, getFlagUrl } from "@/lib/countries";
 import { CheckCircle2, Pencil, Trash2, User } from "lucide-react";
-import { Card, CardHeader, CardBody, Button } from "@nextui-org/react";
+import { Button } from "@/components/ui/button";
 
 interface PlayerCardProps {
     player: Player;
@@ -119,7 +119,7 @@ export const PlayerCard = ({
             </div>
 
             {/* Card Container */}
-            <Card
+            <div
                 className={`
                     w-full h-full 
                     bg-gradient-to-br from-content1 via-content1 to-default-200/20 
@@ -134,7 +134,7 @@ export const PlayerCard = ({
                     aria-hidden="true"
                 />
                 
-                <CardHeader className="flex h-[50%] relative z-10 p-3 sm:p-4 items-start justify-between bg-transparent">
+                <div className="flex h-[50%] relative z-10 p-3 sm:p-4 items-start justify-between bg-transparent">
                     {/* Stats Column */}
                     <div className="flex flex-col items-center justify-start pt-1 sm:pt-2 w-1/4 gap-0.5 sm:gap-1">
                         <span className="text-3xl sm:text-4xl font-black text-primary tracking-tighter leading-none">
@@ -169,9 +169,9 @@ export const PlayerCard = ({
                             />
                         )}
                     </div>
-                </CardHeader>
+                </div>
 
-                <CardBody className="p-0 flex flex-col justify-between overflow-hidden bg-transparent z-10">
+                <div className="p-0 flex flex-col justify-between overflow-hidden bg-transparent z-10">
                     {/* Player Name Section */}
                     <div className="flex flex-col items-center px-3 sm:px-4">
                         <div
@@ -204,8 +204,8 @@ export const PlayerCard = ({
                             </div>
                         ))}
                     </div>
-                </CardBody>
-            </Card>
+                </div>
+            </div>
         </div>
     );
 };
