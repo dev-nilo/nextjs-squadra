@@ -53,7 +53,7 @@ export default function App() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const [numTeams, setNumTeams] = useState(3);
-  const [playersPerTeam, setPlayersPerTeam] = useState(5);
+  const [minPlayersPerTeam, setMinPlayersPerTeam] = useState(5);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
 
   useEffect(() => {
@@ -208,7 +208,7 @@ export default function App() {
 
   const handleDrawTeams = () => {
     const selectedPlayers = players.filter((p) => selectedIds.has(p.id));
-    const minRequiredPlayers = numTeams * playersPerTeam;
+    const minRequiredPlayers = numTeams * minPlayersPerTeam;
 
     if (selectedPlayers.length < minRequiredPlayers) {
       toast.error("Poucos Jogadores", {
@@ -464,8 +464,8 @@ export default function App() {
             onClose={() => setIsTeamConfigOpen(false)}
             numTeams={numTeams}
             setNumTeams={setNumTeams}
-            playersPerTeam={playersPerTeam}
-            setPlayersPerTeam={setPlayersPerTeam}
+            minPlayersPerTeam={minPlayersPerTeam}
+            setMinPlayersPerTeam={setMinPlayersPerTeam}
             selectedCount={selectedIds.size}
             onDraw={handleDrawTeams}
         />

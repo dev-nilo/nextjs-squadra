@@ -237,6 +237,7 @@ export const DrawTeamsModal = ({
                                                         setDraggedPlayer(null);
                                                         setDragOverTeam(null);
                                                     }}
+                                                    aria-label={`${player.name}, ${player.position}, arraste para mover de ${team.name}`}
                                                     className="flex items-center gap-2.5 bg-content1 border border-divider hover:border-primary/40 rounded-lg p-2 cursor-grab active:cursor-grabbing transition-colors touch-manipulation"
                                                 >
                                                     <PlayerAvatar

@@ -52,8 +52,8 @@ interface TeamConfigModalProps {
     onClose: () => void;
     numTeams: number;
     setNumTeams: (n: number) => void;
-    playersPerTeam: number;
-    setPlayersPerTeam: (n: number) => void;
+    minPlayersPerTeam: number;
+    setMinPlayersPerTeam: (n: number) => void;
     selectedCount: number;
     onDraw: () => void;
 }
@@ -63,12 +63,12 @@ export const TeamConfigModal = ({
     onClose,
     numTeams,
     setNumTeams,
-    playersPerTeam,
-    setPlayersPerTeam,
+    minPlayersPerTeam,
+    setMinPlayersPerTeam,
     selectedCount,
     onDraw,
 }: TeamConfigModalProps) => {
-    const required = numTeams * playersPerTeam;
+    const required = numTeams * minPlayersPerTeam;
     const hasEnough = selectedCount >= required;
 
     return (
@@ -95,8 +95,8 @@ export const TeamConfigModal = ({
                     label="Jogadores por Time"
                     min={1}
                     max={20}
-                    value={playersPerTeam}
-                    onChange={setPlayersPerTeam}
+                    value={minPlayersPerTeam}
+                    onChange={setMinPlayersPerTeam}
                 />
 
                 <div className="rounded-xl border border-divider bg-default-50 p-4 space-y-2.5">
