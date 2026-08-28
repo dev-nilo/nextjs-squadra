@@ -4,6 +4,30 @@ Aplicação Next.js para cadastrar Jogadores (estilo carta) e sortear Times bala
 
 **Auth obrigatório:** o Elenco é sempre da conta autenticada (Supabase). Não há modo guest / só-localStorage como produto.
 
+## Stack
+
+- [Next.js 16](https://nextjs.org/) (App Router) + React 19 + TypeScript
+- [Supabase](https://supabase.com/) (Auth + Postgres + Storage)
+- Tailwind CSS
+- Vitest
+
+## Pré-requisitos
+
+- Node.js na versão indicada em `.nvmrc` (`lts/iron`, atualmente Node 20)
+- Um projeto Supabase (URL + anon key)
+
+## Variáveis de ambiente
+
+Crie um arquivo `.env.local` na raiz com:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-anon-key
+
+# Opcional — recomendado em produção (veja seção "Auth Supabase" abaixo)
+NEXT_PUBLIC_SITE_URL=https://SEU-DOMINIO.vercel.app
+```
+
 ## Isolamento por usuário (multi-tenant)
 
 Cada conta só vê/edita/apaga **os próprios** Jogadores:
@@ -21,9 +45,20 @@ scripts/06_harden_user_isolation.sql
 ## Desenvolvimento
 
 1. Instale as dependências: `npm ci`
-2. Execute: `npm run dev`
-3. Acesse: `http://localhost:3000`
-4. Testes: `npm test`
+2. Configure o `.env.local` (veja [Variáveis de ambiente](#variáveis-de-ambiente))
+3. Execute: `npm run dev`
+4. Acesse: `http://localhost:3000`
+
+### Scripts
+
+| Comando | Descrição |
+|---------|-----------|
+| `npm run dev` | Sobe o servidor de desenvolvimento |
+| `npm run build` | Build de produção |
+| `npm run start` | Serve o build de produção |
+| `npm run lint` | Lint (ESLint) |
+| `npm test` | Roda os testes (Vitest) |
+| `npm run test:watch` | Testes em modo watch |
 
 ## Auth Supabase (confirmação de email)
 
@@ -75,11 +110,6 @@ No Vercel, defina `NEXT_PUBLIC_SITE_URL=https://SEU-DOMINIO.vercel.app`.
 1. Apague o usuário pendente em Authentication → Users (se necessário).
 2. Cadastre de novo **ou** use **Reenviar email de confirmação**.
 3. Abra o email **mais recente** e confirme pelo botão na página `/auth/confirm`.
-
-## Build de produção
-
-- `npm run build`
-- `npm run start`
 
 ## Visão geral da estrutura
 
@@ -137,3 +167,10 @@ docs/         → CONTEXT.md, ADRs, agent docs
 ## Config (raiz)
 
 `package.json`, `tailwind.config.ts`, `tsconfig.json`, `next.config.mjs`, `vitest.config.ts`.
+
+## Documentação adicional
+
+- [`docs/`](docs/) — `CONTEXT.md`, ADRs e docs para agentes
+- [`CONTEXT.md`](CONTEXT.md) — glossário de domínio (Jogador, Elenco, Sorteio, Time...)
+- [`DESIGN.md`](DESIGN.md) — decisões de design/UI
+- [`AGENTS.md`](AGENTS.md) — orientação para agentes de IA neste repo
