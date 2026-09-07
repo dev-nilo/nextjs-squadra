@@ -35,6 +35,36 @@ export const teamAverage = (members: Player[]): number =>
     : 0;
 
 /**
+ * Move a Jogador from one post-draw Time to another, recomputing avg for both.
+ * No-op (same array reference) for a same-team move, an unknown playerId,
+ * or an out-of-range team index. Times other than fromTeam/toTeam keep their
+ * reference on a successful move.
+ */
+export const moveMember = (
+  teams: Time[],
+  playerId: string,
+  fromTeam: number,
+  toTeam: number,
+): Time[] => {
+  if (fromTeam === toTeam || !teams[fromTeam] || !teams[toTeam]) return teams;
+
+  const playerToMove = teams[fromTeam].members.find((p) => p.id === playerId);
+  if (!playerToMove) return teams;
+
+  return teams.map((team, index) => {
+    if (index === fromTeam) {
+      const members = team.members.filter((p) => p.id !== playerId);
+      return { ...team, members, avg: teamAverage(members) };
+    }
+    if (index === toTeam) {
+      const members = [...team.members, playerToMove];
+      return { ...team, members, avg: teamAverage(members) };
+    }
+    return team;
+  });
+};
+
+/**
  * Sorteio: distribute Jogadores into Times with attribute-sum balancing.
  * Caller validates mínimo por time before calling.
  */

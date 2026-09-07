@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { Time } from "@/types";
-import { teamAverage } from "@/lib/sorteio";
+import { moveMember } from "@/lib/sorteio";
 import { getTeamPresentation } from "@/lib/constants";
 import { Download, Loader2, Shuffle, User } from "lucide-react";
 import { toast } from "sonner";
@@ -54,27 +54,7 @@ export const DrawTeamsModal = ({
         }
 
         const { playerId, fromTeam } = draggedPlayer;
-        const playerToMove = generatedTeams[fromTeam].members.find((p) => p.id === playerId);
-
-        if (!playerToMove || fromTeam === toTeam) {
-            setDraggedPlayer(null);
-            setDragOverTeam(null);
-            return;
-        }
-
-        const newGeneratedTeams = generatedTeams.map((team, index) => {
-            if (index === fromTeam) {
-                const members = team.members.filter((p) => p.id !== playerId);
-                return { ...team, members, avg: teamAverage(members) };
-            }
-            if (index === toTeam) {
-                const members = [...team.members, playerToMove];
-                return { ...team, members, avg: teamAverage(members) };
-            }
-            return team;
-        });
-
-        setGeneratedTeams(newGeneratedTeams);
+        setGeneratedTeams(moveMember(generatedTeams, playerId, fromTeam, toTeam));
         setDraggedPlayer(null);
         setDragOverTeam(null);
     };
