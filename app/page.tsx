@@ -6,18 +6,10 @@ import { Plus, X, Trash2, User, Shuffle, CheckCircle2, Loader2, Pencil, Search, 
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { useElenco } from "@/hooks/use-elenco";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { AuthErrorWatcher } from "@/components/auth/auth-error-watcher";
 import { UserMenu } from "@/components/auth/user-menu";
-import { createClient } from "@/lib/supabase/client";
-import { calculateOVR } from "@/lib/jogador";
-import {
-  createElencoDeps,
-  deleteJogador,
-  loadElenco,
-  saveJogador,
-  syncElenco,
-} from "@/lib/elenco";
 import type { Player, Time } from "@/types";
 import { sortearTimes } from "@/lib/sorteio";
 import { Button } from "@/components/ui/button";
@@ -32,21 +24,23 @@ import { TeamConfigModal } from "@/components/team/TeamConfigModal";
 import { DrawTeamsModal } from "@/components/team/DrawTeamsModal";
 
 export default function App() {
-  const elenco = useMemo(() => createElencoDeps(createClient()), []);
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  
+  const {
+    players,
+    selectedIds,
+    loading,
+    isSyncing,
+    isOnline,
+    actions: elencoActions,
+  } = useElenco(user?.id);
+
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawModalOpen, setIsDrawModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isTeamConfigOpen, setIsTeamConfigOpen] = useState(false);
-  
+
   const [generatedTeams, setGeneratedTeams] = useState<Time[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [isOnline, setIsOnline] = useState(() => typeof navigator !== "undefined" ? navigator.onLine : true);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "rating" | "position">("rating");
@@ -57,46 +51,13 @@ export default function App() {
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
 
   useEffect(() => {
-    const userId = user?.id;
-    const loadPlayers = async () => {
-      // Hard reset UI state whenever the authenticated user changes
-      setPlayers([]);
-      setSelectedIds(new Set());
+    const resetViewState = () => {
       setGeneratedTeams(null);
       setEditingPlayer(null);
-      setLoading(true);
-      try {
-        if (!userId) {
-          setPlayers([]);
-          return;
-        }
-        setPlayers(await loadElenco(elenco, userId));
-      } catch (e) {
-        console.error("Player load error:", e);
-        setPlayers([]);
-      } finally {
-        setLoading(false);
-      }
     };
-    loadPlayers();
-  }, [user?.id, elenco]);
-
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      toast.success("Conectado", { description: "Sincronizando com a nuvem..." });
-    };
-    const handleOffline = () => {
-      setIsOnline(false);
-      toast.warning("Modo Offline", { description: "Dados salvos localmente" });
-    };
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
+    // Hard reset view-local state whenever the authenticated user changes
+    resetViewState();
+  }, [user?.id]);
 
   const handleEdit = useCallback((player: Player) => {
     setEditingPlayer(player);
@@ -107,104 +68,6 @@ export default function App() {
     setEditingPlayer(null);
     setIsModalOpen(true);
   };
-
-  const handleSavePlayer = async (playerData: Omit<Player, "rating" | "user_id">) => {
-    if (!user) {
-      toast.error("Não autenticado", { description: "Faça login para gerenciar suas cartas." });
-      return;
-    }
-
-    const isNew = !players.some((p) => p.id === playerData.id);
-    const rating = calculateOVR(playerData.attributes);
-    const fullPlayer: Player = {
-      ...playerData,
-      rating,
-      user_id: user.id,
-    };
-
-    if (isOnline) setIsSyncing(true);
-    try {
-      const { players: next, synced } = await saveJogador(elenco, user.id, fullPlayer, {
-        players,
-        isNew,
-        online: isOnline,
-      });
-      setPlayers(next);
-      if (isOnline && synced) {
-        toast.success(isNew ? "Carta Criada" : "Carta Atualizada", {
-          description: "Sincronizado com a nuvem",
-        });
-      } else if (isOnline && !synced) {
-        toast.warning(isNew ? "Carta Criada Localmente" : "Carta Atualizada Localmente", {
-          description: "Salvo no navegador; a nuvem recusou o sync.",
-        });
-      } else {
-        toast.success(isNew ? "Carta Criada" : "Carta Atualizada", {
-          description: "Salvo localmente",
-        });
-      }
-    } catch (e) {
-      console.error("[app] Failed to save player:", e);
-      toast.error("Erro ao salvar carta");
-    } finally {
-      if (isOnline) setIsSyncing(false);
-    }
-  };
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!user) return;
-
-      const optimistic = players.filter((p) => p.id !== id);
-      setPlayers(optimistic);
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-
-      try {
-        const next = await deleteJogador(elenco, user.id, id, {
-          players,
-          online: isOnline,
-        });
-        setPlayers(next);
-        toast.success("Carta Excluída", {
-          description: isOnline ? "Removida da nuvem" : "Removida localmente",
-        });
-      } catch (e) {
-        const next = await deleteJogador(elenco, user.id, id, {
-          players,
-          online: false,
-        });
-        setPlayers(next);
-        toast.error("Erro ao sincronizar exclusão", {
-          description: "Removida localmente",
-        });
-      }
-    },
-    [players, user, isOnline, elenco],
-  );
-
-  const handleToggleSelect = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
-
-  const handleToggleSelectAll = useCallback(() => {
-    const allIds = new Set(players.map((p) => p.id));
-    if (players.every((p) => selectedIds.has(p.id))) {
-      setSelectedIds(new Set());
-      toast.info("Seleção limpa");
-    } else {
-      setSelectedIds(allIds);
-      toast.success(`${allIds.size} carta(s) selecionada(s)`);
-    }
-  }, [players, selectedIds]);
 
   const handleDrawTeams = () => {
     const selectedPlayers = players.filter((p) => selectedIds.has(p.id));
@@ -220,25 +83,6 @@ export default function App() {
     setGeneratedTeams(sortearTimes(selectedPlayers, numTeams));
     setIsTeamConfigOpen(false);
     setIsDrawModalOpen(true);
-  };
-
-  const handleManualSync = async () => {
-    if (!user) {
-      toast.error("Não Autenticado", { description: "Autenticação necessária para sincronizar" });
-      return;
-    }
-    setIsSyncing(true);
-    try {
-      const syncedPlayers = await syncElenco(elenco, user.id, players);
-      setPlayers(syncedPlayers);
-      toast.success("Sincronização Completa", {
-        description: `${syncedPlayers.length} cartas sincronizadas`,
-      });
-    } catch (e) {
-      toast.error("Erro na Sincronização");
-    } finally {
-      setIsSyncing(false);
-    }
   };
 
   const filteredPlayers = useMemo(() => {
@@ -330,7 +174,7 @@ export default function App() {
                         variant="flat"
                         size="sm"
                         className="rounded-l-none border-l border-default-300"
-                        onClick={handleManualSync}
+                        onClick={elencoActions.sync}
                         isDisabled={!isAuthenticated || isSyncing}
                         aria-label={isOnline ? "Sincronizar com nuvem" : "Offline - Salvando localmente"}
                     >
@@ -343,7 +187,7 @@ export default function App() {
 
               <div className="flex items-center gap-2 flex-wrap">
                 <Button
-                  onClick={handleToggleSelectAll}
+                  onClick={elencoActions.toggleSelectAll}
                   variant="flat"
                   startContent={players.every((p) => selectedIds.has(p.id)) ? <X size={16} /> : <CheckCircle2 size={16} />}
                   size="sm"
@@ -397,10 +241,10 @@ export default function App() {
                 <PlayerCard
                   key={player.id}
                   player={player}
-                  onDelete={handleDelete}
+                  onDelete={elencoActions.delete}
                   onEdit={handleEdit}
                   isSelected={selectedIds.has(player.id)}
-                  onToggleSelect={handleToggleSelect}
+                  onToggleSelect={elencoActions.toggleSelect}
                 />
               ))}
             </div>
@@ -409,7 +253,7 @@ export default function App() {
               {filteredPlayers.map((player) => (
                 <div
                   key={player.id}
-                  onClick={() => handleToggleSelect(player.id)}
+                  onClick={() => elencoActions.toggleSelect(player.id)}
                   className={`relative cursor-pointer transition-all group ${selectedIds.has(player.id) ? "ring-2 ring-primary rounded-lg bg-primary/10" : ""}`}
                 >
                   <MiniPlayerRow
@@ -437,7 +281,7 @@ export default function App() {
                             radius="full"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                handleDelete(player.id);
+                                elencoActions.delete(player.id);
                             }}
                             aria-label={`Excluir ${player.name}`}
                         >
@@ -455,7 +299,7 @@ export default function App() {
         <PlayerModal
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
-            onSave={handleSavePlayer}
+            onSave={elencoActions.save}
             initialData={editingPlayer}
         />
 
