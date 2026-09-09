@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  changePassword,
   classifyAuthUrlError,
   completeEmailConfirmation,
   confirmEmailWithToken,
@@ -25,6 +26,7 @@ function createFakeAuth(overrides: Partial<SessaoAuth> = {}): SessaoAuth {
     getSession: vi.fn(async () => ({ data: { session: null }, error: null })),
     exchangeCodeForSession: vi.fn(async () => ({ error: null })),
     verifyOtp: vi.fn(async () => ({ error: null })),
+    updateUser: vi.fn(async () => ({ error: null })),
     onAuthStateChange: vi.fn(() => ({
       data: { subscription: { unsubscribe: vi.fn() } },
     })),
@@ -249,6 +251,47 @@ describe("confirmEmailWithToken / logout / resend", () => {
     });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe("email_required");
+  });
+});
+
+describe("changePassword", () => {
+  const env = { url: "u", key: "k" };
+
+  it("rejects wrong current password", async () => {
+    const auth = createFakeAuth({
+      signInWithPassword: vi.fn(async () => ({
+        error: { message: "Invalid login credentials" },
+      })),
+    });
+    const result = await changePassword(
+      auth,
+      "a@b.com",
+      {
+        currentPassword: "old",
+        newPassword: "newpass",
+        confirmPassword: "newpass",
+      },
+      env,
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe("wrong_current_password");
+    expect(auth.updateUser).not.toHaveBeenCalled();
+  });
+
+  it("updates password when current is valid", async () => {
+    const auth = createFakeAuth();
+    const result = await changePassword(
+      auth,
+      "a@b.com",
+      {
+        currentPassword: "oldpass",
+        newPassword: "newpass",
+        confirmPassword: "newpass",
+      },
+      env,
+    );
+    expect(result).toEqual({ ok: true, code: "password_changed" });
+    expect(auth.updateUser).toHaveBeenCalledWith({ password: "newpass" });
   });
 });
 

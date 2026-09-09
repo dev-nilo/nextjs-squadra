@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { Plus, X, Trash2, User, Shuffle, CheckCircle2, Loader2, Pencil, Search, Grid3x3, List, Cloud, HardDrive } from "lucide-react";
+import { Plus, X, Trash2, User, Shuffle, CheckCircle2, Loader2, Pencil, Search, Grid3x3, List, Cloud, HardDrive, FileUp } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,6 +18,7 @@ import {
   saveJogador,
   syncElenco,
 } from "@/lib/elenco";
+import { isSupabaseConfigured } from "@/lib/sessao";
 import type { Player, Time } from "@/types";
 import { sortearTimes } from "@/lib/sorteio";
 import { Button } from "@/components/ui/button";
@@ -28,11 +29,15 @@ import { Select } from "@/components/ui/select";
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { MiniPlayerRow } from "@/components/player/MiniPlayerRow";
 import { PlayerModal } from "@/components/player/PlayerModal";
+import { ImportCsvModal } from "@/components/player/ImportCsvModal";
 import { TeamConfigModal } from "@/components/team/TeamConfigModal";
 import { DrawTeamsModal } from "@/components/team/DrawTeamsModal";
 
 export default function App() {
-  const elenco = useMemo(() => createElencoDeps(createClient()), []);
+  const elenco = useMemo(
+    () => (isSupabaseConfigured() ? createElencoDeps(createClient()) : null),
+    [],
+  );
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [players, setPlayers] = useState<Player[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -42,6 +47,7 @@ export default function App() {
   const [isDrawModalOpen, setIsDrawModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isTeamConfigOpen, setIsTeamConfigOpen] = useState(false);
+  const [isImportCsvOpen, setIsImportCsvOpen] = useState(false);
   
   const [generatedTeams, setGeneratedTeams] = useState<Time[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,7 +72,7 @@ export default function App() {
       setEditingPlayer(null);
       setLoading(true);
       try {
-        if (!userId) {
+        if (!userId || !elenco) {
           setPlayers([]);
           return;
         }
@@ -109,7 +115,7 @@ export default function App() {
   };
 
   const handleSavePlayer = async (playerData: Omit<Player, "rating" | "user_id">) => {
-    if (!user) {
+    if (!user || !elenco) {
       toast.error("Não autenticado", { description: "Faça login para gerenciar suas cartas." });
       return;
     }
@@ -153,7 +159,7 @@ export default function App() {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!user) return;
+      if (!user || !elenco) return;
 
       const optimistic = players.filter((p) => p.id !== id);
       setPlayers(optimistic);
@@ -223,7 +229,7 @@ export default function App() {
   };
 
   const handleManualSync = async () => {
-    if (!user) {
+    if (!user || !elenco) {
       toast.error("Não Autenticado", { description: "Autenticação necessária para sincronizar" });
       return;
     }
@@ -241,6 +247,37 @@ export default function App() {
     }
   };
 
+  const handleImportCsv = async (imported: Player[]) => {
+    if (!user || !elenco) {
+      toast.error("Não autenticado", { description: "Faça login para importar cartas." });
+      throw new Error("Unauthenticated");
+    }
+
+    if (isOnline) setIsSyncing(true);
+    try {
+      let next = players;
+      let syncedCount = 0;
+      for (const jogador of imported) {
+        const { players: updated, synced } = await saveJogador(
+          elenco,
+          user.id,
+          { ...jogador, user_id: user.id },
+          { players: next, isNew: true, online: isOnline },
+        );
+        next = updated;
+        if (synced) syncedCount++;
+      }
+      setPlayers(next);
+      toast.success("Importação concluída", {
+        description: isOnline
+          ? `${imported.length} carta(s) · ${syncedCount} na nuvem`
+          : `${imported.length} carta(s) salvas localmente`,
+      });
+    } finally {
+      if (isOnline) setIsSyncing(false);
+    }
+  };
+
   const filteredPlayers = useMemo(() => {
     const result = players.filter((player) => player.name.toLowerCase().includes(searchQuery.toLowerCase()));
     result.sort((a, b) => {
@@ -253,6 +290,24 @@ export default function App() {
     });
     return result;
   }, [players, searchQuery, sortBy]);
+
+  if (!isSupabaseConfigured()) {
+    return (
+      <>
+        <Toaster position="top-center" richColors />
+        <div className="min-h-screen bg-background flex items-center justify-center px-4">
+          <div className="max-w-md text-center space-y-4">
+            <h1 className="text-xl font-bold text-foreground">Supabase não configurado</h1>
+            <p className="text-default-500 text-sm">
+              Crie <code className="text-foreground">.env.local</code> na raiz com
+              NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY, depois reinicie{" "}
+              <code className="text-foreground">npm run dev</code>.
+            </p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   if (authLoading || loading) {
     return (
@@ -363,6 +418,16 @@ export default function App() {
                   <span className="hidden sm:inline">Nova Carta</span>
                 </Button>
 
+                <Button
+                  onClick={() => setIsImportCsvOpen(true)}
+                  variant="flat"
+                  startContent={<FileUp size={16} />}
+                  size="sm"
+                >
+                  <span className="sm:hidden">CSV</span>
+                  <span className="hidden sm:inline">Importar CSV</span>
+                </Button>
+
                 {selectedIds.size > 0 && (
                   <Button
                     onClick={() => setIsTeamConfigOpen(true)}
@@ -457,6 +522,12 @@ export default function App() {
             onClose={() => setIsModalOpen(false)}
             onSave={handleSavePlayer}
             initialData={editingPlayer}
+        />
+
+        <ImportCsvModal
+            isOpen={isImportCsvOpen}
+            onClose={() => setIsImportCsvOpen(false)}
+            onImport={handleImportCsv}
         />
 
         <TeamConfigModal

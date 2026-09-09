@@ -1,15 +1,17 @@
 "use client"
 
-import { useId, useRef } from "react"
-import { LogOut, User as UserIcon } from "lucide-react"
+import { useId, useRef, useState } from "react"
+import { KeyRound, LogOut } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { toast } from "sonner"
+import { ChangePasswordModal } from "@/components/auth/change-password-modal"
 
 export function UserMenu() {
   const { user, logout } = useAuth()
   const menuId = useId()
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const [passwordOpen, setPasswordOpen] = useState(false)
 
   if (!user) return null
 
@@ -54,13 +56,16 @@ export function UserMenu() {
           <p className="max-w-[16rem] truncate font-semibold">{user.email}</p>
         </div>
 
-        <div
-          className="flex cursor-not-allowed items-center gap-2 rounded-lg px-3 py-2 text-sm text-default-400"
-          aria-disabled="true"
+        <button
+          type="button"
+          popoverTarget={menuId}
+          popoverTargetAction="hide"
+          onClick={() => setPasswordOpen(true)}
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-default-100"
         >
-          <UserIcon className="h-4 w-4" />
-          Perfil
-        </div>
+          <KeyRound className="h-4 w-4" />
+          Alterar senha
+        </button>
 
         <button
           type="button"
@@ -73,6 +78,12 @@ export function UserMenu() {
           Desconectar
         </button>
       </div>
+
+      <ChangePasswordModal
+        open={passwordOpen}
+        email={user.email ?? ""}
+        onOpenChange={setPasswordOpen}
+      />
     </>
   )
 }

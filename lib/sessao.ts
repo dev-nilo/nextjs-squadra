@@ -39,6 +39,9 @@ export type SessaoAuth = {
     token_hash: string;
     type: EmailOtpType;
   }) => Promise<{ error: { message: string } | null }>;
+  updateUser: (attrs: {
+    password: string;
+  }) => Promise<{ error: { message: string } | null }>;
   onAuthStateChange: (
     callback: (
       event: string,
@@ -204,6 +207,59 @@ export async function logout(auth: SessaoAuth): Promise<SessaoResult> {
   }
 }
 
+/**
+ * Change password for the signed-in user.
+ * Re-checks the current password, then updates via Supabase Auth (no DB access needed).
+ */
+export async function changePassword(
+  auth: SessaoAuth,
+  email: string,
+  input: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  },
+  env: SupabaseEnv = readSupabaseEnv(),
+): Promise<SessaoResult> {
+  if (!isSupabaseConfigured(env)) {
+    return { ok: false, code: "not_configured" };
+  }
+  if (!email.trim()) {
+    return { ok: false, code: "email_required" };
+  }
+  if (input.newPassword !== input.confirmPassword) {
+    return { ok: false, code: "password_mismatch" };
+  }
+  if (input.newPassword.length < 6) {
+    return { ok: false, code: "password_too_short" };
+  }
+  if (input.currentPassword === input.newPassword) {
+    return { ok: false, code: "password_unchanged" };
+  }
+
+  try {
+    const { error: verifyError } = await auth.signInWithPassword({
+      email: email.trim(),
+      password: input.currentPassword,
+    });
+    if (verifyError) {
+      return {
+        ok: false,
+        code: "wrong_current_password",
+        message: verifyError.message,
+      };
+    }
+
+    const { error } = await auth.updateUser({ password: input.newPassword });
+    if (error) {
+      return { ok: false, code: "password_change_failed", message: error.message };
+    }
+    return { ok: true, code: "password_changed" };
+  } catch {
+    return { ok: false, code: "password_change_error" };
+  }
+}
+
 export async function getCurrentUser(
   auth: SessaoAuth,
 ): Promise<{ user: User | null; error: { message: string } | null }> {
@@ -313,7 +369,14 @@ export async function confirmEmailWithToken(
 /** Toast/copy mapping for adapters — single policy for shared codes. */
 export function sessaoToast(
   result: SessaoResult,
-  context: "login" | "signup" | "resend" | "callback" | "confirm" | "watcher" = "login",
+  context:
+    | "login"
+    | "signup"
+    | "resend"
+    | "callback"
+    | "confirm"
+    | "watcher"
+    | "password" = "login",
 ): {
   variant: "success" | "error";
   title: string;
@@ -352,6 +415,12 @@ export function sessaoToast(
         };
       case "logged_out":
         return { variant: "success", title: "Desconectado com sucesso!" };
+      case "password_changed":
+        return {
+          variant: "success",
+          title: "Senha atualizada",
+          description: "Use a nova senha no próximo login.",
+        };
       default:
         return null;
     }
@@ -395,6 +464,30 @@ export function sessaoToast(
         variant: "error",
         title: "Senha muito curta",
         description: "A senha deve ter pelo menos 6 caracteres.",
+      };
+    case "password_unchanged":
+      return {
+        variant: "error",
+        title: "Senha igual à atual",
+        description: "Escolha uma senha diferente da atual.",
+      };
+    case "wrong_current_password":
+      return {
+        variant: "error",
+        title: "Senha atual incorreta",
+        description: "Confira a senha atual e tente de novo.",
+      };
+    case "password_change_failed":
+      return {
+        variant: "error",
+        title: "Não foi possível alterar a senha",
+        description: result.message,
+      };
+    case "password_change_error":
+      return {
+        variant: "error",
+        title: "Erro ao alterar senha",
+        description: "Algo deu errado. Tente novamente.",
       };
     case "signup_failed":
       return {
