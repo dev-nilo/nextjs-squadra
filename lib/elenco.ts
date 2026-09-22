@@ -5,7 +5,7 @@ import { isDataUrlImage } from "@/lib/player-image";
 import {
   loadFromLocalStorage,
   saveToLocalStorage,
-} from "@/lib/player-utils";
+} from "@/lib/elenco-local";
 import {
   preparePlayerForCloud,
   syncPlayerRow,

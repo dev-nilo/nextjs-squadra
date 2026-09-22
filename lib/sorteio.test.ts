@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Attributes, Player } from "@/types";
-import { sortearTimes, teamAverage } from "@/lib/sorteio";
+import { moveMember, sortearTimes, teamAverage } from "@/lib/sorteio";
+import type { Time } from "@/types";
 
 const attrs = (n: number): Attributes => ({
   velocidade: n,
@@ -133,5 +134,48 @@ describe("teamAverage", () => {
         player("b", 71, 71),
       ]),
     ).toBe(71);
+  });
+});
+
+describe("moveMember", () => {
+  const buildTeams = (): Time[] => [
+    { name: "TIME A", members: [player("a", 80, 80), player("b", 60, 60)], avg: 70 },
+    { name: "TIME B", members: [player("c", 90, 90)], avg: 90 },
+    { name: "TIME C", members: [] as (ReturnType<typeof player>)[], avg: 0 },
+  ];
+
+  it("moves the player and recomputes avg on both sides", () => {
+    const teams = buildTeams();
+    const result = moveMember(teams, "a", 0, 1);
+
+    expect(result[0].members.map((p) => p.id)).toEqual(["b"]);
+    expect(result[0].avg).toBe(60);
+    expect(result[1].members.map((p) => p.id)).toEqual(["c", "a"]);
+    expect(result[1].avg).toBe(85); // (90+80)/2
+  });
+
+  it("keeps unaffected Times at the same reference", () => {
+    const teams = buildTeams();
+    const result = moveMember(teams, "a", 0, 1);
+
+    expect(result[2]).toBe(teams[2]);
+    expect(result[0]).not.toBe(teams[0]);
+    expect(result[1]).not.toBe(teams[1]);
+  });
+
+  it("no-ops (same reference) when fromTeam === toTeam", () => {
+    const teams = buildTeams();
+    expect(moveMember(teams, "a", 0, 0)).toBe(teams);
+  });
+
+  it("no-ops (same reference) when the player isn't in fromTeam", () => {
+    const teams = buildTeams();
+    expect(moveMember(teams, "unknown", 0, 1)).toBe(teams);
+  });
+
+  it("no-ops (same reference) for an out-of-range team index", () => {
+    const teams = buildTeams();
+    expect(moveMember(teams, "a", 0, 5)).toBe(teams);
+    expect(moveMember(teams, "a", -1, 1)).toBe(teams);
   });
 });

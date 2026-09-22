@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Player, PlayerPosition, Attributes } from "@/types";
 import { POSITIONS } from "@/lib/constants";
 import { COUNTRY_OPTIONS, DEFAULT_COUNTRY_CODE, getCountryCode } from "@/lib/countries";
-import { processImage } from "@/lib/player-utils";
+import { processImage } from "@/lib/player-image-processing";
 import {
     DEFAULT_ATTRIBUTES,
     normalizeAttributes,
