@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { Plus, X, Trash2, User, Shuffle, CheckCircle2, Loader2, Pencil, Search, Grid3x3, List, Cloud, HardDrive } from "lucide-react";
+import { Plus, X, Trash2, User, Shuffle, CheckCircle2, Loader2, Pencil, Search, Grid3x3, List, Cloud, HardDrive, FileUp } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -10,6 +10,7 @@ import { useElenco } from "@/hooks/use-elenco";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { AuthErrorWatcher } from "@/components/auth/auth-error-watcher";
 import { UserMenu } from "@/components/auth/user-menu";
+import { isSupabaseConfigured } from "@/lib/sessao";
 import type { Player, Time } from "@/types";
 import { sortearTimes } from "@/lib/sorteio";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import { Select } from "@/components/ui/select";
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { MiniPlayerRow } from "@/components/player/MiniPlayerRow";
 import { PlayerModal } from "@/components/player/PlayerModal";
+import { ImportCsvModal } from "@/components/player/ImportCsvModal";
 import { TeamConfigModal } from "@/components/team/TeamConfigModal";
 import { DrawTeamsModal } from "@/components/team/DrawTeamsModal";
 
@@ -39,6 +41,7 @@ export default function App() {
   const [isDrawModalOpen, setIsDrawModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isTeamConfigOpen, setIsTeamConfigOpen] = useState(false);
+  const [isImportCsvOpen, setIsImportCsvOpen] = useState(false);
 
   const [generatedTeams, setGeneratedTeams] = useState<Time[] | null>(null);
 
@@ -97,6 +100,24 @@ export default function App() {
     });
     return result;
   }, [players, searchQuery, sortBy]);
+
+  if (!isSupabaseConfigured()) {
+    return (
+      <>
+        <Toaster position="top-center" richColors />
+        <div className="min-h-screen bg-background flex items-center justify-center px-4">
+          <div className="max-w-md text-center space-y-4">
+            <h1 className="text-xl font-bold text-foreground">Supabase não configurado</h1>
+            <p className="text-default-500 text-sm">
+              Crie <code className="text-foreground">.env.local</code> na raiz com
+              NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY, depois reinicie{" "}
+              <code className="text-foreground">npm run dev</code>.
+            </p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   if (authLoading || loading) {
     return (
@@ -207,6 +228,16 @@ export default function App() {
                   <span className="hidden sm:inline">Nova Carta</span>
                 </Button>
 
+                <Button
+                  onClick={() => setIsImportCsvOpen(true)}
+                  variant="flat"
+                  startContent={<FileUp size={16} />}
+                  size="sm"
+                >
+                  <span className="sm:hidden">CSV</span>
+                  <span className="hidden sm:inline">Importar CSV</span>
+                </Button>
+
                 {selectedIds.size > 0 && (
                   <Button
                     onClick={() => setIsTeamConfigOpen(true)}
@@ -301,6 +332,12 @@ export default function App() {
             onClose={() => setIsModalOpen(false)}
             onSave={elencoActions.save}
             initialData={editingPlayer}
+        />
+
+        <ImportCsvModal
+            isOpen={isImportCsvOpen}
+            onClose={() => setIsImportCsvOpen(false)}
+            onImport={elencoActions.importMany}
         />
 
         <TeamConfigModal

@@ -238,7 +238,10 @@ export const DrawTeamsModal = ({
                                                             {player.position}
                                                         </div>
                                                     </div>
-                                                    <span className="text-sm font-black text-primary tabular-nums shrink-0">
+                                                    <span
+                                                        data-export-ignore="true"
+                                                        className="text-sm font-black text-primary tabular-nums shrink-0"
+                                                    >
                                                         {player.rating}
                                                     </span>
                                                 </div>

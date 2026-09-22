@@ -51,6 +51,10 @@ export function useAuth() {
   }, []);
 
   const logout = async () => {
+    if (!isSupabaseConfigured()) {
+      setUser(null);
+      return;
+    }
     const auth = toSessaoAuth(createClient());
     const previousUserId = user?.id;
     const result = await sessaoLogout(auth);
