@@ -1,5 +1,7 @@
 # Squadra
 
+> **In English:** Squadra is a Next.js app for registering soccer players as cards and drawing balanced teams. Every account has its own private roster: Supabase queries are scoped to the signed-in user and enforced by PostgreSQL row-level security. Built with Next.js, TypeScript, Supabase and Vitest. **Live:** [squadra-eight.vercel.app](https://squadra-eight.vercel.app)
+
 Aplicação Next.js para cadastrar Jogadores (estilo carta) e sortear Times balanceados.
 
 **Auth obrigatório:** o Elenco é sempre da conta autenticada (Supabase). Não há modo guest / só-localStorage como produto.
