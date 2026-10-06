@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { FullScreenLoader } from "@/components/ui/full-screen-loader";
+import { Surface } from "@/components/ui/surface";
 
 // Import refactored components
 import { PlayerCard } from "@/components/player/PlayerCard";
@@ -103,19 +104,16 @@ export default function App() {
 
   if (!isSupabaseConfigured()) {
     return (
-      <>
-        <Toaster position="top-center" richColors />
-        <div className="min-h-screen bg-background flex items-center justify-center px-4">
-          <div className="max-w-md text-center space-y-4">
-            <h1 className="text-xl font-bold text-foreground">Supabase não configurado</h1>
-            <p className="text-default-500 text-sm">
-              Crie <code className="text-foreground">.env.local</code> na raiz com
-              NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY, depois reinicie{" "}
-              <code className="text-foreground">npm run dev</code>.
-            </p>
-          </div>
-        </div>
-      </>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Surface className="max-w-md">
+          <h1 className="text-title">Supabase não configurado</h1>
+          <p className="text-muted mt-1">
+            Crie <code className="text-foreground">.env.local</code> na raiz com
+            NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY, depois reinicie{" "}
+            <code className="text-foreground">npm run dev</code>.
+          </p>
+        </Surface>
+      </div>
     );
   }
 
