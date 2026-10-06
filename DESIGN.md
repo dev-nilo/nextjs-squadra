@@ -26,6 +26,7 @@ Stack: Tailwind CSS 3, tokens as RGB channels in `app/globals.css`, mapped in `t
 | `danger` | Destructive actions and errors |
 | `warning` / `warning-600` | Warnings (`warning-600` for text on `warning/10`) |
 | `success` | Positive confirmation |
+| `overlay` | Modal backdrop scrim (black in both themes), used as `backdrop:bg-overlay/50` |
 
 Rules:
 - No raw Tailwind palette colors (`gray-*`, `zinc-*`, `white`, `black`, `red-*`…) and no hex/arbitrary colors in `app/`, `components/` or `lib/`. ESLint enforces this.
@@ -78,7 +79,7 @@ The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card round
 
 ## Layout
 
-- **App shell**: `app/layout.tsx` renders the single `<Toaster position="top-center" richColors />`. Pages never render their own Toaster.
+- **App shell**: `app/layout.tsx` renders the single `<Toaster position="top-center" richColors theme="system" />`. Pages never render their own Toaster.
 - **Home**: sticky header (`bg-content1/95 backdrop-blur-sm border-b border-divider shadow-lg`), content in `max-w-7xl mx-auto px-3 sm:px-6`.
 - **Auth routes** (`/auth`, `/auth/confirm`, `/auth/callback`) share `app/auth/layout.tsx`: full-height, centered, `max-w-md` column on `bg-background`. Content goes in a `Surface`.
 - Mobile first: everything must work at 375px with no horizontal scroll.

@@ -214,7 +214,7 @@ export const DrawTeamsModal = ({
                                         >
                                             {team.name}
                                         </h3>
-                                        <span className="text-[11px] font-bold text-default-500 mt-0.5 uppercase tracking-wide">
+                                        <span className="text-2xs font-bold text-default-500 mt-0.5 uppercase tracking-wide">
                                             {team.members.length} jogadores · média{" "}
                                             {team.avg}
                                         </span>
@@ -254,7 +254,7 @@ export const DrawTeamsModal = ({
                                                         <div className="font-bold text-sm truncate text-foreground">
                                                             {player.name}
                                                         </div>
-                                                        <div className="text-[10px] uppercase font-bold text-default-500">
+                                                        <div className="text-2xs uppercase font-bold text-default-500">
                                                             {player.position}
                                                         </div>
                                                     </div>

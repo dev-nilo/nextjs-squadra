@@ -44,7 +44,7 @@ export default function AuthPage() {
           </div>
 
           <Button
-            variant="bordered"
+            variant="flat"
             className="w-full"
             onClick={() => setIsLogin(!isLogin)}
           >

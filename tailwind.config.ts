@@ -10,11 +10,18 @@ const config = {
       fontFamily: {
         sans: ["var(--font-sans)"],
       },
+      fontSize: {
+        "2xs": ["0.6875rem", { lineHeight: "1rem" }],
+      },
+      borderRadius: {
+        card: "2rem",
+      },
       colors: {
         background: "rgb(var(--background) / <alpha-value>)",
         foreground: "rgb(var(--foreground) / <alpha-value>)",
         focus: "rgb(var(--focus) / <alpha-value>)",
         divider: "rgb(var(--divider) / <alpha-value>)",
+        overlay: "rgb(var(--overlay) / <alpha-value>)",
         content1: {
           DEFAULT: "rgb(var(--content1) / <alpha-value>)",
           foreground: "rgb(var(--content1-foreground) / <alpha-value>)",
