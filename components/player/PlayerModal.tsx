@@ -95,8 +95,8 @@ export const PlayerModal = ({
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} className="max-w-3xl">
-            <ModalHeader className="flex flex-col gap-1 text-lg sm:text-xl">
-                {initialData ? "Editar Carta" : "Nova Carta"}
+            <ModalHeader>
+                <h2 className="text-title">{initialData ? "Editar Carta" : "Nova Carta"}</h2>
             </ModalHeader>
 
             <ModalBody>
@@ -135,7 +135,7 @@ export const PlayerModal = ({
                         </Select>
 
                         <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-default-600">
+                            <label className="text-sm font-medium text-foreground">
                                 Foto do Jogador
                             </label>
                             <div className="flex flex-wrap gap-2">
@@ -178,7 +178,7 @@ export const PlayerModal = ({
                     </div>
 
                     <div className="space-y-3 sm:space-y-4">
-                        <h3 className="text-sm font-bold text-default-600">
+                        <h3 className="text-section">
                             Atributos (OVR: {calculateOVR(attributes)})
                         </h3>
                         <div className="space-y-3 sm:space-y-4">
@@ -247,13 +247,13 @@ export const PlayerModal = ({
             </ModalBody>
 
             <ModalFooter>
-                <Button variant="light" onClick={onClose} className="w-full sm:w-auto">
+                <Button variant="flat" onClick={onClose} className="w-full sm:w-auto">
                     Cancelar
                 </Button>
                 <Button
                     color="primary"
                     onClick={handleSubmit}
-                    startContent={<Save size={20} />}
+                    startContent={<Save size={18} />}
                     className="w-full sm:w-auto"
                 >
                     {initialData ? "Atualizar Carta" : "Criar Carta"}

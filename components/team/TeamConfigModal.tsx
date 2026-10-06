@@ -4,6 +4,7 @@ import { useId } from "react";
 import { Shuffle } from "lucide-react";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 
 interface RangeSliderProps {
     label: string;
@@ -74,10 +75,8 @@ export const TeamConfigModal = ({
     return (
         <Modal isOpen={isOpen} onClose={onClose} className="max-w-md">
             <ModalHeader className="flex flex-col gap-1">
-                <h2 className="text-xl sm:text-2xl font-black text-foreground">
-                    Configurar Times
-                </h2>
-                <p className="text-sm text-default-500 font-normal">
+                <h2 className="text-title">Configurar Times</h2>
+                <p className="text-muted">
                     Defina quantos times e jogadores por time
                 </p>
             </ModalHeader>
@@ -108,17 +107,11 @@ export const TeamConfigModal = ({
                         <span className="text-default-600 font-medium">Selecionados</span>
                         <span className="font-black text-foreground tabular-nums">{selectedCount}</span>
                     </div>
-                    <div
-                        className={`mt-1 rounded-lg px-3 py-2 text-sm font-semibold ${
-                            hasEnough
-                                ? "bg-success/10 text-success"
-                                : "bg-danger/10 text-danger"
-                        }`}
-                    >
+                    <Alert tone={hasEnough ? "success" : "danger"} className="mt-1">
                         {hasEnough
                             ? "✓ Quantidade suficiente"
                             : `✗ Faltam ${required - selectedCount} jogadores`}
-                    </div>
+                    </Alert>
                 </div>
             </ModalBody>
 
@@ -127,11 +120,11 @@ export const TeamConfigModal = ({
                     Cancelar
                 </Button>
                 <Button
-                    color="primary"
+                    color="secondary"
                     onClick={onDraw}
                     isDisabled={!hasEnough}
                     startContent={<Shuffle size={18} />}
-                    className="font-semibold w-full sm:w-auto"
+                    className="w-full sm:w-auto"
                 >
                     Sortear
                 </Button>
