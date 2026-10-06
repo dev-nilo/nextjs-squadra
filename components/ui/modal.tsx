@@ -59,7 +59,7 @@ export function Modal({ isOpen, onClose, children, className = "max-w-md" }: Mod
       onClick={(e) => {
         if (e.target === dialogRef.current) dialogRef.current?.close();
       }}
-      className="m-auto w-full max-w-none bg-transparent p-0 backdrop:bg-black/50 backdrop:backdrop-blur-sm"
+      className="m-auto w-full max-w-none bg-transparent p-0 backdrop:bg-overlay/50 backdrop:backdrop-blur-sm"
     >
       <div
         className={`mx-auto flex max-h-[90vh] w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-2xl bg-content1 shadow-2xl ${className}`}

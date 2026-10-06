@@ -1,107 +1,102 @@
 # DESIGN.md
 
-## Overview
-This document captures the visual design system of the **Squadra** Next.js application. It serves as a single source of truth for UI components, color palette, typography, spacing, and interaction patterns. AI agents and developers can reference it to ensure consistency across new screens and components.
+The visual contract for Squadra. Every page and modal is built from the tokens, scales and primitives below. If something you need isn't here, add it here first, then use it.
+
+Stack: Tailwind CSS 3, tokens as RGB channels in `app/globals.css`, mapped in `tailwind.config.ts`. Font: **Bricolage Grotesque** (`font-sans`, loaded in `app/layout.tsx`). Icons: **lucide-react**.
 
 ---
 
-## Design Tokens
+## Theme
 
-### Colors (OKLCH)
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--background` | `oklch(1 0 0)` (light) / `oklch(0.145 0 0)` (dark) | Page background |
-| `--foreground` | `oklch(0.145 0 0)` (light) / `oklch(0.985 0 0)` (dark) | Primary text |
-| `--card` | `oklch(1 0 0)` / `oklch(0.145 0 0)` | Card backgrounds |
-| `--card-foreground` | `oklch(0.145 0 0)` / `oklch(0.985 0 0)` | Text on cards |
-| `--primary` | `oklch(0.205 0 0)` (light) / `oklch(0.985 0 0)` (dark) | Buttons, highlights |
-| `--primary-foreground` | `oklch(0.985 0 0)` (light) / `oklch(0.205 0 0)` (dark) | Text on primary elements |
-| `--secondary` | `oklch(0.97 0 0)` (light) / `oklch(0.269 0 0)` (dark) | Secondary UI surfaces |
-| `--secondary-foreground` | `oklch(0.205 0 0)` (light) / `oklch(0.985 0 0)` (dark) | Text on secondary elements |
-| `--muted` | `oklch(0.97 0 0)` (light) / `oklch(0.269 0 0)` (dark) | Disabled/placeholder backgrounds |
-| `--muted-foreground` | `oklch(0.556 0 0)` (light) / `oklch(0.708 0 0)` (dark) | Disabled text |
-| `--accent` | `oklch(0.97 0 0)` | Accent surface |
-| `--accent-foreground` | `oklch(0.205 0 0)` | Text on accent |
-| `--destructive` | `oklch(0.577 0.245 27.325)` | Error states |
-| `--destructive-foreground` | `oklch(0.985 0 0)` | Text on error |
-| `--border` | `oklch(0.922 0 0)` | Border colour |
-| `--input` | `oklch(0.922 0 0)` | Input background |
-| `--ring` | `oklch(0.708 0 0)` | Focus ring |
-| `--chart-1` … `--chart-5` | Various OKLCH values | Chart series colours |
-| `--radius` | `0.625rem` | Border‑radius for rounded components |
-| `--sidebar` | `oklch(0.985 0 0)` | Sidebar background |
-| `--sidebar-foreground` | `oklch(0.145 0 0)` | Sidebar text |
-| `--sidebar-primary` | `oklch(0.205 0 0)` | Sidebar accent |
-| `--sidebar-primary-foreground` | `oklch(0.985 0 0)` | Text on sidebar accent |
-| `--sidebar-accent` | `oklch(0.97 0 0)` | Secondary sidebar accent |
-| `--sidebar-accent-foreground` | `oklch(0.205 0 0)` | Text on secondary accent |
-| `--sidebar-border` | `oklch(0.922 0 0)` | Sidebar border |
-| `--sidebar-ring` | `oklch(0.708 0 0)` | Sidebar focus ring |
+- Light and dark follow the OS (`next-themes`, `defaultTheme="system"`, class strategy). There is no toggle.
+- Every token has a light value under `:root` and a dark value under `.dark`. Only use tokens, so both themes stay correct for free.
+- Any change must be checked in **both** themes.
 
-### Typography
-| Token | Font | Size | Weight | Usage |
-|-------|------|------|--------|-------|
-| `font-heading` | `Inter, system-ui, sans-serif` | 1.5rem (24px) | **700** (bold) | Page titles, modal headings |
-| `font-body` | `Inter, system-ui, sans-serif` | 1rem (16px) | **400** (regular) | Body copy |
-| `font-label` | `Inter, system-ui, sans-serif` | 0.875rem (14px) | **500** (medium) | Form labels, button text |
-| `font-small` | `Inter, system-ui, sans-serif` | 0.75rem (12px) | **400** | Helper text, captions |
+## Color tokens
 
-### Spacing Scale
-| Token | Value |
-|-------|-------|
-| `spacing-0` | `0rem` |
-| `spacing-1` | `0.25rem` (4px) |
-| `spacing-2` | `0.5rem` (8px) |
-| `spacing-3` | `0.75rem` (12px) |
-| `spacing-4` | `1rem` (16px) |
-| `spacing-5` | `1.25rem` (20px) |
-| `spacing-6` | `1.5rem` (24px) |
-| `spacing-8` | `2rem` (32px) |
-| `spacing-12` | `3rem` (48px) |
-| `spacing-16` | `4rem` (64px) |
+| Token | Use |
+|-------|-----|
+| `background` / `foreground` | Page canvas and default text |
+| `content1` | Surfaces: modals, cards, header, menus |
+| `content2`–`content4` | Nested / raised fills |
+| `default-50…900`, `default` | Neutrals: input fills (`default-100`), borders (`default-200/300`), muted text (`default-400/500/600`) |
+| `divider` | Hairlines and borders between regions |
+| `primary` (+ `50…900`) | Green. Main action, selection, focus, brand accents |
+| `secondary` | Purple. **Reserved for Sorteio actions** (Sortear Times, Sortear, Sortear Novamente) |
+| `danger` | Destructive actions and errors |
+| `warning` / `warning-600` | Warnings (`warning-600` for text on `warning/10`) |
+| `success` | Positive confirmation |
+| `overlay` | Modal backdrop scrim (black in both themes), used as `backdrop:bg-overlay/50` |
 
----
+Rules:
+- No raw Tailwind palette colors (`gray-*`, `zinc-*`, `white`, `black`, `red-*`…) and no hex/arbitrary colors in `app/`, `components/` or `lib/`. ESLint enforces this.
+- Tints use opacity on a token: `bg-primary/10`, `border-danger/20`.
+- Team colors (`getTeamPresentation` in `lib/constants.ts`) cycle through the semantic tokens; that's the only place `secondary` appears outside Sorteio actions.
+- Attribute values use `getStatColor` (`lib/stat-color.ts`): ≥80 `success`, ≥70 `primary`, ≥50 `warning-600`, else `danger`.
 
-## Core Components
+## Typography
 
-### Modal (`DrawTeamsModal`)
-- **Container**: Glass‑morphism style with `bg-white/10`, `border-white/20`, `backdrop-blur-lg`, `shadow-xl`. Hover scales `1.05`.
-- **Header**: Dark overlay (`bg-black/60`) with bold title `Times Sorteados`.
-- **Team Card**: Gradient background (`bg-gradient-to-b`) using team‑specific colors, rounded corners, border reflecting team colour. Header includes team name and player count.
-- **Player Card**: Rounded avatar, name, position, and drag‑and‑drop interaction. Rating display removed per spec.
-- **Interaction**: Drag‑and‑drop with smooth state transitions, hover elevation, and accessible ARIA labels.
+Three named levels, defined in `@layer components` in `app/globals.css`. Use the class, not the raw utilities.
 
-### Buttons
-- Primary: `bg-primary` with hover `bg-primary/90`, rounded, `transition-colors`.
-- Secondary/Close: Text‑only, `text-muted-foreground` with hover `text-foreground`.
+| Class | Equals | Use |
+|-------|--------|-----|
+| `.text-title` | `text-xl sm:text-2xl font-black text-foreground` | Page and modal titles (one per screen) |
+| `.text-section` | `text-base sm:text-lg font-bold text-foreground` | Section headings inside a page/modal |
+| `.text-muted` | `text-sm text-default-500` | Subtitles, helper text, empty states |
 
-### Icons
-- Uses **lucide‑react** icons (`Shuffle`, `X`, `User`). Icons inherit current text colour for theming.
+Other sizes come from the Tailwind scale plus one token: `text-2xs` (11px) for tiny uppercase labels. Arbitrary sizes (`text-[10px]`) are banned by ESLint.
 
----
+`font-black` is the brand's "sporty" weight: titles, ratings, OVR numbers. Body copy stays regular; labels are `font-medium`.
 
-## Interaction Patterns
-- **Glass‑morphism**: Semi‑transparent backgrounds combined with `backdrop-blur` create depth while preserving readability.
-- **Hover Scaling**: Subtle `scale‑105` on cards conveys interactivity without jarring motion.
-- **Focus Rings**: Utilise the `--ring` token for accessible keyboard focus outlines.
-- **Dark Mode**: All colour tokens have light/dark variants defined under `:root` and `.dark` scopes. The application automatically toggles based on the `class="dark"` on the HTML element.
+## Radius scale
 
----
+| Radius | Role |
+|--------|------|
+| `rounded-2xl` | **Surfaces**: modals, page cards (`Surface`) |
+| `rounded-xl` | **Controls and inner blocks**: buttons, inputs, selects, Time cards, info panels |
+| `rounded-lg` | **Small items**: alerts, list rows, draggable rows, menu items, image previews |
+| `rounded-full` | Avatars, badges, round icon buttons |
 
-## Accessibility & Security Considerations (from mandatory‑secure‑web‑skills)
-- **No `dangerouslySetInnerHTML`** – all content is rendered via React JSX, benefiting from native escaping.
-- **ARIA Labels** – interactive drag‑and‑drop elements include descriptive `aria-label`s (rating removed for privacy).
-- **Focus Management** – modal traps focus and restores it on close.
-- **Color Contrast** – chosen OKLCH values provide WCAG AA compliance for both light and dark themes.
-- **No Sensitive Data** – UI never exposes user ratings or other sensitive metrics as per request.
+The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card rounded-b-xl`, a FUT-card shape that is part of the product identity. `rounded-t-card` is a named token (2rem) in `tailwind.config.ts`.
 
----
+## Elevation
 
-## How to Keep DESIGN.md Updated
-1. **Run the `design‑md` skill** (when available) to auto‑extract new components.
-2. **Manual updates** – when adding new screens or component variants, extend the relevant sections (tokens, components, interaction patterns).
-3. **Version control** – commit changes alongside component code to keep design and implementation in sync.
+- `shadow-2xl` for floating surfaces (modals, page cards, menus, Jogador card).
+- `shadow-lg` for the sticky header and floating badges/buttons over a card.
+- `shadow-sm` for images inside a card.
 
----
+## Primitives (`components/ui/`)
 
-*Generated by Antigravity using the project’s source files and the mandatory secure web guidelines.*
+| Primitive | Notes |
+|-----------|-------|
+| `Button` | `color`: `primary` · `secondary` (Sorteio only) · `danger` · `default`. `variant`: `solid` (main action) · `flat` (secondary action, e.g. Cancelar, Voltar) · `light` (tertiary / inline / icon). `size`: `sm` · `md` · `lg`. Supports `isLoading`, `isIconOnly`, `radius="full"`, `startContent`. One `solid` primary or secondary per action group. |
+| `Input`, `Select` | `rounded-xl`, `bg-default-100`, `border-default-200`, focus ring `primary`. Always pass `label` or `aria-label`. |
+| `Modal`, `ModalHeader`, `ModalBody`, `ModalFooter` | Native `<dialog>`. Header holds a `.text-title` and optional `.text-muted` subtitle. Footer: secondary action (`flat`) first, primary action last; full width on mobile. |
+| `Surface` | Page-level card: `rounded-2xl bg-content1 shadow-2xl p-4 sm:p-6`. Use for any standalone content block outside a modal. |
+| `Alert` | Inline status box, `tone`: `danger` · `warning` · `success` · `info`. `rounded-lg`, `bg-<tone>/10`, `text-sm font-medium`. Use instead of hand-rolled colored boxes. |
+| `FullScreenLoader` | Centered spinner + label on `bg-background`, full viewport. The only loading state for routes and route-level fallbacks. |
+| `PlayerAvatar` | Round avatar with image → icon → initials fallback. |
+
+## Layout
+
+- **App shell**: `app/layout.tsx` renders the single `<Toaster position="top-center" richColors theme="system" />`. Pages never render their own Toaster.
+- **Home**: sticky header (`bg-content1/95 backdrop-blur-sm border-b border-divider shadow-lg`), content in `max-w-7xl mx-auto px-3 sm:px-6`.
+- **Auth routes** (`/auth`, `/auth/confirm`, `/auth/callback`) share `app/auth/layout.tsx`: full-height, centered, `max-w-md` column on `bg-background`. Content goes in a `Surface`.
+- Mobile first: everything must work at 375px with no horizontal scroll.
+
+## Interaction
+
+- Focus: `focus-visible:ring-2 ring-primary` on every interactive element.
+- Selection: `ring-2 ring-primary` plus a `primary/10` tint.
+- Hover on rows: border shifts toward `primary/40–50`. Only the Jogador card scales (`sm:hover:scale-105`).
+- Motion: `transition-colors` / `transition-opacity`; `animate-scale-in` for elements that pop in (selection badge).
+
+## Export (Times Sorteados PNG)
+
+The exported image follows the active theme: its background is read from the `--background` token at export time, never a hardcoded color.
+
+## Checklist for a UI change
+
+1. Only tokens, scales and primitives from this file.
+2. Checked in light **and** dark, at 375px **and** desktop.
+3. `npm run lint`, `npm test`, `npm run build` pass.

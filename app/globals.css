@@ -7,6 +7,7 @@
   --foreground: 17 24 28;
   --divider: 219 219 219;
   --focus: 129 179 77;
+  --overlay: 0 0 0;
 
   --content1: 255 255 255;
   --content1-foreground: 17 24 28;
@@ -96,32 +97,23 @@
   --warning-600: 249 201 124;
 }
 
+@layer components {
+  .text-title {
+    @apply text-xl font-black text-foreground sm:text-2xl;
+  }
+  .text-section {
+    @apply text-base font-bold text-foreground sm:text-lg;
+  }
+  .text-muted {
+    @apply text-sm text-default-500;
+  }
+}
+
 @layer base {
   html,
   body {
     overflow-x: clip;
     max-width: 100vw;
-  }
-}
-
-/* Added custom animations for enhanced UX */
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -136,25 +128,6 @@
   }
 }
 
-.animate-shimmer {
-  animation: shimmer 2s infinite linear;
-  background: linear-gradient(
-    to right,
-    transparent 0%,
-    rgba(255, 255, 255, 0.1) 50%,
-    transparent 100%
-  );
-  background-size: 1000px 100%;
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.5s ease-out;
-}
-
 .animate-scale-in {
   animation: scale-in 0.3s ease-out;
-}
-
-.glass {
-  @apply bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg;
 }

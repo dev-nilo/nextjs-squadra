@@ -22,7 +22,12 @@ export function AuthModal({ open, onOpenChange, onSuccess }: AuthModalProps) {
   return (
     <Modal isOpen={open} onClose={() => onOpenChange(false)} className="max-w-md">
       <ModalHeader className="flex flex-col gap-1">
-        {isLogin ? "Fazer Login" : "Criar Conta"}
+        <h2 className="text-title">{isLogin ? "Bem-vindo" : "Criar Conta"}</h2>
+        <p className="text-muted">
+          {isLogin
+            ? "Faça login em sua conta para continuar"
+            : "Crie uma nova conta para começar"}
+        </p>
       </ModalHeader>
       <ModalBody className="pb-6">
         <div className="space-y-6">
@@ -33,7 +38,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: AuthModalProps) {
           )}
 
           <div className="flex items-center justify-center">
-            <div className="text-sm text-default-500">
+            <div className="text-muted">
               {isLogin ? "Não tem conta? " : "Já tem uma conta? "}
               <Button
                 variant="light"

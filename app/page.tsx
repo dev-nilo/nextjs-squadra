@@ -4,7 +4,6 @@ import type React from "react";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Plus, X, Trash2, User, Shuffle, CheckCircle2, Loader2, Pencil, Search, Grid3x3, List, Cloud, HardDrive, FileUp } from "lucide-react";
 import { toast } from "sonner";
-import { Toaster } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useElenco } from "@/hooks/use-elenco";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -16,6 +15,7 @@ import { sortearTimes } from "@/lib/sorteio";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { FullScreenLoader } from "@/components/ui/full-screen-loader";
 
 // Import refactored components
 import { PlayerCard } from "@/components/player/PlayerCard";
@@ -121,22 +121,13 @@ export default function App() {
 
   if (authLoading || loading) {
     return (
-      <>
-        <Toaster position="top-center" richColors />
-        <div className="min-h-screen bg-background flex items-center justify-center px-4">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-12 h-12 animate-spin text-default-500" />
-            <p className="text-default-500">Carregando...</p>
-          </div>
-        </div>
-      </>
+      <FullScreenLoader />
     );
   }
 
   if (!isAuthenticated) {
     return (
       <>
-        <Toaster position="top-center" richColors />
         <AuthErrorWatcher />
         <AuthModal
           open={!isAuthenticated}
@@ -149,7 +140,6 @@ export default function App() {
 
   return (
     <>
-      <Toaster position="top-center" richColors />
       <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
         <header className="sticky top-0 z-40 bg-content1/95 backdrop-blur-sm border-b border-divider shadow-lg">
           <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4">
@@ -257,12 +247,12 @@ export default function App() {
 
         <main className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
           {filteredPlayers.length === 0 ? (
-            <div className="text-center py-12 sm:py-16 text-default-500 px-2">
-              <User size={64} className="mx-auto mb-4 opacity-50" />
-              <p className="text-base sm:text-lg">
+            <div className="text-center py-12 sm:py-16 px-2">
+              <User size={64} className="mx-auto mb-4 text-default-400" aria-hidden="true" />
+              <p className="text-section">
                 {searchQuery ? "Nenhuma carta encontrada" : "Nenhuma carta criada ainda"}
               </p>
-              <p className="text-sm mt-2">
+              <p className="text-muted mt-2">
                 {searchQuery ? "Tente ajustar a busca" : "Clique em 'Nova Carta' para começar"}
               </p>
             </div>

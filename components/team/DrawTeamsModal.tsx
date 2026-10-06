@@ -67,7 +67,9 @@ export const DrawTeamsModal = ({
             const dataUrl = await toPng(exportRef.current, {
                 cacheBust: true,
                 pixelRatio: 2,
-                backgroundColor: "#ffffff",
+                backgroundColor: `rgb(${getComputedStyle(document.documentElement)
+                    .getPropertyValue("--background")
+                    .trim()})`,
                 filter: (node) => {
                     if (node instanceof HTMLElement && node.dataset?.exportIgnore === "true") {
                         return false;
@@ -108,10 +110,8 @@ export const DrawTeamsModal = ({
             <ModalHeader className="flex flex-col gap-3 bg-content1">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 w-full">
                     <div className="min-w-0">
-                        <h2 className="text-xl sm:text-2xl font-black text-foreground">
-                            Times Sorteados
-                        </h2>
-                        <p className="text-xs sm:text-sm text-default-500 font-normal mt-1">
+                        <h2 className="text-title">Times Sorteados</h2>
+                        <p className="text-muted mt-1">
                             <span className="hidden sm:inline">
                                 Arraste jogadores entre os times para reorganizar
                             </span>
@@ -132,11 +132,11 @@ export const DrawTeamsModal = ({
                             Baixar PNG
                         </Button>
                         <Button
-                            color="primary"
+                            color="secondary"
                             onClick={onRedraw}
                             startContent={<Shuffle size={16} />}
                             size="sm"
-                            className="w-full sm:w-auto font-semibold"
+                            className="w-full sm:w-auto"
                         >
                             Sortear Novamente
                         </Button>
@@ -194,7 +194,7 @@ export const DrawTeamsModal = ({
                                         >
                                             {team.name}
                                         </h3>
-                                        <span className="text-[11px] font-bold text-default-500 mt-0.5 uppercase tracking-wide">
+                                        <span className="text-2xs font-bold text-default-500 mt-0.5 uppercase tracking-wide">
                                             {team.members.length} jogadores · média{" "}
                                             {team.avg}
                                         </span>
@@ -234,7 +234,7 @@ export const DrawTeamsModal = ({
                                                         <div className="font-bold text-sm truncate text-foreground">
                                                             {player.name}
                                                         </div>
-                                                        <div className="text-[10px] uppercase font-bold text-default-500">
+                                                        <div className="text-2xs uppercase font-bold text-default-500">
                                                             {player.position}
                                                         </div>
                                                     </div>
