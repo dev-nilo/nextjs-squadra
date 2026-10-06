@@ -75,7 +75,7 @@ export const PlayerCard = ({
             {/* Selection Indicator */}
             {isSelected && (
                 <div
-                    className="absolute top-1 left-1 sm:-top-2 sm:-left-2 z-50 bg-primary text-primary-foreground p-1 rounded-full shadow-lg animate-in zoom-in duration-200"
+                    className="absolute top-1 left-1 sm:-top-2 sm:-left-2 z-50 bg-primary text-primary-foreground p-1 rounded-full shadow-lg animate-scale-in"
                     aria-hidden="true"
                 >
                     <CheckCircle2 size={22} />
@@ -124,7 +124,7 @@ export const PlayerCard = ({
                     w-full h-full 
                     bg-gradient-to-br from-content1 via-content1 to-default-200/20 
                     border-2 ${isSelected ? "border-primary" : "border-divider/30"} 
-                    rounded-t-[2rem] rounded-b-xl 
+                    rounded-t-card rounded-b-xl 
                     shadow-2xl overflow-hidden 
                 `}
             >

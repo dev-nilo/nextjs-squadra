@@ -36,7 +36,7 @@ export function UserMenu() {
         type="button"
         popoverTarget={menuId}
         aria-label="Menu da conta"
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground transition-transform active:scale-95"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground transition-transform active:scale-95"
       >
         {initials}
       </button>
@@ -50,8 +50,8 @@ export function UserMenu() {
         className="fixed m-0 min-w-[14rem] max-w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-divider bg-content1 p-1 text-foreground shadow-2xl"
       >
         <div className="flex flex-col gap-0.5 border-b border-divider px-3 py-3">
-          <p className="font-semibold">Logado como</p>
-          <p className="max-w-[16rem] truncate font-semibold">{user.email}</p>
+          <p className="text-xs text-default-500">Logado como</p>
+          <p className="max-w-[16rem] truncate text-sm font-semibold">{user.email}</p>
         </div>
 
         <div

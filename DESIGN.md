@@ -88,7 +88,7 @@ The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card round
 
 - Focus: `focus-visible:ring-2 ring-primary` on every interactive element.
 - Selection: `ring-2 ring-primary` plus a `primary/10` tint.
-- Hover on rows and cards: border shifts toward `primary/40–50`. No scaling.
+- Hover on rows: border shifts toward `primary/40–50`. Only the Jogador card scales (`sm:hover:scale-105`).
 - Motion: `transition-colors` / `transition-opacity`; `animate-scale-in` for elements that pop in (selection badge).
 
 ## Export (Times Sorteados PNG)

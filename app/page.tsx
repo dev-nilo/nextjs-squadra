@@ -372,12 +372,12 @@ export default function App() {
 
         <main className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
           {filteredPlayers.length === 0 ? (
-            <div className="text-center py-12 sm:py-16 text-default-500 px-2">
-              <User size={64} className="mx-auto mb-4 opacity-50" />
-              <p className="text-base sm:text-lg">
+            <div className="text-center py-12 sm:py-16 px-2">
+              <User size={64} className="mx-auto mb-4 text-default-400" aria-hidden="true" />
+              <p className="text-section">
                 {searchQuery ? "Nenhuma carta encontrada" : "Nenhuma carta criada ainda"}
               </p>
-              <p className="text-sm mt-2">
+              <p className="text-muted mt-2">
                 {searchQuery ? "Tente ajustar a busca" : "Clique em 'Nova Carta' para começar"}
               </p>
             </div>
