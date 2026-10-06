@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { FullScreenLoader } from "@/components/ui/full-screen-loader";
+import { LoadingState } from "@/components/ui/full-screen-loader";
+import { Surface } from "@/components/ui/surface";
+import { Alert } from "@/components/ui/alert";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -67,37 +69,30 @@ function ConfirmContent() {
   };
 
   return (
-    <div className="w-full max-w-md rounded-2xl bg-content1 p-2 shadow-2xl sm:p-4">
-      <div className="flex flex-col items-start gap-2 px-2 pb-4 pt-2">
-        <div className="flex items-center gap-2 text-primary">
-          <Mail size={22} />
-          <h1 className="text-xl sm:text-2xl font-black text-foreground">
-            Confirmar email
-          </h1>
+    <Surface>
+      <div className="flex flex-col gap-1 pb-6">
+        <div className="flex items-center gap-2">
+          <Mail size={22} className="text-primary" aria-hidden="true" />
+          <h1 className="text-title">Confirmar email</h1>
         </div>
-        <p className="text-sm font-normal text-default-500">
+        <p className="text-muted">
           Clique no botão abaixo para ativar sua conta. Isso evita que o link expire
           automaticamente por scanners de email.
         </p>
       </div>
-      <div className="flex flex-col gap-4 px-2 pb-2">
-        {error && (
-          <div className="rounded-lg bg-danger/10 text-danger text-sm px-3 py-2 font-medium">
-            {decodeAuthDescription(error)}
-          </div>
-        )}
+      <div className="flex flex-col gap-4">
+        {error && <Alert tone="danger">{decodeAuthDescription(error)}</Alert>}
 
         {!canConfirm && !error && (
-          <div className="rounded-lg bg-warning/10 text-warning-600 text-sm px-3 py-2 font-medium">
+          <Alert tone="warning">
             Link incompleto. Abra o link mais recente do email de confirmação ou
             cadastre-se novamente.
-          </div>
+          </Alert>
         )}
 
         <Button
           color="primary"
-          size="lg"
-          className="w-full font-semibold"
+          className="w-full"
           isDisabled={!canConfirm || loading}
           isLoading={loading}
           startContent={<CheckCircle2 size={18} />}
@@ -110,16 +105,14 @@ function ConfirmContent() {
           Voltar ao login
         </Button>
       </div>
-    </div>
+    </Surface>
   );
 }
 
 export default function AuthConfirmPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Suspense fallback={<FullScreenLoader />}>
-        <ConfirmContent />
-      </Suspense>
-    </div>
+    <Suspense fallback={<LoadingState />}>
+      <ConfirmContent />
+    </Suspense>
   );
 }

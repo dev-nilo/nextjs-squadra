@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { FullScreenLoader } from "@/components/ui/full-screen-loader";
+import { LoadingState } from "@/components/ui/full-screen-loader";
 import {
   applySessaoToast,
   completeEmailConfirmation,
@@ -50,12 +50,12 @@ function CallbackContent() {
     handleCallback();
   }, [searchParams, router]);
 
-  return <FullScreenLoader label="Processando autenticação..." />;
+  return <LoadingState label="Processando autenticação..." />;
 }
 
 export default function AuthCallbackPage() {
   return (
-    <Suspense fallback={<FullScreenLoader label="Processando autenticação..." />}>
+    <Suspense fallback={<LoadingState label="Processando autenticação..." />}>
       <CallbackContent />
     </Suspense>
   );
