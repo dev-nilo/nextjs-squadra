@@ -96,6 +96,18 @@
   --warning-600: 249 201 124;
 }
 
+@layer components {
+  .text-title {
+    @apply text-xl font-black text-foreground sm:text-2xl;
+  }
+  .text-section {
+    @apply text-base font-bold text-foreground sm:text-lg;
+  }
+  .text-muted {
+    @apply text-sm text-default-500;
+  }
+}
+
 @layer base {
   html,
   body {

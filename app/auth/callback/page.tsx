@@ -2,10 +2,10 @@
 
 import { Suspense, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { FullScreenLoader } from "@/components/ui/full-screen-loader";
 import {
   applySessaoToast,
   completeEmailConfirmation,
@@ -50,28 +50,13 @@ function CallbackContent() {
     handleCallback();
   }, [searchParams, router]);
 
-  return (
-    <div className="text-center">
-      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-foreground" />
-      <p className="text-default-500">Processando autenticação...</p>
-    </div>
-  );
+  return <FullScreenLoader label="Processando autenticação..." />;
 }
 
 export default function AuthCallbackPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <Toaster position="top-center" richColors />
-      <Suspense
-        fallback={
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-foreground" />
-            <p className="text-default-500">Processando autenticação...</p>
-          </div>
-        }
-      >
-        <CallbackContent />
-      </Suspense>
-    </div>
+    <Suspense fallback={<FullScreenLoader label="Processando autenticação..." />}>
+      <CallbackContent />
+    </Suspense>
   );
 }

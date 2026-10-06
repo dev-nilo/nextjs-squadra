@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { LoginForm, SignUpForm } from "@/components/auth/auth-form"
 import { Button } from "@/components/ui/button"
-import { Toaster } from "sonner"
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
@@ -16,8 +15,6 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Toaster />
-      
       <div className="w-full max-w-md rounded-2xl bg-content1 p-4 shadow-2xl">
         <div className="flex flex-col items-start gap-1 px-2 pb-4 pt-2">
           <h2 className="text-xl sm:text-2xl font-bold">

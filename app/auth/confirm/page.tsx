@@ -3,8 +3,9 @@
 import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Loader2, Mail } from "lucide-react";
-import { toast, Toaster } from "sonner";
+import { CheckCircle2, Mail } from "lucide-react";
+import { toast } from "sonner";
+import { FullScreenLoader } from "@/components/ui/full-screen-loader";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -116,15 +117,7 @@ function ConfirmContent() {
 export default function AuthConfirmPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Toaster position="top-center" richColors />
-      <Suspense
-        fallback={
-          <div className="flex flex-col items-center gap-3 text-default-500">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <p>Carregando...</p>
-          </div>
-        }
-      >
+      <Suspense fallback={<FullScreenLoader />}>
         <ConfirmContent />
       </Suspense>
     </div>

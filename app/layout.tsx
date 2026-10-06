@@ -2,6 +2,7 @@ import type React from "react";
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { Toaster } from "sonner";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -50,6 +51,7 @@ export default function RootLayout({
       <body className={`${bricolage.variable} font-sans antialiased overflow-x-hidden`}>
         <Providers>
           {children}
+          <Toaster position="top-center" richColors theme="system" />
           <Analytics />
         </Providers>
       </body>

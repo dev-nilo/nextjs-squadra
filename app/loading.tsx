@@ -1,3 +1,5 @@
+import { FullScreenLoader } from "@/components/ui/full-screen-loader";
+
 export default function Loading() {
-  return null
+  return <FullScreenLoader />;
 }
