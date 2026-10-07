@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { FileUp, Loader2 } from "lucide-react";
+import { FileUp } from "lucide-react";
 import type { Player } from "@/types";
 import { importPlayersFromCsv } from "@/lib/csv-import";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 
 interface ImportCsvModalProps {
   isOpen: boolean;
@@ -86,10 +87,8 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
   return (
     <Modal isOpen={isOpen} onClose={handleClose} className="max-w-lg">
       <ModalHeader className="flex flex-col gap-1">
-        <h2 className="text-xl sm:text-2xl font-black text-foreground">
-          Importar CSV
-        </h2>
-        <p className="text-sm text-default-500 font-normal">
+        <h2 className="text-title">Importar CSV</h2>
+        <p className="text-muted">
           UTF-8 · cabeçalhos JOGADOR, VEL, RES, CHU, PAS, POS, DEF, DRI, FIS
           (ordem das colunas não importa)
         </p>
@@ -105,7 +104,7 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
         />
 
         <Button
-          variant="bordered"
+          variant="flat"
           startContent={<FileUp size={16} />}
           onClick={() => inputRef.current?.click()}
           isDisabled={importing}
@@ -115,15 +114,13 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
         </Button>
 
         {fileName && (
-          <p className="text-sm text-default-500 truncate" title={fileName}>
+          <p className="text-muted truncate" title={fileName}>
             {fileName}
           </p>
         )}
 
         {error && (
-          <p className="text-sm text-danger" role="alert">
-            {error}
-          </p>
+          <Alert tone="danger">{error}</Alert>
         )}
 
         {preview.length > 0 && (
@@ -172,9 +169,7 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
           color="primary"
           onClick={() => void handleConfirm()}
           isDisabled={preview.length === 0 || importing}
-          startContent={
-            importing ? <Loader2 size={16} className="animate-spin" /> : undefined
-          }
+          isLoading={importing}
         >
           {importing ? "Importando…" : `Importar ${preview.length || ""}`.trim()}
         </Button>

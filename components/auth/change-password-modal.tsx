@@ -62,8 +62,8 @@ export function ChangePasswordModal({
   return (
     <Modal isOpen={open} onClose={handleClose} className="max-w-md">
       <ModalHeader className="flex flex-col gap-1">
-        <h2 className="text-xl font-black text-foreground">Alterar senha</h2>
-        <p className="text-sm font-normal text-default-500">
+        <h2 className="text-title">Alterar senha</h2>
+        <p className="text-muted">
           Defina uma senha nova para compartilhar a conta sem usar a senha antiga.
         </p>
       </ModalHeader>
