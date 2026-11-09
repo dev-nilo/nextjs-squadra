@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { Logo } from "@/components/ui/logo";
-import { Time } from "@/types";
+import { Player, Time } from "@/types";
 import { moveMember } from "@/lib/sorteio";
 import { getTeamPresentation } from "@/lib/constants";
 import { Download, Loader2, Shuffle } from "lucide-react";
@@ -11,6 +11,13 @@ import { toast } from "sonner";
 import { Modal, ModalHeader, ModalBody } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
+
+/**
+ * Sorteio order runs strongest to weakest, so a numbered list in that order (and in the shared PNG,
+ * which hides ratings) would rank people. Display alphabetically instead; membership is untouched.
+ */
+const byName = new Intl.Collator("pt-BR", { sensitivity: "base", numeric: true });
+const sortByName = (members: Player[]) => [...members].sort((a, b) => byName.compare(a.name, b.name));
 
 interface DrawTeamsModalProps {
     isOpen: boolean;
@@ -233,7 +240,7 @@ export const DrawTeamsModal = ({
                                         </p>
                                     ) : (
                                         <ol className="divide-y divide-divider">
-                                            {team.members.map((player, i) => (
+                                            {sortByName(team.members).map((player, i) => (
                                                 <li
                                                     key={player.id}
                                                     draggable

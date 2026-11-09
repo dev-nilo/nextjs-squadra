@@ -111,7 +111,7 @@ The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card round
 The exported image follows the active theme: its background is read from the `--background` token at export time, never a hardcoded color.
 
 - **Layout is a team sheet (súmula)**: header with the lockup, date, player count and the **difference between the highest and lowest average** (the point of a balanced Sorteio). Each Time is one `bg-content1` surface: crest (`team-N` circle with the letter) + name + count, the average as a big `font-black` number, then a hairline-divided numbered list (`divide-divider`), no card per row. Avatars without a photo show initials.
-- Individual ratings are on screen only (`data-export-ignore`); the PNG shows names, positions and team averages.
+- Individual ratings are on screen only (`data-export-ignore`); the PNG shows names, positions and team averages. Players are listed **alphabetically**, never in Sorteio order (strongest first), so the numbered list never ranks people.
 - `html-to-image` copies the computed style of an `<svg>` root but not of its children, so SVGs inside the export area keep their colors on the root (`color` + inherited `fill`) and children use `currentColor`/inheritance. `Logo` follows this.
 
 ## Checklist for a UI change
