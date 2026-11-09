@@ -33,6 +33,15 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-anon-key
 NEXT_PUBLIC_SITE_URL=https://SEU-DOMINIO.vercel.app
 ```
 
+Monitoramento de erros (Sentry). Sem DSN o SDK fica inativo, então dev local e CI não precisam de nada disso:
+
+| Variável | Onde | Para quê |
+|----------|------|----------|
+| `NEXT_PUBLIC_SENTRY_DSN` | Vercel (Production e Preview) | Envia erros do browser e do servidor |
+| `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` | Vercel (build) | Upload dos source maps |
+
+Os eventos saem com a tag `production` (deploy de produção) ou `staging` (previews). O SDK não coleta usuário, cookies, headers nem corpos das requisições (veja [`lib/sentry-options.ts`](lib/sentry-options.ts)).
+
 ## Isolamento por usuário (multi-tenant)
 
 Cada conta só vê/edita/apaga **os próprios** Jogadores:
