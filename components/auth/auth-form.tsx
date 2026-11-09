@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { getEmailRedirectTo } from "@/lib/auth-url";
@@ -38,30 +39,31 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
   return (
     <form onSubmit={handleLogin} className="space-y-4">
       <Input
-        label="Email"
+        aria-label="Email"
         id="email"
         type="email"
-        placeholder="seu@email.com"
+        placeholder="Email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         isDisabled={loading}
         isRequired
+        size="lg"
         autoComplete="email"
       />
 
-      <Input
-        label="Senha"
+      <PasswordInput
+        aria-label="Senha"
         id="password"
-        type="password"
-        placeholder="Sua senha"
+        placeholder="Senha"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         isDisabled={loading}
         isRequired
+        size="lg"
         autoComplete="current-password"
       />
 
-      <Button type="submit" color="primary" className="w-full" isLoading={loading}>
+      <Button type="submit" color="primary" size="lg" radius="full" className="mt-2 w-full" isLoading={loading}>
         {loading ? "Entrando..." : "Entrar"}
       </Button>
     </form>
@@ -113,50 +115,53 @@ export function SignUpForm({ onSuccess }: AuthFormProps) {
   return (
     <form onSubmit={handleSignUp} className="space-y-4">
       <Input
-        label="Email"
+        aria-label="Email"
         id="signup-email"
         type="email"
-        placeholder="seu@email.com"
+        placeholder="Email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         isDisabled={loading}
         isRequired
+        size="lg"
         autoComplete="email"
       />
 
-      <Input
-        label="Senha"
+      <PasswordInput
+        aria-label="Senha"
         id="signup-password"
-        type="password"
-        placeholder="Mínimo 6 caracteres"
+        placeholder="Senha (mínimo 6 caracteres)"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         isDisabled={loading}
         isRequired
+        size="lg"
         autoComplete="new-password"
       />
 
-      <Input
-        label="Confirmar Senha"
+      <PasswordInput
+        aria-label="Confirmar Senha"
         id="confirm-password"
-        type="password"
-        placeholder="Repita sua senha"
+        placeholder="Confirme a senha"
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.target.value)}
         isDisabled={loading}
         isRequired
+        size="lg"
         autoComplete="new-password"
       />
 
-      <Button type="submit" color="primary" className="w-full" isLoading={loading}>
-        {loading ? "Criando conta..." : "Criar Conta"}
+      <Button type="submit" color="primary" size="lg" radius="full" className="mt-2 w-full" isLoading={loading}>
+        {loading ? "Criando conta..." : "Criar conta"}
       </Button>
 
       {(pendingEmail || email) && (
         <Button
           type="button"
-          variant="flat"
-          className="w-full"
+          variant="light"
+          color="primary"
+          size="sm"
+          className="mx-auto"
           isLoading={resending}
           onClick={handleResend}
         >

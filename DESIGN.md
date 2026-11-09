@@ -58,7 +58,7 @@ Three named levels, defined in `@layer components` in `app/globals.css`. Use the
 | `.text-title` | `text-xl sm:text-2xl font-black text-foreground` | Page and modal titles (one per screen) |
 | `.text-section` | `text-base sm:text-lg font-bold text-foreground` | Section headings inside a page/modal |
 | `.text-muted` | `text-sm text-default-500` | Subtitles, helper text, empty states |
-| `.text-display` | `text-3xl sm:text-5xl lg:text-6xl font-black leading-none tracking-tight` | **Only** the auth panel headline |
+| `.text-display` | `text-2xl sm:text-3xl lg:text-4xl font-normal leading-tight tracking-tight` | **Only** the auth picture caption (one word in `font-black`) |
 
 Other sizes come from the Tailwind scale plus one token: `text-2xs` (11px) for tiny uppercase labels. Arbitrary sizes (`text-[10px]`) are banned by ESLint.
 
@@ -86,7 +86,8 @@ The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card round
 | Primitive | Notes |
 |-----------|-------|
 | `Button` | `color`: `primary` · `secondary` (Sorteio only) · `danger` · `default`. `variant`: `solid` (main action) · `flat` (secondary action, e.g. Cancelar, Voltar) · `light` (tertiary / inline / icon). `size`: `sm` · `md` · `lg`. Supports `isLoading`, `isIconOnly`, `radius="full"`, `startContent`. One `solid` primary or secondary per action group. |
-| `Input`, `Select` | `rounded-xl`, `bg-default-100`, `border-default-200`, focus ring `primary`. Always pass `label` or `aria-label`. |
+| `Input`, `Select` | `rounded-xl`, `bg-default-100`, `border-default-200`, focus ring `primary`. Always pass `label` or `aria-label`. `Input` sizes `sm` · `md` · `lg` (auth); `endContent` is an interactive trailing slot. |
+| `PasswordInput` | `Input` with a show/hide toggle (`aria-pressed`). Use for every password field. |
 | `Modal`, `ModalHeader`, `ModalBody`, `ModalFooter` | Native `<dialog>`. Header holds a `.text-title` and optional `.text-muted` subtitle. Footer: secondary action (`flat`) first, primary action last; full width on mobile. |
 | `Surface` | Page-level card: `rounded-2xl bg-content1 shadow-2xl p-4 sm:p-6`. Use for any standalone content block outside a modal. |
 | `Alert` | Inline status box, `tone`: `danger` · `warning` · `success` · `info`. `rounded-lg`, `bg-<tone>/10`, `text-sm font-medium`. Use instead of hand-rolled colored boxes. |
@@ -98,7 +99,7 @@ The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card round
 
 - **App shell**: `app/layout.tsx` renders the single `<Toaster position="top-center" richColors theme="system" />`. Pages never render their own Toaster. Toast colors are remapped to the tokens in `app/globals.css` (sonner's `--normal-*`, `--success-*`, `--error-*`… variables), so they follow the palette.
 - **Home**: sticky header with `BrandLockup` left of the search (`bg-content1/95 backdrop-blur-sm border-b border-divider shadow-lg`), content in `max-w-7xl mx-auto px-3 sm:px-6`.
-- **Auth screen**: `AuthShell` (`components/auth/auth-shell.tsx`) is the one sign-in layout, used by `/` when there's no Sessão and by every `/auth` route (via `app/auth/layout.tsx`). Desktop: two columns, the pitch panel on the left (sticky, full height) and a `max-w-sm` content column. Mobile: the panel becomes a band on top (lockup + headline; the paragraph and the scoreboard hide). The panel draws a futsal court from above in `panel-foreground` at low opacity (mowing stripes, markings, the mark as a watermark in the center circle) behind the lockup, the `.text-display` headline and an example scoreboard (labelled as an example). Content sits directly on `bg-background`, no `Surface`: `AuthPanel` (login/sign-up switcher), the confirm form, or `LoadingState`. Voice is pelada-friendly ("Bora pro jogo"), plain and short.
+- **Auth screen**: `AuthShell` (`components/auth/auth-shell.tsx`) is the one sign-in layout, used by `/` when there's no Sessão and by every `/auth` route (via `app/auth/layout.tsx`). A `bg-background` card (`sm:rounded-3xl`, `shadow-2xl`) floats over a full-bleed night pitch that shows in the margins. Inside: the content column (`max-w-sm`, centered) and an inset pitch picture (`rounded-2xl`, `.on-panel`) on the right, a band on top on mobile. The picture is drawn, not photographed (`NightPitch`: SVG grass grain, mowing stripes, blurred bands of floodlight and shadow, faint markings, a lone ball from `sm` up), with pill tags top-right ("Futsal", "Society") and a caption bottom-left: mark + `.text-display` line with one `font-black` word. `AuthPanel` centers mark, title ("Bora pro jogo!") and the inline switch link ("Primeira vez aqui? Criar conta"); fields are `size="lg"` with placeholder + `aria-label`, passwords use `PasswordInput`, the submit is `size="lg" radius="full"`. No links to flows that don't exist (password reset, social login).
 - Mobile first: everything must work at 375px with no horizontal scroll.
 
 ## Interaction

@@ -172,7 +172,7 @@ html [data-sonner-toaster][data-theme] {
     @apply text-sm text-default-500;
   }
   .text-display {
-    @apply text-3xl font-black leading-none tracking-tight sm:text-5xl lg:text-6xl;
+    @apply text-2xl font-normal leading-tight tracking-tight sm:text-3xl lg:text-4xl;
   }
   /* Inside the navy panel the mark inverts, as on the dark canvas. */
   .on-panel {

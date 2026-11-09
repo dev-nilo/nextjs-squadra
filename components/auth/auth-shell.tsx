@@ -1,103 +1,116 @@
 import { Logo } from "@/components/ui/logo";
 
 /**
- * Full-screen auth layout: the "pitch" brand panel (left on desktop, a band on top on mobile)
- * and a content column. Shared by `/`, `/auth`, `/auth/confirm` and `/auth/callback`.
+ * Full-screen auth layout, shared by `/` (no Sessão) and every `/auth` route.
+ * A floating card over the night pitch: content column on the left, an inset pitch picture
+ * on the right (a band on top on mobile).
  */
 export function AuthShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-background lg:grid lg:grid-cols-2">
-      <PitchPanel />
-      <main className="flex justify-center px-4 py-8 sm:py-12 lg:items-center">
-        <div className="w-full max-w-sm">{children}</div>
-      </main>
+    <div className="relative isolate min-h-screen bg-panel text-panel-foreground sm:p-3 lg:p-4">
+      <NightPitch id="frame" className="fixed inset-0 -z-10 h-full w-full" />
+      <div className="grid min-h-screen content-start gap-2 bg-background p-2 text-foreground shadow-2xl sm:min-h-[calc(100vh-1.5rem)] sm:rounded-3xl sm:p-3 lg:min-h-[calc(100vh-2rem)] lg:grid-cols-2 lg:content-stretch">
+        <main className="order-2 flex justify-center px-3 py-8 sm:py-12 lg:order-1 lg:items-center">
+          <div className="w-full max-w-sm">{children}</div>
+        </main>
+        <PitchPicture />
+      </div>
     </div>
   );
 }
 
-function PitchPanel() {
+function PitchPicture() {
   return (
-    <aside className="on-panel relative isolate overflow-hidden bg-panel text-panel-foreground lg:sticky lg:top-0 lg:h-screen">
-      <PitchMarkings />
-      <div className="relative flex h-full flex-col gap-6 px-6 py-7 sm:gap-10 sm:px-10 sm:py-10 lg:justify-between lg:px-14 lg:py-12">
-        <div className="flex items-center gap-2.5">
-          <Logo className="h-11 w-11 sm:h-12 sm:w-12" />
-          <span className="text-2xl font-black tracking-tight leading-none sm:text-3xl">Squadra</span>
-        </div>
-
-        <div className="flex max-w-lg flex-col gap-4">
-          <p className="text-display text-balance">Pelada boa começa com time equilibrado.</p>
-          <p className="hidden text-base text-panel-foreground/75 sm:block">
-            Cadastre o elenco em cartas, sorteie os times pela média e mande a escalação no grupo.
-          </p>
-        </div>
-
-        <Scoreboard />
-      </div>
+    <aside className="on-panel relative isolate order-1 flex min-h-56 flex-col justify-between overflow-hidden rounded-2xl bg-panel p-4 text-panel-foreground sm:min-h-72 sm:p-6 lg:order-2 lg:min-h-0 lg:p-8">
+      <NightPitch id="picture" className="absolute inset-0 -z-10 h-full w-full" withBall />
+      <ul className="flex justify-end gap-2" aria-label="Modalidades">
+        {["Futsal", "Society"].map((tag) => (
+          <li
+            key={tag}
+            className="rounded-full border border-panel-foreground/40 bg-panel/40 px-3 py-1 text-sm font-medium backdrop-blur-sm"
+          >
+            {tag}
+          </li>
+        ))}
+      </ul>
+      <p className="text-display flex max-w-xl items-start gap-3 text-balance">
+        <Logo className="mt-0.5 h-7 w-7 sm:h-9 sm:w-9" />
+        <span>
+          Pelada boa começa com time <strong className="font-black">equilibrado</strong>.
+        </span>
+      </p>
     </aside>
   );
 }
 
-/** A futsal court seen from above (40×20 m, 30 units per meter), sliced to fill the panel. */
-function PitchMarkings() {
-  const stripes = Array.from({ length: 21 }, (_, i) => i).filter((i) => i % 2 === 0);
+/**
+ * A pitch at night, drawn rather than photographed: grass grain (SVG noise), mowing stripes,
+ * rolling bands of floodlight and shadow, faint markings and, optionally, a lone ball.
+ * `id` keeps filter/gradient ids unique when the picture is drawn twice on a page.
+ */
+function NightPitch({ id, className, withBall = false }: { id: string; className: string; withBall?: boolean }) {
+  const grain = `${id}-grain`;
+  const soft = `${id}-soft`;
+  const flood = `${id}-flood`;
   return (
     <svg
       aria-hidden="true"
-      viewBox="0 0 640 1240"
+      viewBox="0 0 800 1000"
       preserveAspectRatio="xMidYMid slice"
-      className="pointer-events-none absolute inset-0 -z-10 h-full w-full"
+      className={`pointer-events-none ${className}`}
     >
-      {/* mowing stripes, 2 m wide */}
-      {stripes.map((i) => (
-        <rect key={i} x="0" y={20 + i * 60} width="640" height="60" fill="currentColor" fillOpacity="0.025" />
+      <defs>
+        <filter id={grain} x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.85 0.12" numOctaves="2" seed="11" />
+          <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0.9 0 0 0 -0.38" />
+        </filter>
+        <filter id={soft} x="-20%" y="-50%" width="140%" height="200%">
+          <feGaussianBlur stdDeviation="30" />
+        </filter>
+        <radialGradient id={flood} cx="0.85" cy="0.05" r="0.9">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.22" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      {/* mowing stripes */}
+      {Array.from({ length: 10 }, (_, i) => (
+        <rect key={i} x="0" y={i * 100} width="800" height="50" fill="currentColor" fillOpacity="0.018" />
       ))}
-      {/* the mark as a watermark in the center circle */}
-      <path
-        fill="currentColor"
-        fillOpacity="0.07"
-        d="M320 530 A90 90 0 0 0 320 710 A45 45 0 0 0 320 620 A45 45 0 0 1 320 530 Z"
-      />
-      <g fill="none" stroke="currentColor" strokeOpacity="0.18" strokeWidth="3" vectorEffect="non-scaling-stroke">
-        <rect x="20" y="20" width="600" height="1200" />
-        <path d="M20 620 H620" />
-        <circle cx="320" cy="620" r="90" />
-        <path d="M95 20 A180 180 0 0 0 275 200 H365 A180 180 0 0 0 545 20" />
-        <path d="M95 1220 A180 180 0 0 1 275 1040 H365 A180 180 0 0 1 545 1220" />
-        <path d="M275 20 V6 H365 V20 M275 1220 V1234 H365 V1220" />
+
+      {/* rolling light and shadow, like terrain under floodlights */}
+      <g filter={`url(#${soft})`}>
+        <path d="M-100 40 C 200 -20, 460 140, 900 30 L 900 140 C 460 250, 200 110, -100 170 Z" fill="black" fillOpacity="0.4" />
+        <path d="M-100 210 C 150 120, 420 300, 900 170 L 900 300 C 460 410, 170 240, -100 340 Z" fill="currentColor" fillOpacity="0.2" />
+        <path d="M-100 430 C 220 350, 500 560, 900 410 L 900 540 C 520 670, 200 500, -100 580 Z" fill="black" fillOpacity="0.5" />
+        <path d="M-100 650 C 200 590, 520 760, 900 630 L 900 750 C 520 870, 220 730, -100 790 Z" fill="currentColor" fillOpacity="0.16" />
+        <path d="M-100 850 C 260 790, 540 960, 900 850 L 900 1100 L -100 1100 Z" fill="black" fillOpacity="0.5" />
       </g>
-      <g fill="currentColor" fillOpacity="0.3">
-        <circle cx="320" cy="620" r="5" />
+      <rect width="800" height="1000" fill={`url(#${flood})`} />
+
+      {/* grass grain */}
+      <rect width="800" height="1000" filter={`url(#${grain})`} opacity="0.09" />
+
+      {/* faint markings */}
+      <g fill="none" stroke="currentColor" strokeOpacity="0.12" strokeWidth="2" vectorEffect="non-scaling-stroke">
+        <path d="M0 500 H800" />
+        <circle cx="400" cy="500" r="120" />
       </g>
+
+      {withBall && (
+        <g transform="translate(560 760)" className="hidden sm:block">
+          <ellipse cx="6" cy="15" rx="17" ry="5" fill="black" fillOpacity="0.4" />
+          <circle r="13" fill="currentColor" />
+          <path
+            d="M-12 -4 Q0 -8 12 -4 M-12 5 Q0 9 12 5 M-4 -12 Q-6 -8 -4 -5 M4 -12 Q6 -8 4 -5"
+            fill="none"
+            stroke="black"
+            strokeOpacity="0.35"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          />
+        </g>
+      )}
     </svg>
-  );
-}
-
-/** The old logo's scoreboard, now saying what the app does. Labelled as an example. */
-function Scoreboard() {
-  return (
-    <figure className="hidden flex-col gap-2 sm:flex">
-      <div className="inline-flex w-fit items-center gap-4 rounded-xl bg-panel-foreground px-4 py-3 text-panel shadow-2xl">
-        <Crest letter="A" className="bg-team-1" />
-        <span className="text-3xl font-black tabular-nums leading-none">72</span>
-        <span className="text-xl font-black leading-none opacity-50" aria-hidden="true">×</span>
-        <span className="text-3xl font-black tabular-nums leading-none">71</span>
-        <Crest letter="B" className="bg-team-2" />
-      </div>
-      <figcaption className="text-xs font-medium text-panel-foreground/60">
-        Exemplo de sorteio: médias dos dois times, 1 ponto de diferença
-      </figcaption>
-    </figure>
-  );
-}
-
-function Crest({ letter, className }: { letter: string; className: string }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-background ${className}`}
-    >
-      {letter}
-    </span>
   );
 }
