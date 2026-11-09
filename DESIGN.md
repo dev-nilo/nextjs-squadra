@@ -6,9 +6,20 @@ Stack: Tailwind CSS 3, tokens as RGB channels in `app/globals.css`, mapped in `t
 
 ---
 
+## Brand
+
+The logo is a navy wavy seal (`#1E4360`) holding a vintage leather ball, two tickets and a 1:0 scoreboard, drawn in cream (`#F2EEE6`). The whole palette derives from those two colors: cream paper canvas, navy ink and actions.
+
+- **Component**: `Logo` (`components/ui/logo.tsx`) renders the seal as inline SVG from `logo-paths.ts` (traced from the artwork). `BrandLockup` is seal + "Squadra" wordmark (`font-black tracking-tight text-brand`); `size`: `sm` (header, auth modal) · `lg` + `stacked` (auth pages).
+- **Where it appears**: home header (lockup left of the search), auth pages and auth modal, the exported Times Sorteados PNG, the loader (`LoadingState` spins only the seal outline, still under `prefers-reduced-motion`), and the empty Elenco state.
+- **Not** used as a decorative motif elsewhere. The Jogador card and the OVR stay as they are.
+- **Static assets** (`public/icon.svg`, `icon-*-32x32.png`, `apple-icon.png`, `icon-192/512.png`, `icon-maskable-512.png`, `app/opengraph-image.png`) are generated from the same paths. The SVG favicon inverts under `prefers-color-scheme: dark`.
+- No paper texture: the canvas is flat cream.
+
 ## Theme
 
 - Light and dark follow the OS (`next-themes`, `defaultTheme="system"`, class strategy). There is no toggle.
+- Light is cream paper with navy ink; dark is deep navy (`#0C1620`) with cream text.
 - Every token has a light value under `:root` and a dark value under `.dark`. Only use tokens, so both themes stay correct for free.
 - Any change must be checked in **both** themes.
 
@@ -16,17 +27,18 @@ Stack: Tailwind CSS 3, tokens as RGB channels in `app/globals.css`, mapped in `t
 
 | Token | Use |
 |-------|-----|
-| `background` / `foreground` | Page canvas and default text |
+| `background` / `foreground` | Page canvas (cream / deep navy) and default text (navy ink / cream) |
+| `brand` / `brand-foreground` | **Logo only**: seal fill and its line work. Navy/cream in light, swapped in dark. Never use for UI actions (that's `primary`). |
 | `content1` | Surfaces: modals, cards, header, menus |
 | `content2`–`content4` | Nested / raised fills |
-| `default-50…900`, `default` | Neutrals: input fills (`default-100`), borders (`default-200/300`), muted text (`default-400/500/600`) |
+| `default-50…900`, `default` | Neutrals (warm paper tones in light, navy-grays in dark): input fills (`default-100`), borders (`default-200/300`), muted text (`default-400/500/600`) |
 | `divider` | Hairlines and borders between regions |
-| `primary` (+ `50…900`) | Green. Main action, selection, focus, brand accents |
-| `secondary` | Purple. **Reserved for Sorteio actions** (Sortear Times, Sortear, Sortear Novamente) |
-| `danger` | Destructive actions and errors |
-| `warning` / `warning-600` | Warnings (`warning-600` for text on `warning/10`) |
-| `success` | Positive confirmation |
-| `overlay` | Modal backdrop scrim (black in both themes), used as `backdrop:bg-overlay/50` |
+| `primary` (+ `50…900`) | Navy `#1E4360` in light; light steel blue `#8FB2D1` in dark (navy would vanish on the navy canvas). Main action, selection, focus. `primary-600` is the solid hover. |
+| `secondary` | Pitch green. **Reserved for Sorteio actions** (Sortear Times, Sortear, Sortear Novamente). `#81B34D` in dark, deepened to `#467828` in light for AA with cream text. |
+| `danger` | Brick red. Destructive actions and errors |
+| `warning` / `warning-600` | Ochre. Warnings (`warning-600` for text on `warning/10`) |
+| `success` | Cool teal-green, kept distinct from the Sorteio green. Positive confirmation |
+| `overlay` | Modal backdrop scrim (near-black navy in both themes), used as `backdrop:bg-overlay/50` |
 
 Rules:
 - No raw Tailwind palette colors (`gray-*`, `zinc-*`, `white`, `black`, `red-*`…) and no hex/arbitrary colors in `app/`, `components/` or `lib/`. ESLint enforces this.
@@ -74,14 +86,15 @@ The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card round
 | `Modal`, `ModalHeader`, `ModalBody`, `ModalFooter` | Native `<dialog>`. Header holds a `.text-title` and optional `.text-muted` subtitle. Footer: secondary action (`flat`) first, primary action last; full width on mobile. |
 | `Surface` | Page-level card: `rounded-2xl bg-content1 shadow-2xl p-4 sm:p-6`. Use for any standalone content block outside a modal. |
 | `Alert` | Inline status box, `tone`: `danger` · `warning` · `success` · `info`. `rounded-lg`, `bg-<tone>/10`, `text-sm font-medium`. Use instead of hand-rolled colored boxes. |
-| `FullScreenLoader` | Centered spinner + label on `bg-background`, full viewport. The only loading state for routes and route-level fallbacks. |
+| `FullScreenLoader` | Centered spinning seal + label on `bg-background`, full viewport. The only loading state for routes and route-level fallbacks. |
 | `PlayerAvatar` | Round avatar with image → icon → initials fallback. |
+| `Logo`, `BrandLockup` | See **Brand**. |
 
 ## Layout
 
-- **App shell**: `app/layout.tsx` renders the single `<Toaster position="top-center" richColors theme="system" />`. Pages never render their own Toaster.
-- **Home**: sticky header (`bg-content1/95 backdrop-blur-sm border-b border-divider shadow-lg`), content in `max-w-7xl mx-auto px-3 sm:px-6`.
-- **Auth routes** (`/auth`, `/auth/confirm`, `/auth/callback`) share `app/auth/layout.tsx`: full-height, centered, `max-w-md` column on `bg-background`. Content goes in a `Surface`.
+- **App shell**: `app/layout.tsx` renders the single `<Toaster position="top-center" richColors theme="system" />`. Pages never render their own Toaster. Toast colors are remapped to the tokens in `app/globals.css` (sonner's `--normal-*`, `--success-*`, `--error-*`… variables), so they follow the palette.
+- **Home**: sticky header with `BrandLockup` left of the search (`bg-content1/95 backdrop-blur-sm border-b border-divider shadow-lg`), content in `max-w-7xl mx-auto px-3 sm:px-6`.
+- **Auth routes** (`/auth`, `/auth/confirm`, `/auth/callback`) share `app/auth/layout.tsx`: full-height, centered, `max-w-md` column on `bg-background`. Pages with a form put a `BrandLockup size="lg" stacked` above their `Surface`; loading states don't (the spinning seal is already the brand).
 - Mobile first: everything must work at 375px with no horizontal scroll.
 
 ## Interaction
@@ -89,7 +102,7 @@ The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card round
 - Focus: `focus-visible:ring-2 ring-primary` on every interactive element.
 - Selection: `ring-2 ring-primary` plus a `primary/10` tint.
 - Hover on rows: border shifts toward `primary/40–50`. Only the Jogador card scales (`sm:hover:scale-105`).
-- Motion: `transition-colors` / `transition-opacity`; `animate-scale-in` for elements that pop in (selection badge).
+- Motion: `transition-colors` / `transition-opacity`; `animate-scale-in` for elements that pop in (selection badge); `animate-spin-slow` only for the loader seal.
 
 ## Export (Times Sorteados PNG)
 
