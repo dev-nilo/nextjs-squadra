@@ -22,6 +22,14 @@ const config = {
         focus: "rgb(var(--focus) / <alpha-value>)",
         divider: "rgb(var(--divider) / <alpha-value>)",
         overlay: "rgb(var(--overlay) / <alpha-value>)",
+        team: {
+          1: "rgb(var(--team-1) / <alpha-value>)",
+          2: "rgb(var(--team-2) / <alpha-value>)",
+          3: "rgb(var(--team-3) / <alpha-value>)",
+          4: "rgb(var(--team-4) / <alpha-value>)",
+          5: "rgb(var(--team-5) / <alpha-value>)",
+          6: "rgb(var(--team-6) / <alpha-value>)",
+        },
         brand: {
           DEFAULT: "rgb(var(--brand) / <alpha-value>)",
           foreground: "rgb(var(--brand-foreground) / <alpha-value>)",

@@ -32,15 +32,14 @@ export function getLocalStorageKey(userId?: string | null): string {
     return userId ? `${LOCAL_STORAGE_KEY}:user:${userId}` : `${LOCAL_STORAGE_KEY}:guest`;
 }
 
+/** Team kit colors by Time index (`--team-1…6` tokens). `crest` fills the team badge, `ring` marks a drop target. */
 export const TEAM_COLORS = [
-    { color: "bg-primary/10", borderColor: "border-primary/20", headerColor: "text-primary" },
-    { color: "bg-danger/10", borderColor: "border-danger/20", headerColor: "text-danger" },
-    { color: "bg-success/10", borderColor: "border-success/20", headerColor: "text-success" },
-    { color: "bg-warning/10", borderColor: "border-warning/20", headerColor: "text-warning" },
-    { color: "bg-secondary/10", borderColor: "border-secondary/20", headerColor: "text-secondary" },
-    { color: "bg-default/10", borderColor: "border-default/20", headerColor: "text-default-foreground" },
-    { color: "bg-primary/10", borderColor: "border-primary/20", headerColor: "text-primary" },
-    { color: "bg-danger/10", borderColor: "border-danger/20", headerColor: "text-danger" },
+    { crest: "bg-team-1", ring: "ring-team-1" },
+    { crest: "bg-team-2", ring: "ring-team-2" },
+    { crest: "bg-team-3", ring: "ring-team-3" },
+    { crest: "bg-team-4", ring: "ring-team-4" },
+    { crest: "bg-team-5", ring: "ring-team-5" },
+    { crest: "bg-team-6", ring: "ring-team-6" },
 ];
 
 export function getTeamPresentation(index: number) {

@@ -15,16 +15,19 @@ export function Logo({ className = "h-8 w-8", tossing = false, title }: LogoProp
   return (
     <svg
       viewBox="0 0 100 100"
-      className={`shrink-0 ${tossing ? "animate-coin-toss" : ""} ${className}`}
+      // Both colors live on the root: `color` (navy half, ring) and the inherited `fill` (cream half).
+      // Children only use currentColor or inherit, because html-to-image (PNG export) copies the
+      // computed style of the <svg> root but clones its children without their class styles.
+      className={`shrink-0 text-brand fill-brand-foreground ${tossing ? "animate-coin-toss" : ""} ${className}`}
       role={title ? "img" : undefined}
       aria-hidden={title ? undefined : true}
       aria-label={title}
     >
-      <circle cx="50" cy="50" r="34" className="fill-brand-foreground" />
-      <path className="fill-brand" d="M50 16 A34 34 0 0 0 50 84 A17 17 0 0 0 50 50 A17 17 0 0 1 50 16 Z" />
-      <circle cx="50" cy="50" r="34" fill="none" strokeWidth="5" className="stroke-brand" />
-      <path d="M50 3 V16 M50 84 V97" strokeWidth="5" strokeLinecap="round" className="stroke-brand" />
-      <circle cx="50" cy="50" r="4.2" strokeWidth="2.4" className="fill-brand-foreground stroke-brand" />
+      <circle cx="50" cy="50" r="34" />
+      <path fill="currentColor" d="M50 16 A34 34 0 0 0 50 84 A17 17 0 0 0 50 50 A17 17 0 0 1 50 16 Z" />
+      <circle cx="50" cy="50" r="34" fill="none" stroke="currentColor" strokeWidth="5" />
+      <path d="M50 3 V16 M50 84 V97" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
+      <circle cx="50" cy="50" r="4.2" stroke="currentColor" strokeWidth="2.4" />
     </svg>
   );
 }

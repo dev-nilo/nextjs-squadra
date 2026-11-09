@@ -40,11 +40,12 @@ The mark is **Meio-campo**: the pitch's center circle seen from above, split by 
 | `warning` / `warning-600` | Ochre. Warnings (`warning-600` for text on `warning/10`) |
 | `success` | Cool teal-green, kept distinct from the Sorteio green. Positive confirmation |
 | `overlay` | Modal backdrop scrim (near-black navy in both themes), used as `backdrop:bg-overlay/50` |
+| `team-1…6` | Vintage kit colors for Times, by index: navy, brick, pitch green, ochre, petrol, wine. Lighter in dark. **Only** for team identity (the crest), never semantic. |
 
 Rules:
 - No raw Tailwind palette colors (`gray-*`, `zinc-*`, `white`, `black`, `red-*`…) and no hex/arbitrary colors in `app/`, `components/` or `lib/`. ESLint enforces this.
 - Tints use opacity on a token: `bg-primary/10`, `border-danger/20`.
-- Team colors (`getTeamPresentation` in `lib/constants.ts`) cycle through the semantic tokens; that's the only place `secondary` appears outside Sorteio actions.
+- Team colors (`getTeamPresentation` in `lib/constants.ts`) cycle through `team-1…6`. Never use `danger`/`success` for a Time: a red team reads as an error.
 - Attribute values use `getStatColor` (`lib/stat-color.ts`): ≥80 `success`, ≥70 `primary`, ≥50 `warning-600`, else `danger`.
 
 ## Typography
@@ -108,6 +109,10 @@ The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card round
 ## Export (Times Sorteados PNG)
 
 The exported image follows the active theme: its background is read from the `--background` token at export time, never a hardcoded color.
+
+- **Layout is a team sheet (súmula)**: header with the lockup, date, player count and the **difference between the highest and lowest average** (the point of a balanced Sorteio). Each Time is one `bg-content1` surface: crest (`team-N` circle with the letter) + name + count, the average as a big `font-black` number, then a hairline-divided numbered list (`divide-divider`), no card per row. Avatars without a photo show initials.
+- Individual ratings are on screen only (`data-export-ignore`); the PNG shows names, positions and team averages.
+- `html-to-image` copies the computed style of an `<svg>` root but not of its children, so SVGs inside the export area keep their colors on the root (`color` + inherited `fill`) and children use `currentColor`/inheritance. `Logo` follows this.
 
 ## Checklist for a UI change
 

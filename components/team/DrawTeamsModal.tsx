@@ -6,7 +6,7 @@ import { Logo } from "@/components/ui/logo";
 import { Time } from "@/types";
 import { moveMember } from "@/lib/sorteio";
 import { getTeamPresentation } from "@/lib/constants";
-import { Download, Loader2, Shuffle, User } from "lucide-react";
+import { Download, Loader2, Shuffle } from "lucide-react";
 import { toast } from "sonner";
 import { Modal, ModalHeader, ModalBody } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ export const DrawTeamsModal = ({
         setDraggedPlayer({ playerId, fromTeam });
     };
 
-    const handleDragOver = (e: React.DragEvent<HTMLDivElement>, teamIndex: number) => {
+    const handleDragOver = (e: React.DragEvent<HTMLElement>, teamIndex: number) => {
         e.preventDefault();
         setDragOverTeam(teamIndex);
     };
@@ -97,6 +97,11 @@ export const DrawTeamsModal = ({
 
     if (!generatedTeams) return null;
 
+    const totalPlayers = generatedTeams.reduce((n, t) => n + t.members.length, 0);
+    const averages = generatedTeams.map((t) => t.avg);
+    const spread = Math.max(...averages) - Math.min(...averages);
+    const drawDate = new Date().toLocaleDateString("pt-BR");
+
     const gridCols =
         generatedTeams.length <= 2
             ? "grid-cols-1 sm:grid-cols-2"
@@ -149,69 +154,87 @@ export const DrawTeamsModal = ({
                 <div className="p-4 sm:p-6 overflow-x-hidden">
                     <div
                         ref={exportRef}
-                        className="bg-background rounded-xl p-3 sm:p-5 space-y-4"
+                        className="bg-background rounded-xl p-3 sm:p-5 flex flex-col gap-4"
                     >
                         <div
-                            className="flex items-center justify-between gap-3 pb-3 border-b border-divider"
+                            className="flex items-center justify-between gap-3 pb-4 border-b border-divider"
                             data-export-title
                         >
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
                                 <Logo className="h-10 w-10 sm:h-12 sm:w-12" />
-                                <div>
-                                <p className="text-lg sm:text-xl font-black text-brand tracking-tight">
-                                    Squadra
-                                </p>
-                                <p className="text-xs text-default-500 font-medium">
-                                    Times sorteados · {generatedTeams.length} times ·{" "}
-                                    {generatedTeams.reduce(
-                                        (n, t) => n + t.members.length,
-                                        0,
-                                    )}{" "}
-                                    jogadores
-                                </p>
+                                <div className="min-w-0">
+                                    <p className="text-lg sm:text-xl font-black text-brand tracking-tight leading-tight">
+                                        Squadra
+                                    </p>
+                                    <p className="text-xs text-default-500 font-medium">
+                                        <span className="whitespace-nowrap">{drawDate}</span> ·{" "}
+                                        <span className="whitespace-nowrap">{totalPlayers} jogadores</span>
+                                    </p>
                                 </div>
                             </div>
+                            {generatedTeams.length > 1 && (
+                                <div className="text-right shrink-0">
+                                    <p className="text-2xs font-bold uppercase tracking-wide text-default-500">
+                                        Diferença<span className="hidden sm:inline"> de média</span>
+                                    </p>
+                                    <p className="text-xl sm:text-2xl font-black tabular-nums text-foreground leading-tight">
+                                        {spread} {spread === 1 ? "ponto" : "pontos"}
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
-                        <div className={`grid gap-3 sm:gap-4 ${gridCols}`}>
+                        <div className={`grid gap-3 sm:gap-4 items-start ${gridCols}`}>
                             {generatedTeams.map((team, idx) => {
                                 const presentation = getTeamPresentation(idx);
+                                const letter = team.name.split(" ").pop();
                                 return (
-                                <div
+                                <section
                                     key={idx}
+                                    aria-label={team.name}
                                     onDragOver={(e) => handleDragOver(e, idx)}
                                     onDragLeave={handleDragLeave}
                                     onDrop={() => handleDrop(idx)}
                                     className={`
-                                        rounded-xl border-2 overflow-hidden bg-content1
-                                        transition-colors
-                                        ${presentation.borderColor}
-                                        ${presentation.color}
-                                        ${dragOverTeam === idx ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}
+                                        rounded-xl border border-divider bg-content1 overflow-hidden
+                                        transition-shadow
+                                        ${dragOverTeam === idx ? `ring-2 ${presentation.ring} ring-offset-2 ring-offset-background` : ""}
                                     `}
                                 >
-                                    <div
-                                        className={`flex flex-col items-center justify-center px-3 py-3 border-b ${presentation.borderColor} bg-content1/80`}
-                                    >
-                                        <h3
-                                            className={`text-base sm:text-lg font-black tracking-tight ${presentation.headerColor}`}
+                                    <header className="flex items-center gap-3 px-3 py-3 border-b border-divider">
+                                        <span
+                                            aria-hidden="true"
+                                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-black text-background ${presentation.crest}`}
                                         >
-                                            {team.name}
-                                        </h3>
-                                        <span className="text-2xs font-bold text-default-500 mt-0.5 uppercase tracking-wide">
-                                            {team.members.length} jogadores · média{" "}
-                                            {team.avg}
+                                            {letter}
                                         </span>
-                                    </div>
-
-                                    <div className="p-2 space-y-1.5 min-h-[140px] sm:min-h-[180px]">
-                                        {team.members.length === 0 ? (
-                                            <p className="text-center text-xs text-default-400 py-8">
-                                                Arraste jogadores para cá
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="text-base font-black tracking-tight text-foreground leading-tight truncate">
+                                                {team.name}
+                                            </h3>
+                                            <p className="text-2xs font-bold uppercase tracking-wide text-default-500">
+                                                {team.members.length}{" "}
+                                                {team.members.length === 1 ? "jogador" : "jogadores"}
                                             </p>
-                                        ) : (
-                                            team.members.map((player) => (
-                                                <div
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                            <p className="text-2xl font-black tabular-nums text-foreground leading-none">
+                                                {team.avg}
+                                            </p>
+                                            <p className="text-2xs font-bold uppercase tracking-wide text-default-500 mt-0.5">
+                                                Média
+                                            </p>
+                                        </div>
+                                    </header>
+
+                                    {team.members.length === 0 ? (
+                                        <p className="text-center text-muted py-10">
+                                            Arraste jogadores para cá
+                                        </p>
+                                    ) : (
+                                        <ol className="divide-y divide-divider">
+                                            {team.members.map((player, i) => (
+                                                <li
                                                     key={player.id}
                                                     draggable
                                                     onDragStart={() =>
@@ -222,37 +245,33 @@ export const DrawTeamsModal = ({
                                                         setDragOverTeam(null);
                                                     }}
                                                     aria-label={`${player.name}, ${player.position}, arraste para mover de ${team.name}`}
-                                                    className="flex items-center gap-2.5 bg-content1 border border-divider hover:border-primary/40 rounded-lg p-2 cursor-grab active:cursor-grabbing transition-colors touch-manipulation"
+                                                    className="flex items-center gap-2.5 px-3 py-2 cursor-grab active:cursor-grabbing hover:bg-default-50 transition-colors touch-manipulation"
                                                 >
+                                                    <span className="w-5 shrink-0 text-right text-xs font-bold tabular-nums text-default-400">
+                                                        {i + 1}
+                                                    </span>
                                                     <PlayerAvatar
                                                         src={player.image}
                                                         name={player.name}
-                                                        icon={
-                                                            !player.image ? (
-                                                                <User size={14} />
-                                                            ) : undefined
-                                                        }
                                                         size="sm"
                                                     />
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="font-bold text-sm truncate text-foreground">
-                                                            {player.name}
-                                                        </div>
-                                                        <div className="text-2xs uppercase font-bold text-default-500">
-                                                            {player.position}
-                                                        </div>
-                                                    </div>
+                                                    <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">
+                                                        {player.name}
+                                                    </span>
+                                                    <span className="shrink-0 rounded-full bg-default-100 px-2 py-0.5 text-2xs font-bold uppercase tracking-wide text-default-600">
+                                                        {player.position}
+                                                    </span>
                                                     <span
                                                         data-export-ignore="true"
-                                                        className="text-sm font-black text-primary tabular-nums shrink-0"
+                                                        className="w-7 shrink-0 text-right text-sm font-black tabular-nums text-default-600"
                                                     >
                                                         {player.rating}
                                                     </span>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                </div>
+                                                </li>
+                                            ))}
+                                        </ol>
+                                    )}
+                                </section>
                                 );
                             })}
                         </div>

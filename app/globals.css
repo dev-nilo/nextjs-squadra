@@ -57,6 +57,14 @@
   --warning-foreground: 23 33 43;
   --danger: 178 50 40;
   --danger-foreground: 250 248 243;
+
+  /* Team colors: vintage kit colors, assigned by Time index. Not semantic. */
+  --team-1: 30 67 96;
+  --team-2: 168 58 42;
+  --team-3: 70 120 40;
+  --team-4: 140 94 12;
+  --team-5: 22 104 114;
+  --team-6: 118 42 72;
 }
 
 .dark {
@@ -112,6 +120,13 @@
   --warning-foreground: 12 22 32;
   --danger: 236 112 98;
   --danger-foreground: 12 22 32;
+
+  --team-1: 143 178 209;
+  --team-2: 232 128 108;
+  --team-3: 129 179 77;
+  --team-4: 232 178 84;
+  --team-5: 96 186 192;
+  --team-6: 214 128 160;
 }
 
 /* Sonner toasts on the design tokens (beats sonner's own [data-theme] palette by specificity). */
