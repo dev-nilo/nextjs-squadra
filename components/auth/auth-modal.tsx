@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Modal, ModalHeader, ModalBody } from "@/components/ui/modal"
 import { Button } from "@/components/ui/button"
+import { BrandLockup } from "@/components/ui/logo"
 import { LoginForm, SignUpForm } from "./auth-form"
 
 interface AuthModalProps {
@@ -22,6 +23,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: AuthModalProps) {
   return (
     <Modal isOpen={open} onClose={() => onOpenChange(false)} className="max-w-md">
       <ModalHeader className="flex flex-col gap-1">
+        <BrandLockup className="mb-3" />
         <h2 className="text-title">{isLogin ? "Bem-vindo" : "Criar Conta"}</h2>
         <p className="text-muted">
           {isLogin

@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { FullScreenLoader } from "@/components/ui/full-screen-loader";
+import { BrandLockup, Logo } from "@/components/ui/logo";
 import { Surface } from "@/components/ui/surface";
 
 // Import refactored components
@@ -143,15 +144,18 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4">
             <div className="flex flex-col gap-3">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 justify-between">
-                <div className="flex-1 w-full min-w-0">
-                    <Input
-                        placeholder="Buscar jogador..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        startContent={<Search size={18} className="text-default-400 shrink-0" />}
-                        className="w-full"
-                        size="sm"
-                    />
+                <div className="flex flex-1 w-full min-w-0 items-center gap-3">
+                    <BrandLockup />
+                    <div className="flex-1 min-w-0">
+                        <Input
+                            placeholder="Buscar jogador..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            startContent={<Search size={18} className="text-default-400 shrink-0" />}
+                            className="w-full"
+                            size="sm"
+                        />
+                    </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 justify-between sm:justify-start w-full sm:w-auto">
@@ -246,7 +250,11 @@ export default function App() {
         <main className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
           {filteredPlayers.length === 0 ? (
             <div className="text-center py-12 sm:py-16 px-2">
-              <User size={64} className="mx-auto mb-4 text-default-400" aria-hidden="true" />
+              {searchQuery ? (
+                <User size={64} className="mx-auto mb-4 text-default-400" aria-hidden="true" />
+              ) : (
+                <Logo className="mx-auto mb-4 h-20 w-20 opacity-90" />
+              )}
               <p className="text-section">
                 {searchQuery ? "Nenhuma carta encontrada" : "Nenhuma carta criada ainda"}
               </p>

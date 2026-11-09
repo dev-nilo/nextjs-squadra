@@ -1,10 +1,10 @@
-import { Loader2 } from "lucide-react";
+import { Logo } from "./logo";
 
-/** Spinner + label. Use directly inside a layout that already centers on the viewport (e.g. app/auth/layout.tsx). */
+/** Spinning seal + label. Use directly inside a layout that already centers on the viewport (e.g. app/auth/layout.tsx). */
 export function LoadingState({ label = "Carregando..." }: { label?: string }) {
   return (
     <div role="status" className="flex flex-col items-center justify-center gap-4">
-      <Loader2 className="h-10 w-10 animate-spin text-primary" aria-hidden="true" />
+      <Logo spinning className="h-16 w-16" />
       <p className="text-muted">{label}</p>
     </div>
   );

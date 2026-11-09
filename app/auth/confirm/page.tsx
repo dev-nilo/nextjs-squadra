@@ -7,6 +7,7 @@ import { CheckCircle2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingState } from "@/components/ui/full-screen-loader";
 import { Surface } from "@/components/ui/surface";
+import { BrandLockup } from "@/components/ui/logo";
 import { Alert } from "@/components/ui/alert";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -69,43 +70,46 @@ function ConfirmContent() {
   };
 
   return (
-    <Surface>
-      <div className="flex flex-col gap-1 pb-6">
-        <div className="flex items-center gap-2">
-          <Mail size={22} className="text-primary" aria-hidden="true" />
-          <h1 className="text-title">Confirmar email</h1>
+    <>
+      <BrandLockup size="lg" stacked className="mb-6" />
+      <Surface>
+        <div className="flex flex-col gap-1 pb-6">
+          <div className="flex items-center gap-2">
+            <Mail size={22} className="text-primary" aria-hidden="true" />
+            <h1 className="text-title">Confirmar email</h1>
+          </div>
+          <p className="text-muted">
+            Clique no botão abaixo para ativar sua conta. Isso evita que o link expire
+            automaticamente por scanners de email.
+          </p>
         </div>
-        <p className="text-muted">
-          Clique no botão abaixo para ativar sua conta. Isso evita que o link expire
-          automaticamente por scanners de email.
-        </p>
-      </div>
-      <div className="flex flex-col gap-4">
-        {error && <Alert tone="danger">{decodeAuthDescription(error)}</Alert>}
+        <div className="flex flex-col gap-4">
+          {error && <Alert tone="danger">{decodeAuthDescription(error)}</Alert>}
 
-        {!canConfirm && !error && (
-          <Alert tone="warning">
-            Link incompleto. Abra o link mais recente do email de confirmação ou
-            cadastre-se novamente.
-          </Alert>
-        )}
+          {!canConfirm && !error && (
+            <Alert tone="warning">
+              Link incompleto. Abra o link mais recente do email de confirmação ou
+              cadastre-se novamente.
+            </Alert>
+          )}
 
-        <Button
-          color="primary"
-          className="w-full"
-          isDisabled={!canConfirm || loading}
-          isLoading={loading}
-          startContent={<CheckCircle2 size={18} />}
-          onClick={handleConfirm}
-        >
-          Confirmar minha conta
-        </Button>
+          <Button
+            color="primary"
+            className="w-full"
+            isDisabled={!canConfirm || loading}
+            isLoading={loading}
+            startContent={<CheckCircle2 size={18} />}
+            onClick={handleConfirm}
+          >
+            Confirmar minha conta
+          </Button>
 
-        <Button variant="flat" className="w-full" onClick={() => router.push("/auth")}>
-          Voltar ao login
-        </Button>
-      </div>
-    </Surface>
+          <Button variant="flat" className="w-full" onClick={() => router.push("/auth")}>
+            Voltar ao login
+          </Button>
+        </div>
+      </Surface>
+    </>
   );
 }
 

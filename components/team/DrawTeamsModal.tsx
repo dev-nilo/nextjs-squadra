@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
+import { Logo } from "@/components/ui/logo";
 import { Time } from "@/types";
 import { moveMember } from "@/lib/sorteio";
 import { getTeamPresentation } from "@/lib/constants";
@@ -154,8 +155,10 @@ export const DrawTeamsModal = ({
                             className="flex items-center justify-between gap-3 pb-3 border-b border-divider"
                             data-export-title
                         >
-                            <div>
-                                <p className="text-lg sm:text-xl font-black text-primary tracking-tight">
+                            <div className="flex items-center gap-3">
+                                <Logo className="h-10 w-10 sm:h-12 sm:w-12" />
+                                <div>
+                                <p className="text-lg sm:text-xl font-black text-brand tracking-tight">
                                     Squadra
                                 </p>
                                 <p className="text-xs text-default-500 font-medium">
@@ -166,6 +169,7 @@ export const DrawTeamsModal = ({
                                     )}{" "}
                                     jogadores
                                 </p>
+                                </div>
                             </div>
                         </div>
 
