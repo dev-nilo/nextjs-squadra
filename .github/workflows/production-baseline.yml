@@ -1,0 +1,59 @@
+name: Production baseline
+
+# One-time setup. Production's schema was built by hand from the old scripts/
+# before migrations existed. "check" diffs it against what the migrations build;
+# "repair" then records the baseline as already applied, so the migrate-production
+# job in CI only ever pushes migrations that come after it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "check: diff production against the migrations. repair: mark the baseline as applied."
+        type: choice
+        options: [check, repair]
+        default: check
+
+jobs:
+  baseline:
+    name: Production baseline (${{ inputs.action }})
+    runs-on: ubuntu-latest
+    environment: supabase-production
+    concurrency:
+      group: supabase-production
+      cancel-in-progress: false
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ secrets.PROD_PROJECT_REF }}
+      BASELINE: "20261109000000"
+    steps:
+      - name: Check production is configured
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN" && test -n "$PROJECT_REF" || {
+            echo "::error::Set SUPABASE_ACCESS_TOKEN and PROD_PROJECT_REF first. See docs/staging.md."
+            exit 1
+          }
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Migration history on production
+        run: npx supabase migration list --remote="$PROJECT_REF"
+      - name: Diff production against the baseline
+        if: inputs.action == 'check'
+        run: |
+          # Build the shadow database from the baseline only: later migrations
+          # haven't reached production yet and would show up as noise.
+          find supabase/migrations -name '*.sql' ! -name "${BASELINE}_*" -print -delete
+          # An empty diff means the baseline describes production exactly.
+          npx supabase db diff --remote="$PROJECT_REF" --schema public,storage | tee "$RUNNER_TEMP/diff.sql"
+          if grep -qE '^\s*(create|alter|drop|grant|revoke)' "$RUNNER_TEMP/diff.sql"; then
+            echo "::warning::Production differs from the baseline. Read the diff above before running repair."
+          else
+            echo "::notice::No schema differences: production matches the baseline. Safe to run repair."
+          fi
+      - name: Record the baseline as applied
+        if: inputs.action == 'repair'
+        run: npx supabase migration repair "$BASELINE" --status applied --remote="$PROJECT_REF" --yes

@@ -1,0 +1,49 @@
+name: Staging
+
+on:
+  schedule:
+    # Mondays. A free Supabase project pauses after a week without activity.
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+    inputs:
+      reset:
+        description: "Wipe staging and rebuild it from supabase/migrations and supabase/seed.sql"
+        type: boolean
+        default: false
+
+concurrency:
+  group: supabase-staging
+  cancel-in-progress: false
+
+jobs:
+  staging:
+    name: ${{ inputs.reset && 'Reset staging' || 'Keep staging awake' }}
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ secrets.STAGING_PROJECT_REF }}
+    steps:
+      - name: Check staging is configured
+        id: gate
+        run: |
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$PROJECT_REF" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Staging secrets are not set, skipping. See docs/staging.md."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v5
+        if: steps.gate.outputs.ready == 'true'
+      - uses: actions/setup-node@v5
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+        if: steps.gate.outputs.ready == 'true'
+      - name: Touch the database
+        if: steps.gate.outputs.ready == 'true' && !inputs.reset
+        run: npx supabase migration list --remote="$PROJECT_REF"
+      - name: Reset staging (migrations + seed)
+        if: steps.gate.outputs.ready == 'true' && inputs.reset
+        run: npx supabase db reset --remote="$PROJECT_REF" --yes
