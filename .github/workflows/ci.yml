@@ -39,6 +39,12 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      # Supabase binds 54321-54329, which sits inside Linux's default ephemeral range
+      # (32768-60999). An outgoing connection during the image pulls can grab one of
+      # those ports first and the DB container then fails with "address already in use".
+      # Moving the ephemeral range above 60000 keeps them free.
+      - name: Keep Supabase ports out of the ephemeral range
+        run: sudo sysctl -w net.ipv4.ip_local_port_range="60000 65000"
       - name: Start local Supabase (applies migrations + seed)
         run: npx supabase start --exclude studio,imgproxy,edge-runtime,logflare,vector,supavisor
       - name: Lint the schema
