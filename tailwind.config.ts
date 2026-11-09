@@ -22,6 +22,10 @@ const config = {
         focus: "rgb(var(--focus) / <alpha-value>)",
         divider: "rgb(var(--divider) / <alpha-value>)",
         overlay: "rgb(var(--overlay) / <alpha-value>)",
+        brand: {
+          DEFAULT: "rgb(var(--brand) / <alpha-value>)",
+          foreground: "rgb(var(--brand-foreground) / <alpha-value>)",
+        },
         content1: {
           DEFAULT: "rgb(var(--content1) / <alpha-value>)",
           foreground: "rgb(var(--content1-foreground) / <alpha-value>)",
