@@ -7,7 +7,9 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Superseded PR runs are cancelled; runs on main never are, so a production
+  # migration is never cut off by the next merge.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   checks:
@@ -77,3 +79,90 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
+
+  # Shared staging database: every PR from this repo pushes its migrations there
+  # once the checks pass, so the Vercel preview (pointed at staging) runs on the
+  # new schema. Skipped until the staging secrets exist (docs/staging.md).
+  migrate-staging:
+    name: Migrate staging
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: [checks, database]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: supabase-staging
+      cancel-in-progress: false
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ secrets.STAGING_PROJECT_REF }}
+    steps:
+      - name: Check staging is configured
+        id: gate
+        run: |
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$PROJECT_REF" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Staging secrets are not set, skipping. See docs/staging.md."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v5
+        if: steps.gate.outputs.ready == 'true'
+      - uses: actions/setup-node@v5
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+        if: steps.gate.outputs.ready == 'true'
+      - name: Pending migrations
+        if: steps.gate.outputs.ready == 'true'
+        run: npx supabase db push --remote="$PROJECT_REF" --dry-run --yes
+      - name: Apply migrations to staging
+        if: steps.gate.outputs.ready == 'true'
+        run: npx supabase db push --remote="$PROJECT_REF" --yes
+
+  # Production only changes here, after a merge to main and green checks.
+  migrate-production:
+    name: Migrate production
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [checks, database]
+    runs-on: ubuntu-latest
+    environment: supabase-production
+    concurrency:
+      group: supabase-production
+      cancel-in-progress: false
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ secrets.PROD_PROJECT_REF }}
+    steps:
+      - name: Check production is configured
+        id: gate
+        run: |
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$PROJECT_REF" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Production secrets are not set, skipping. See docs/staging.md."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v5
+        if: steps.gate.outputs.ready == 'true'
+      - uses: actions/setup-node@v5
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+        if: steps.gate.outputs.ready == 'true'
+      # Production was built by hand before migrations existed. If its history
+      # doesn't record the baseline, pushing would replay the whole schema on top
+      # of the live one, so stop and ask for the one-time repair instead.
+      - name: Pending migrations (refuse to replay the baseline)
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          npx supabase db push --remote="$PROJECT_REF" --dry-run --yes 2>&1 | tee "$RUNNER_TEMP/pending.txt"
+          if grep -q 20261109000000 "$RUNNER_TEMP/pending.txt"; then
+            echo "::error::Production has no record of the baseline migration. Run the 'Production baseline' workflow (check, then repair) first. See docs/staging.md."
+            exit 1
+          fi
+      - name: Apply migrations to production
+        if: steps.gate.outputs.ready == 'true'
+        run: npx supabase db push --remote="$PROJECT_REF" --yes

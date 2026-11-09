@@ -196,6 +196,7 @@ supabase/     → config local, migrations, seed
 ## Documentação adicional
 
 - [`docs/`](docs/) — `CONTEXT.md`, ADRs e docs para agentes
+- [`docs/staging.md`](docs/staging.md) — ambientes (local, staging, produção) e como as migrations chegam em cada um
 - [`CONTEXT.md`](CONTEXT.md) — glossário de domínio (Jogador, Elenco, Sorteio, Time...)
 - [`DESIGN.md`](DESIGN.md) — decisões de design/UI
 - [`AGENTS.md`](AGENTS.md) — orientação para agentes de IA neste repo
