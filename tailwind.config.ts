@@ -30,6 +30,10 @@ const config = {
           5: "rgb(var(--team-5) / <alpha-value>)",
           6: "rgb(var(--team-6) / <alpha-value>)",
         },
+        panel: {
+          DEFAULT: "rgb(var(--panel) / <alpha-value>)",
+          foreground: "rgb(var(--panel-foreground) / <alpha-value>)",
+        },
         brand: {
           DEFAULT: "rgb(var(--brand) / <alpha-value>)",
           foreground: "rgb(var(--brand-foreground) / <alpha-value>)",

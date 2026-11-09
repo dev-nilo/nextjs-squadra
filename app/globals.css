@@ -13,6 +13,10 @@
   --brand: 30 67 96;
   --brand-foreground: 242 238 230;
 
+  /* Auth "pitch" panel */
+  --panel: 30 67 96;
+  --panel-foreground: 242 238 230;
+
   --content1: 250 248 243;
   --content1-foreground: 23 33 43;
   --content2: 236 231 221;
@@ -75,6 +79,9 @@
 
   --brand: 242 238 230;
   --brand-foreground: 30 67 96;
+
+  --panel: 20 40 60;
+  --panel-foreground: 242 238 230;
 
   --content1: 19 32 45;
   --content1-foreground: 242 238 230;
@@ -163,6 +170,14 @@ html [data-sonner-toaster][data-theme] {
   }
   .text-muted {
     @apply text-sm text-default-500;
+  }
+  .text-display {
+    @apply text-3xl font-black leading-none tracking-tight sm:text-5xl lg:text-6xl;
+  }
+  /* Inside the navy panel the mark inverts, as on the dark canvas. */
+  .on-panel {
+    --brand: var(--panel-foreground);
+    --brand-foreground: var(--panel);
   }
 }
 

@@ -10,9 +10,9 @@ Stack: Tailwind CSS 3, tokens as RGB channels in `app/globals.css`, mapped in `t
 
 The mark is **Meio-campo**: the pitch's center circle seen from above, split by an S into two equal halves, with the halfway line above and below and the center spot. One drawing says S for Squadra, two Times and a balanced split. Navy (`#1E4360`) and cream (`#F2EEE6`); the whole palette derives from those two colors: cream paper canvas, navy ink and actions.
 
-- **Component**: `Logo` (`components/ui/logo.tsx`), inline geometric SVG on a 100×100 grid: circle r34 with a 5-unit ring, S halves of r17, halfway stubs, center spot. `BrandLockup` is mark + "Squadra" wordmark (`font-black tracking-tight text-brand`); `size`: `sm` (header, auth modal) · `lg` + `stacked` (auth pages).
+- **Component**: `Logo` (`components/ui/logo.tsx`), inline geometric SVG on a 100×100 grid: circle r34 with a 5-unit ring, S halves of r17, halfway stubs, center spot. `BrandLockup` is mark + "Squadra" wordmark (`font-black tracking-tight text-brand`); `size`: `sm` (header) · `lg` + `stacked`. The auth panel builds its own larger lockup.
 - **Small variant** for 16/32px (`public/icon.svg`, `icon-*-32x32.png`): no stubs and no spot, circle r44 with a 9-unit ring, so the S survives at tab size. Don't use the full mark below ~24px.
-- **Where it appears**: home header (lockup left of the search), auth pages and auth modal, the exported Times Sorteados PNG, the loader (`LoadingState` flips the mark like a coin toss, `animate-coin-toss`, still under `prefers-reduced-motion`), and the empty Elenco state.
+- **Where it appears**: home header (lockup left of the search), the auth panel (inverted via `.on-panel`), the exported Times Sorteados PNG, the loader (`LoadingState` flips the mark like a coin toss, `animate-coin-toss`, still under `prefers-reduced-motion`), and the empty Elenco state.
 - **Not** used as a decorative motif elsewhere. The Jogador card and the OVR stay as they are.
 - **Static assets** (`public/icon.svg`, `icon-*-32x32.png`, `apple-icon.png`, `icon-192/512.png`, `icon-maskable-512.png`, `app/opengraph-image.png`) follow the same geometry. The SVG favicon inverts under `prefers-color-scheme: dark`.
 - No paper texture: the canvas is flat cream.
@@ -29,6 +29,7 @@ The mark is **Meio-campo**: the pitch's center circle seen from above, split by 
 | Token | Use |
 |-------|-----|
 | `background` / `foreground` | Page canvas (cream / deep navy) and default text (navy ink / cream) |
+| `panel` / `panel-foreground` | The auth "pitch" panel: navy with cream in light, a lifted navy in dark. Wrap it in `.on-panel` so the mark inverts on it. |
 | `brand` / `brand-foreground` | **Logo only**: the mark's navy half and ring, and its cream half. Navy/cream in light, swapped in dark. Never use for UI actions (that's `primary`). |
 | `content1` | Surfaces: modals, cards, header, menus |
 | `content2`–`content4` | Nested / raised fills |
@@ -57,6 +58,7 @@ Three named levels, defined in `@layer components` in `app/globals.css`. Use the
 | `.text-title` | `text-xl sm:text-2xl font-black text-foreground` | Page and modal titles (one per screen) |
 | `.text-section` | `text-base sm:text-lg font-bold text-foreground` | Section headings inside a page/modal |
 | `.text-muted` | `text-sm text-default-500` | Subtitles, helper text, empty states |
+| `.text-display` | `text-3xl sm:text-5xl lg:text-6xl font-black leading-none tracking-tight` | **Only** the auth panel headline |
 
 Other sizes come from the Tailwind scale plus one token: `text-2xs` (11px) for tiny uppercase labels. Arbitrary sizes (`text-[10px]`) are banned by ESLint.
 
@@ -96,7 +98,7 @@ The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card round
 
 - **App shell**: `app/layout.tsx` renders the single `<Toaster position="top-center" richColors theme="system" />`. Pages never render their own Toaster. Toast colors are remapped to the tokens in `app/globals.css` (sonner's `--normal-*`, `--success-*`, `--error-*`… variables), so they follow the palette.
 - **Home**: sticky header with `BrandLockup` left of the search (`bg-content1/95 backdrop-blur-sm border-b border-divider shadow-lg`), content in `max-w-7xl mx-auto px-3 sm:px-6`.
-- **Auth routes** (`/auth`, `/auth/confirm`, `/auth/callback`) share `app/auth/layout.tsx`: full-height, centered, `max-w-md` column on `bg-background`. Pages with a form put a `BrandLockup size="lg" stacked` above their `Surface`; loading states don't (the tossing mark is already the brand).
+- **Auth screen**: `AuthShell` (`components/auth/auth-shell.tsx`) is the one sign-in layout, used by `/` when there's no Sessão and by every `/auth` route (via `app/auth/layout.tsx`). Desktop: two columns, the pitch panel on the left (sticky, full height) and a `max-w-sm` content column. Mobile: the panel becomes a band on top (lockup + headline; the paragraph and the scoreboard hide). The panel draws a futsal court from above in `panel-foreground` at low opacity (mowing stripes, markings, the mark as a watermark in the center circle) behind the lockup, the `.text-display` headline and an example scoreboard (labelled as an example). Content sits directly on `bg-background`, no `Surface`: `AuthPanel` (login/sign-up switcher), the confirm form, or `LoadingState`. Voice is pelada-friendly ("Bora pro jogo"), plain and short.
 - Mobile first: everything must work at 375px with no horizontal scroll.
 
 ## Interaction

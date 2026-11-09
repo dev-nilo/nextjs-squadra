@@ -6,7 +6,8 @@ import { Plus, X, Trash2, User, Shuffle, CheckCircle2, Loader2, Pencil, Search, 
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useElenco } from "@/hooks/use-elenco";
-import { AuthModal } from "@/components/auth/auth-modal";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { AuthPanel } from "@/components/auth/auth-panel";
 import { AuthErrorWatcher } from "@/components/auth/auth-error-watcher";
 import { UserMenu } from "@/components/auth/user-menu";
 import { isSupabaseConfigured } from "@/lib/sessao";
@@ -41,7 +42,6 @@ export default function App() {
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawModalOpen, setIsDrawModalOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isTeamConfigOpen, setIsTeamConfigOpen] = useState(false);
   const [isImportCsvOpen, setIsImportCsvOpen] = useState(false);
 
@@ -128,11 +128,9 @@ export default function App() {
     return (
       <>
         <AuthErrorWatcher />
-        <AuthModal
-          open={!isAuthenticated}
-          onOpenChange={() => {}}
-          onSuccess={() => setIsAuthModalOpen(false)}
-        />
+        <AuthShell>
+          <AuthPanel />
+        </AuthShell>
       </>
     );
   }
