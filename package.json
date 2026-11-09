@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset"
@@ -28,6 +29,7 @@
     "sonner": "^1.7.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",

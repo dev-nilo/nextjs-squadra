@@ -30,7 +30,7 @@ jobs:
       - run: npm run typecheck
 
   database:
-    name: Migrations and seed from scratch
+    name: Database and E2E
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -54,3 +54,26 @@ jobs:
           count=$(psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -tAc "select count(*) from public.players")
           echo "players: $count"
           test "$count" -eq 23
+      - name: Point the app at the local Supabase
+        run: |
+          npx supabase status -o json > "$RUNNER_TEMP/supabase.json"
+          echo "status keys: $(jq -r 'keys | join(", ")' "$RUNNER_TEMP/supabase.json")"
+          url=$(jq -r '.API_URL' "$RUNNER_TEMP/supabase.json")
+          key=$(jq -r '.ANON_KEY // .PUBLISHABLE_KEY' "$RUNNER_TEMP/supabase.json")
+          test -n "$url" && test "$url" != null
+          test -n "$key" && test "$key" != null
+          echo "NEXT_PUBLIC_SUPABASE_URL=$url" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$key" >> "$GITHUB_ENV"
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: E2E (Playwright)
+        run: npm run test:e2e
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
