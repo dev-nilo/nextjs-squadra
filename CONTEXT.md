@@ -9,8 +9,16 @@ A player card with position, nationality, attributes, overall rating, and option
 _Avoid_: Card (UI only), athlete
 
 **Elenco**:
-The authenticated user's full set of Jogadores. Unauthenticated / guest collections are out of scope.
-_Avoid_: Roster (when meaning the whole collection), squad (ambiguous with Time), guest local-only mode
+The full set of Jogadores of a Grupo. Every Membro sees it; only `dono` and `admin` change it. While the migration runs (ADR 0003), Jogadores of a user who hasn't named a Grupo yet have none.
+_Avoid_: Roster (when meaning the whole collection), squad (ambiguous with Time), a per-user Elenco, guest local-only mode
+
+**Grupo**:
+The people who play together and share one Elenco, like a weekly pelada. Named by whoever creates it, who becomes its `dono`. Reached at `/g/<slug>`; the slug is fixed at creation.
+_Avoid_: Team (that's a Time), league, club, "fut" in code (it's only the UI word on the naming screen)
+
+**Membro**:
+A user's membership in a Grupo, with a papel: `dono` (exactly one per Grupo; renames or deletes it, promotes admins), `admin` (edits Jogadores, and later runs Partidas and the Sorteio), or `membro` (sees the Elenco).
+_Avoid_: Member of the Elenco, player (a Jogador may have no account at all)
 
 **Sorteio**:
 Distributing the selected Jogadores into Times using attribute-sum balancing (shuffle, rating tiers, assign to the Time with the lowest attribute total).

@@ -30,7 +30,7 @@ jobs:
       - run: npm run typecheck
 
   database:
-    name: Database and E2E
+    name: Database, RLS and E2E
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -54,16 +54,23 @@ jobs:
           count=$(psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -tAc "select count(*) from public.players")
           echo "players: $count"
           test "$count" -eq 23
-      - name: Point the app at the local Supabase
+      - name: Export local Supabase URL and keys
         run: |
           npx supabase status -o json > "$RUNNER_TEMP/supabase.json"
           echo "status keys: $(jq -r 'keys | join(", ")' "$RUNNER_TEMP/supabase.json")"
           url=$(jq -r '.API_URL' "$RUNNER_TEMP/supabase.json")
-          key=$(jq -r '.ANON_KEY // .PUBLISHABLE_KEY' "$RUNNER_TEMP/supabase.json")
-          test -n "$url" && test "$url" != null
-          test -n "$key" && test "$key" != null
-          echo "NEXT_PUBLIC_SUPABASE_URL=$url" >> "$GITHUB_ENV"
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$key" >> "$GITHUB_ENV"
+          anon=$(jq -r '.ANON_KEY // .PUBLISHABLE_KEY' "$RUNNER_TEMP/supabase.json")
+          service=$(jq -r '.SERVICE_ROLE_KEY // .SECRET_KEY' "$RUNNER_TEMP/supabase.json")
+          for v in "$url" "$anon" "$service"; do test -n "$v" && test "$v" != null; done
+          {
+            echo "SUPABASE_URL=$url"
+            echo "SUPABASE_ANON_KEY=$anon"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$service"
+            echo "NEXT_PUBLIC_SUPABASE_URL=$url"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$anon"
+          } >> "$GITHUB_ENV"
+      - name: Integration tests (RLS, database functions)
+        run: npm run test:integration
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - name: E2E (Playwright)
