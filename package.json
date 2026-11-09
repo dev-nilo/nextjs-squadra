@@ -3,12 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build",
     "dev": "next dev",
-    "lint": "eslint .",
+    "build": "next build",
     "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset"
   },
   "dependencies": {
     "@supabase/ssr": "^0.4.0",
@@ -30,6 +34,7 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.2.10",
     "postcss": "^8.5.15",
+    "supabase": "^3.1.0",
     "tailwindcss": "^3.4.19",
     "typescript": "^5",
     "vitest": "^4.1.10"

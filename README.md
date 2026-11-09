@@ -1,5 +1,7 @@
 # Squadra
 
+[![CI](https://github.com/dev-nilo/nextjs-squadra/actions/workflows/ci.yml/badge.svg)](https://github.com/dev-nilo/nextjs-squadra/actions/workflows/ci.yml)
+
 > **In English:** Squadra is a Next.js app for registering soccer players as cards and drawing balanced teams. Every account has its own private roster: Supabase queries are scoped to the signed-in user and enforced by PostgreSQL row-level security. Built with Next.js, TypeScript, Supabase and Vitest. **Live:** [squadra-eight.vercel.app](https://squadra-eight.vercel.app)
 
 Aplicação Next.js para cadastrar Jogadores (estilo carta) e sortear Times balanceados.
@@ -12,6 +14,7 @@ Aplicação Next.js para cadastrar Jogadores (estilo carta) e sortear Times bala
 - [Supabase](https://supabase.com/) (Auth + Postgres + Storage)
 - Tailwind CSS
 - Vitest
+- Supabase CLI (migrations versionadas em `supabase/migrations`)
 
 ## Pré-requisitos
 
@@ -38,11 +41,7 @@ Cada conta só vê/edita/apaga **os próprios** Jogadores:
 - Cache local (`localStorage`) separado por usuário (`fut-cards-players-v2:user:<id>`)
 - Sem upload automático de dados de outro usuário para a nuvem da conta atual
 
-Rode no SQL Editor do Supabase (obrigatório em produção):
-
-```bash
-scripts/06_harden_user_isolation.sql
-```
+Essas regras (RLS forçada, grants e policies) estão na migration baseline em [`supabase/migrations`](supabase/migrations).
 
 ## Desenvolvimento
 
@@ -50,6 +49,17 @@ scripts/06_harden_user_isolation.sql
 2. Configure o `.env.local` (veja [Variáveis de ambiente](#variáveis-de-ambiente))
 3. Execute: `npm run dev`
 4. Acesse: `http://localhost:3000`
+
+### Banco local (Supabase CLI)
+
+Requer Docker. `npm run db:start` sobe um Supabase local, aplica todas as migrations e roda o [`supabase/seed.sql`](supabase/seed.sql). A saída mostra a URL e a anon key pra colocar no `.env.local`.
+
+Usuários do seed (senha `squadra-dev-123`):
+
+- `dev@squadra.test`: Elenco com 20 Jogadores
+- `amigo@squadra.test`: Elenco com 3 Jogadores (pra conferir o isolamento)
+
+Mudanças de schema são sempre uma nova migration (`npx supabase migration new <nome>`), nunca SQL rodado na mão no dashboard.
 
 ### Scripts
 
@@ -59,8 +69,11 @@ scripts/06_harden_user_isolation.sql
 | `npm run build` | Build de produção |
 | `npm run start` | Serve o build de produção |
 | `npm run lint` | Lint (ESLint) |
+| `npm run typecheck` | Checagem de tipos (`tsc --noEmit`) |
 | `npm test` | Roda os testes (Vitest) |
 | `npm run test:watch` | Testes em modo watch |
+| `npm run db:start` / `db:stop` | Sobe / derruba o Supabase local |
+| `npm run db:reset` | Recria o banco local do zero (migrations + seed) |
 
 ## Auth Supabase (confirmação de email)
 
@@ -122,6 +135,7 @@ hooks/        → adapter React da Sessão
 lib/          → domínio + persistência + Supabase
 types/        → Jogador (Player), Time, Attributes
 docs/         → CONTEXT.md, ADRs, agent docs
+supabase/     → config local, migrations, seed
 ```
 
 ### `app/`
@@ -168,7 +182,7 @@ docs/         → CONTEXT.md, ADRs, agent docs
 
 ## Config (raiz)
 
-`package.json`, `tailwind.config.ts`, `tsconfig.json`, `next.config.mjs`, `vitest.config.ts`.
+`package.json`, `tailwind.config.ts`, `tsconfig.json`, `next.config.mjs`, `vitest.config.ts`, `supabase/config.toml`, `.github/workflows/ci.yml`.
 
 ## Documentação adicional
 

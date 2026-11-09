@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, test, build, typecheck
+    runs-on: ubuntu-latest
+    env:
+      # Build-time placeholders: nothing in CI talks to a real Supabase project.
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npm run typecheck
+
+  database:
+    name: Migrations and seed from scratch
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Start local Supabase (applies migrations + seed)
+        run: npx supabase start --exclude studio,imgproxy,edge-runtime,logflare,vector,supavisor
+      - name: Lint the schema
+        run: npx supabase db lint --level warning --fail-on error
+      - name: Check the seed landed
+        run: |
+          count=$(psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -tAc "select count(*) from public.players")
+          echo "players: $count"
+          test "$count" -eq 23
