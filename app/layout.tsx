@@ -15,7 +15,6 @@ export const metadata: Metadata = {
   title: "Squadra",
   description:
     "Sistema de gerenciamento de cartas de jogadores e sorteio de times balanceados",
-  generator: "v0.app",
   icons: {
     icon: [
       {
@@ -36,6 +35,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F2EEE6" },
+    { media: "(prefers-color-scheme: dark)", color: "#0C1620" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -48,7 +51,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${bricolage.variable} font-sans antialiased overflow-x-hidden`}>
+      <body className={`${bricolage.variable} font-sans antialiased overflow-x-hidden bg-background text-foreground`}>
         <Providers>
           {children}
           <Toaster position="top-center" richColors theme="system" />
