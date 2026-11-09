@@ -8,12 +8,13 @@ Stack: Tailwind CSS 3, tokens as RGB channels in `app/globals.css`, mapped in `t
 
 ## Brand
 
-The logo is a navy wavy seal (`#1E4360`) holding a vintage leather ball, two tickets and a 1:0 scoreboard, drawn in cream (`#F2EEE6`). The whole palette derives from those two colors: cream paper canvas, navy ink and actions.
+The mark is **Meio-campo**: the pitch's center circle seen from above, split by an S into two equal halves, with the halfway line above and below and the center spot. One drawing says S for Squadra, two Times and a balanced split. Navy (`#1E4360`) and cream (`#F2EEE6`); the whole palette derives from those two colors: cream paper canvas, navy ink and actions.
 
-- **Component**: `Logo` (`components/ui/logo.tsx`) renders the seal as inline SVG from `logo-paths.ts` (traced from the artwork). `BrandLockup` is seal + "Squadra" wordmark (`font-black tracking-tight text-brand`); `size`: `sm` (header, auth modal) · `lg` + `stacked` (auth pages).
-- **Where it appears**: home header (lockup left of the search), auth pages and auth modal, the exported Times Sorteados PNG, the loader (`LoadingState` spins only the seal outline, still under `prefers-reduced-motion`), and the empty Elenco state.
+- **Component**: `Logo` (`components/ui/logo.tsx`), inline geometric SVG on a 100×100 grid: circle r34 with a 5-unit ring, S halves of r17, halfway stubs, center spot. `BrandLockup` is mark + "Squadra" wordmark (`font-black tracking-tight text-brand`); `size`: `sm` (header, auth modal) · `lg` + `stacked` (auth pages).
+- **Small variant** for 16/32px (`public/icon.svg`, `icon-*-32x32.png`): no stubs and no spot, circle r44 with a 9-unit ring, so the S survives at tab size. Don't use the full mark below ~24px.
+- **Where it appears**: home header (lockup left of the search), auth pages and auth modal, the exported Times Sorteados PNG, the loader (`LoadingState` flips the mark like a coin toss, `animate-coin-toss`, still under `prefers-reduced-motion`), and the empty Elenco state.
 - **Not** used as a decorative motif elsewhere. The Jogador card and the OVR stay as they are.
-- **Static assets** (`public/icon.svg`, `icon-*-32x32.png`, `apple-icon.png`, `icon-192/512.png`, `icon-maskable-512.png`, `app/opengraph-image.png`) are generated from the same paths. The SVG favicon inverts under `prefers-color-scheme: dark`.
+- **Static assets** (`public/icon.svg`, `icon-*-32x32.png`, `apple-icon.png`, `icon-192/512.png`, `icon-maskable-512.png`, `app/opengraph-image.png`) follow the same geometry. The SVG favicon inverts under `prefers-color-scheme: dark`.
 - No paper texture: the canvas is flat cream.
 
 ## Theme
@@ -28,7 +29,7 @@ The logo is a navy wavy seal (`#1E4360`) holding a vintage leather ball, two tic
 | Token | Use |
 |-------|-----|
 | `background` / `foreground` | Page canvas (cream / deep navy) and default text (navy ink / cream) |
-| `brand` / `brand-foreground` | **Logo only**: seal fill and its line work. Navy/cream in light, swapped in dark. Never use for UI actions (that's `primary`). |
+| `brand` / `brand-foreground` | **Logo only**: the mark's navy half and ring, and its cream half. Navy/cream in light, swapped in dark. Never use for UI actions (that's `primary`). |
 | `content1` | Surfaces: modals, cards, header, menus |
 | `content2`–`content4` | Nested / raised fills |
 | `default-50…900`, `default` | Neutrals (warm paper tones in light, navy-grays in dark): input fills (`default-100`), borders (`default-200/300`), muted text (`default-400/500/600`) |
@@ -86,7 +87,7 @@ The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card round
 | `Modal`, `ModalHeader`, `ModalBody`, `ModalFooter` | Native `<dialog>`. Header holds a `.text-title` and optional `.text-muted` subtitle. Footer: secondary action (`flat`) first, primary action last; full width on mobile. |
 | `Surface` | Page-level card: `rounded-2xl bg-content1 shadow-2xl p-4 sm:p-6`. Use for any standalone content block outside a modal. |
 | `Alert` | Inline status box, `tone`: `danger` · `warning` · `success` · `info`. `rounded-lg`, `bg-<tone>/10`, `text-sm font-medium`. Use instead of hand-rolled colored boxes. |
-| `FullScreenLoader` | Centered spinning seal + label on `bg-background`, full viewport. The only loading state for routes and route-level fallbacks. |
+| `FullScreenLoader` | Centered coin-tossing mark + label on `bg-background`, full viewport. The only loading state for routes and route-level fallbacks. |
 | `PlayerAvatar` | Round avatar with image → icon → initials fallback. |
 | `Logo`, `BrandLockup` | See **Brand**. |
 
@@ -94,7 +95,7 @@ The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card round
 
 - **App shell**: `app/layout.tsx` renders the single `<Toaster position="top-center" richColors theme="system" />`. Pages never render their own Toaster. Toast colors are remapped to the tokens in `app/globals.css` (sonner's `--normal-*`, `--success-*`, `--error-*`… variables), so they follow the palette.
 - **Home**: sticky header with `BrandLockup` left of the search (`bg-content1/95 backdrop-blur-sm border-b border-divider shadow-lg`), content in `max-w-7xl mx-auto px-3 sm:px-6`.
-- **Auth routes** (`/auth`, `/auth/confirm`, `/auth/callback`) share `app/auth/layout.tsx`: full-height, centered, `max-w-md` column on `bg-background`. Pages with a form put a `BrandLockup size="lg" stacked` above their `Surface`; loading states don't (the spinning seal is already the brand).
+- **Auth routes** (`/auth`, `/auth/confirm`, `/auth/callback`) share `app/auth/layout.tsx`: full-height, centered, `max-w-md` column on `bg-background`. Pages with a form put a `BrandLockup size="lg" stacked` above their `Surface`; loading states don't (the tossing mark is already the brand).
 - Mobile first: everything must work at 375px with no horizontal scroll.
 
 ## Interaction
@@ -102,7 +103,7 @@ The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card round
 - Focus: `focus-visible:ring-2 ring-primary` on every interactive element.
 - Selection: `ring-2 ring-primary` plus a `primary/10` tint.
 - Hover on rows: border shifts toward `primary/40–50`. Only the Jogador card scales (`sm:hover:scale-105`).
-- Motion: `transition-colors` / `transition-opacity`; `animate-scale-in` for elements that pop in (selection badge); `animate-spin-slow` only for the loader seal.
+- Motion: `transition-colors` / `transition-opacity`; `animate-scale-in` for elements that pop in (selection badge); `animate-coin-toss` only for the loader mark.
 
 ## Export (Times Sorteados PNG)
 

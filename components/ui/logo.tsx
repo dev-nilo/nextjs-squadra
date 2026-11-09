@@ -1,37 +1,40 @@
-import { LOGO_INNER_PATH, LOGO_OFFSET, LOGO_SEAL_PATH, LOGO_VIEWBOX } from "./logo-paths";
-
 interface LogoProps {
   className?: string;
-  /** Slowly rotates the wavy seal only; ball, tickets and scoreboard stay still. Off under prefers-reduced-motion. */
-  spinning?: boolean;
+  /** Flips the mark like a coin toss (the Sorteio before kick-off). Off under prefers-reduced-motion. */
+  tossing?: boolean;
   /** Accessible name. Omit when the mark sits next to the "Squadra" wordmark. */
   title?: string;
 }
 
-/** The Squadra seal. Colors come from the `brand` tokens, so it inverts in dark mode. */
-export function Logo({ className = "h-8 w-8", spinning = false, title }: LogoProps) {
+/**
+ * The Squadra mark, "Meio-campo": the pitch's center circle split by an S into two equal halves
+ * (two balanced Times), with the halfway line and the center spot. Colors come from the `brand`
+ * tokens, so it inverts in dark mode. The favicons use a simplified variant (see DESIGN.md).
+ */
+export function Logo({ className = "h-8 w-8", tossing = false, title }: LogoProps) {
   return (
     <svg
-      viewBox={LOGO_VIEWBOX}
-      className={`shrink-0 ${className}`}
+      viewBox="0 0 100 100"
+      className={`shrink-0 ${tossing ? "animate-coin-toss" : ""} ${className}`}
       role={title ? "img" : undefined}
       aria-hidden={title ? undefined : true}
       aria-label={title}
     >
-      <g className={spinning ? "animate-spin-slow" : undefined} style={{ transformOrigin: "416px 416px" }}>
-        <path transform={LOGO_OFFSET} className="fill-brand" d={LOGO_SEAL_PATH} />
-      </g>
-      <path transform={LOGO_OFFSET} className="fill-brand-foreground" fillRule="evenodd" d={LOGO_INNER_PATH} />
+      <circle cx="50" cy="50" r="34" className="fill-brand-foreground" />
+      <path className="fill-brand" d="M50 16 A34 34 0 0 0 50 84 A17 17 0 0 0 50 50 A17 17 0 0 1 50 16 Z" />
+      <circle cx="50" cy="50" r="34" fill="none" strokeWidth="5" className="stroke-brand" />
+      <path d="M50 3 V16 M50 84 V97" strokeWidth="5" strokeLinecap="round" className="stroke-brand" />
+      <circle cx="50" cy="50" r="4.2" strokeWidth="2.4" className="fill-brand-foreground stroke-brand" />
     </svg>
   );
 }
 
 const LOCKUP_SIZES = {
-  sm: { mark: "h-9 w-9", text: "text-xl" },
-  lg: { mark: "h-20 w-20", text: "text-3xl" },
+  sm: { mark: "h-9 w-9", text: "text-xl", gap: "gap-1.5" },
+  lg: { mark: "h-20 w-20", text: "text-3xl", gap: "gap-2" },
 } as const;
 
-/** Seal + "Squadra" wordmark. `stacked` centers the wordmark under the seal (auth screens). */
+/** Mark + "Squadra" wordmark. `stacked` centers the wordmark under the mark (auth screens). */
 export function BrandLockup({
   size = "sm",
   stacked = false,
@@ -43,7 +46,7 @@ export function BrandLockup({
 }) {
   const s = LOCKUP_SIZES[size];
   return (
-    <div className={`flex items-center ${stacked ? "flex-col gap-2" : "gap-2"} ${className}`}>
+    <div className={`flex items-center ${s.gap} ${stacked ? "flex-col" : ""} ${className}`}>
       <Logo className={s.mark} />
       <span className={`${s.text} font-black tracking-tight text-brand leading-none`}>Squadra</span>
     </div>

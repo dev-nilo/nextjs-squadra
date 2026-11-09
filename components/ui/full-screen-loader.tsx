@@ -1,10 +1,10 @@
 import { Logo } from "./logo";
 
-/** Spinning seal + label. Use directly inside a layout that already centers on the viewport (e.g. app/auth/layout.tsx). */
+/** Coin-tossing mark + label. Use directly inside a layout that already centers on the viewport (e.g. app/auth/layout.tsx). */
 export function LoadingState({ label = "Carregando..." }: { label?: string }) {
   return (
     <div role="status" className="flex flex-col items-center justify-center gap-4">
-      <Logo spinning className="h-16 w-16" />
+      <Logo tossing className="h-16 w-16" />
       <p className="text-muted">{label}</p>
     </div>
   );
