@@ -1,4 +1,5 @@
 import { Logo } from "@/components/ui/logo";
+import { KickableBall } from "./kickable-ball";
 
 /**
  * Full-screen auth layout, shared by `/` (no Sessão) and every `/auth` route.
@@ -22,7 +23,8 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
 function PitchPicture() {
   return (
     <aside className="on-panel relative isolate order-1 flex min-h-56 flex-col justify-between overflow-hidden rounded-2xl bg-panel p-4 text-panel-foreground sm:min-h-72 sm:p-6 lg:order-2 lg:min-h-0 lg:p-8">
-      <NightPitch id="picture" className="absolute inset-0 -z-10 h-full w-full" withBall />
+      <NightPitch id="picture" className="absolute inset-0 -z-10 h-full w-full" />
+      <KickableBall />
       <ul className="flex justify-end gap-2" aria-label="Modalidades">
         {["Futsal", "Society"].map((tag) => (
           <li
@@ -45,10 +47,10 @@ function PitchPicture() {
 
 /**
  * A pitch at night, drawn rather than photographed: grass grain (SVG noise), mowing stripes,
- * rolling bands of floodlight and shadow, faint markings and, optionally, a lone ball.
+ * rolling bands of floodlight and shadow and faint markings. The ball is `KickableBall`.
  * `id` keeps filter/gradient ids unique when the picture is drawn twice on a page.
  */
-function NightPitch({ id, className, withBall = false }: { id: string; className: string; withBall?: boolean }) {
+function NightPitch({ id, className }: { id: string; className: string }) {
   const grain = `${id}-grain`;
   const soft = `${id}-soft`;
   const flood = `${id}-flood`;
@@ -97,20 +99,6 @@ function NightPitch({ id, className, withBall = false }: { id: string; className
         <circle cx="400" cy="500" r="120" />
       </g>
 
-      {withBall && (
-        <g transform="translate(560 760)" className="hidden sm:block">
-          <ellipse cx="6" cy="15" rx="17" ry="5" fill="black" fillOpacity="0.4" />
-          <circle r="13" fill="currentColor" />
-          <path
-            d="M-12 -4 Q0 -8 12 -4 M-12 5 Q0 9 12 5 M-4 -12 Q-6 -8 -4 -5 M4 -12 Q6 -8 4 -5"
-            fill="none"
-            stroke="black"
-            strokeOpacity="0.35"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-          />
-        </g>
-      )}
     </svg>
   );
 }
