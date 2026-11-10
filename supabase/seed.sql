@@ -2,8 +2,9 @@
 -- never copy production rows here.
 --
 -- Users (password for both: squadra-dev-123)
---   dev@squadra.test    owns the main Elenco (20 Jogadores)
---   amigo@squadra.test  owns a small Elenco (3 Jogadores) to check isolation
+--   dev@squadra.test    dono of the Grupo "Fut do Dev", with the main Elenco (20 Jogadores)
+--   amigo@squadra.test  a small Elenco (3 Jogadores) and no Grupo yet, so signing in
+--                       as amigo shows the "Dê um nome pro seu fut" screen
 
 -- ---------------------------------------------------------------------------
 -- Auth users, already confirmed
@@ -74,3 +75,16 @@ from (values
   ('22222222-2222-4222-8222-222222222222', 'Ala do Amigo',     'ALA', 'BR', 80, 75, 65, 66, 55, 74, 70, 62),
   ('22222222-2222-4222-8222-222222222222', 'Pivô do Amigo',    'ATA', 'BR', 64, 70, 78, 74, 48, 64, 66, 82)
 ) as v(user_id, name, position, nationality, vel, res, chu, pos, def, dri, pas, fis);
+
+-- ---------------------------------------------------------------------------
+-- Grupos. dev already named theirs; amigo hasn't (first-access screen).
+-- ---------------------------------------------------------------------------
+insert into public.grupos (id, slug, nome, criado_por)
+values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'fut-do-dev', 'Fut do Dev', '11111111-1111-4111-8111-111111111111');
+
+insert into public.grupo_membros (grupo_id, user_id, papel)
+values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '11111111-1111-4111-8111-111111111111', 'dono');
+
+update public.players
+set grupo_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+where user_id = '11111111-1111-4111-8111-111111111111';

@@ -6,6 +6,8 @@ import { Plus, X, Trash2, User, Shuffle, CheckCircle2, Loader2, Pencil, Search, 
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useElenco } from "@/hooks/use-elenco";
+import { useGrupo } from "@/hooks/use-grupo";
+import { NomearGrupo } from "@/components/grupo/nomear-grupo";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { AuthPanel } from "@/components/auth/auth-panel";
 import { AuthErrorWatcher } from "@/components/auth/auth-error-watcher";
@@ -38,6 +40,8 @@ export default function App() {
     isOnline,
     actions: elencoActions,
   } = useElenco(user?.id);
+  const { state: grupoState, definirGrupo } = useGrupo(user?.id);
+  const grupo = grupoState.status === "pronto" ? grupoState.grupo : null;
 
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -135,6 +139,14 @@ export default function App() {
     );
   }
 
+  if (grupoState.status === "loading") {
+    return <FullScreenLoader />;
+  }
+
+  if (grupoState.status === "sem-grupo") {
+    return <NomearGrupo onCriado={definirGrupo} />;
+  }
+
   return (
     <>
       <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -143,7 +155,15 @@ export default function App() {
             <div className="flex flex-col gap-3">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 justify-between">
                 <div className="flex flex-1 w-full min-w-0 items-center gap-3">
-                    <BrandLockup />
+                    <div className="flex shrink-0 flex-col gap-1">
+                      <BrandLockup />
+                      {grupo && (
+                        <p className="max-w-[9rem] truncate text-xs font-semibold text-default-500" title={grupo.nome}>
+                          <span className="sr-only">Fut: </span>
+                          {grupo.nome}
+                        </p>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                         <Input
                             placeholder="Buscar jogador..."
