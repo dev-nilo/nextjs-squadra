@@ -13,6 +13,9 @@ import { GrupoSwitcher } from "@/components/grupo/grupo-switcher";
 import { slugDoCaminho } from "@/lib/grupo";
 import { ConvidarModal } from "@/components/convite/convidar-modal";
 import { caminhoDoConvite, convitePendente } from "@/lib/convite";
+import { QuemSouEu } from "@/components/jogador/quem-sou-eu";
+import { desvincularJogador } from "@/app/actions/vinculo";
+import { meuJogador } from "@/lib/vinculo";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { AuthPanel } from "@/components/auth/auth-panel";
 import { AuthErrorWatcher } from "@/components/auth/auth-error-watcher";
@@ -105,6 +108,20 @@ export function ElencoApp() {
     setEditingPlayer(player);
     setIsModalOpen(true);
   }, []);
+
+  const handleDesvincular = useCallback(
+    async (player: Player) => {
+      if (!window.confirm(`Desvincular a conta de ${player.name}? O Jogador continua no Elenco.`)) return;
+      const resultado = await desvincularJogador(player.id);
+      if (!resultado.ok) {
+        toast.error("Não deu pra desvincular", { description: resultado.message });
+        return;
+      }
+      toast.success("Conta desvinculada", { description: `${player.name} continua no Elenco.` });
+      await elencoActions.recarregar();
+    },
+    [elencoActions],
+  );
 
   const handleOpenNew = () => {
     setEditingPlayer(null);
@@ -355,6 +372,9 @@ export function ElencoApp() {
         </header>
 
         <main className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
+          {grupo && !meuJogador(players, user?.id) && (
+            <QuemSouEu key={grupo.id} grupoId={grupo.id} players={players} onVinculado={elencoActions.recarregar} />
+          )}
           {filteredPlayers.length === 0 ? (
             <div className="text-center py-12 sm:py-16 px-2">
               {searchQuery ? (
@@ -381,6 +401,8 @@ export function ElencoApp() {
                   player={player}
                   onDelete={podeEditar ? elencoActions.delete : undefined}
                   onEdit={podeEditar ? handleEdit : undefined}
+                  onDesvincular={podeEditar ? handleDesvincular : undefined}
+                  isMine={!!user && player.conta_id === user.id}
                   isSelected={selectedIds.has(player.id)}
                   onToggleSelect={elencoActions.toggleSelect}
                 />

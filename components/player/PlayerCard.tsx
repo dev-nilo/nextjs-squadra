@@ -3,7 +3,7 @@ import { GK_LABELS, OUTFIELD_LABELS } from "@/lib/constants";
 import { getStatColor } from "@/lib/stat-color";
 import { normalizeAttributes } from "@/lib/jogador";
 import { getCountryCode, getCountryName, getFlagUrl } from "@/lib/countries";
-import { CheckCircle2, Pencil, Trash2, User } from "lucide-react";
+import { CheckCircle2, Pencil, Trash2, Unlink, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface PlayerCardProps {
@@ -13,6 +13,10 @@ interface PlayerCardProps {
     onEdit?: (player: Player) => void;
     isSelected: boolean;
     onToggleSelect: (id: string) => void;
+    /** The signed-in user's own Jogador ("você"). */
+    isMine?: boolean;
+    /** Given to the dono and admins: unlinks the Jogador from its account. */
+    onDesvincular?: (player: Player) => void;
 }
 
 export const PlayerCard = ({
@@ -21,6 +25,8 @@ export const PlayerCard = ({
     onEdit,
     isSelected,
     onToggleSelect,
+    isMine = false,
+    onDesvincular,
 }: PlayerCardProps) => {
     const labels = player.position === "GOL" ? GK_LABELS : OUTFIELD_LABELS;
     const attributes = normalizeAttributes(player.attributes);
@@ -62,7 +68,7 @@ export const PlayerCard = ({
             role="button"
             tabIndex={0}
             aria-pressed={isSelected}
-            aria-label={`Carta de ${player.name}, ${player.position}, rating ${player.rating}${isSelected ? ", selecionado" : ""}`}
+            aria-label={`Carta de ${player.name}, ${player.position}, rating ${player.rating}${isSelected ? ", selecionado" : ""}${isMine ? ", você" : player.conta_id ? ", com conta" : ""}`}
             onClick={() => onToggleSelect(player.id)}
             onKeyDown={handleKeyDown}
             className={`
@@ -81,6 +87,15 @@ export const PlayerCard = ({
                 >
                     <CheckCircle2 size={22} />
                 </div>
+            )}
+
+            {isMine && (
+                <span
+                    className="absolute -bottom-2 left-1/2 z-50 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-primary-foreground shadow-lg"
+                    aria-hidden="true"
+                >
+                    Você
+                </span>
             )}
 
             {/* Action Buttons - Always visible on mobile, hover on desktop */}
@@ -104,6 +119,23 @@ export const PlayerCard = ({
                 >
                     <Pencil size={16} />
                 </Button>
+                {onDesvincular && player.conta_id && (
+                    <Button
+                        isIconOnly
+                        variant="flat"
+                        size="sm"
+                        radius="full"
+                        className="shadow-lg bg-content1"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDesvincular(player);
+                        }}
+                        aria-label={`Desvincular conta de ${player.name}`}
+                        title="Desvincular a conta deste Jogador"
+                    >
+                        <Unlink size={16} />
+                    </Button>
+                )}
                 <Button
                     isIconOnly
                     color="danger"

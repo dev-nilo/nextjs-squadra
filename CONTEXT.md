@@ -5,7 +5,7 @@ Amateur football squad management: build a roster of players and draw balanced t
 ## Language
 
 **Jogador**:
-A player card with position, nationality, attributes, overall rating, and optional image.
+A player card with position, nationality, attributes, overall rating, and optional image. It may be linked to the account of the person it represents ("sou esse aqui"): at most one Jogador per account in each Grupo. A Membro links themselves, or adds themselves with default attributes; the `dono` or an `admin` can unlink. Many Jogadores have no account, and that's fine.
 _Avoid_: Card (UI only), athlete
 
 **Elenco**:

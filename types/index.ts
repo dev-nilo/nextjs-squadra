@@ -22,6 +22,8 @@ export interface Player {
     /** Who created the Jogador. Ownership is the Grupo's (`grupo_id`). */
     user_id?: string;
     grupo_id?: string;
+    /** The account of the person this Jogador is ("sou esse aqui"), if any. */
+    conta_id?: string;
 }
 
 /** Domain Time from a Sorteio — presentation tokens live in the UI. */

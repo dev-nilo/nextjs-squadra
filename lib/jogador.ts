@@ -131,5 +131,6 @@ export const normalizePlayer = (player: unknown): Player => {
     rating,
     user_id: typeof source.user_id === "string" ? source.user_id : undefined,
     grupo_id: typeof source.grupo_id === "string" ? source.grupo_id : undefined,
+    conta_id: typeof source.conta_id === "string" ? source.conta_id : undefined,
   };
 };

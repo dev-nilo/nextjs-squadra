@@ -88,11 +88,21 @@ test("someone new signs up through an invite, confirms the email and joins as me
     await expect(convidado.getByRole("button", { name: /^Nova( Carta)?$/ })).toHaveCount(0);
     await expect(convidado.getByRole("button", { name: "Convidar" })).toHaveCount(0);
 
+    // Not in the Elenco yet: they add themselves, already linked to their account.
+    await convidado.getByRole("button", { name: "Escolher meu Jogador" }).click();
+    const escolher = convidado.getByRole("dialog");
+    await escolher.getByLabel("Seu nome").fill("Convidado Novo");
+    await escolher.getByLabel("Posição").selectOption("ATA");
+    await escolher.getByRole("button", { name: "Criar meu Jogador" }).click();
+    await expect(convidado.getByRole("button", { name: /^Carta de Convidado Novo, ATA, rating 60, você$/ })).toBeVisible();
+    await expect(convidado.getByRole("region", { name: "Vincular sua conta" })).toHaveCount(0);
+
     const { data: conta } = await service.auth.admin.listUsers({ perPage: 1000 });
     const userId = conta.users.find((u) => u.email === email)!.id;
     const { data: membro } = await service.from("grupo_membros").select("papel").eq("grupo_id", FUT_DO_DEV).eq("user_id", userId);
     expect(membro).toEqual([{ papel: "membro" }]);
   } finally {
+    await service.from("players").delete().eq("grupo_id", FUT_DO_DEV).eq("name", "Convidado Novo");
     const { data } = await service.auth.admin.listUsers({ perPage: 1000 });
     const conta = data.users.find((u) => u.email === email);
     if (conta) await service.auth.admin.deleteUser(conta.id);
@@ -122,7 +132,24 @@ test("someone who opened an invite and signs in on / is sent back to it, not to 
     }
     const { data: membros } = await service.from("grupo_membros").select("papel").eq("grupo_id", FUT_DO_DEV).eq("user_id", criado.user!.id);
     expect(membros).toEqual([{ papel: "membro" }]);
+
+    // "Sou esse aqui": they claim a seeded Jogador nobody had claimed.
+    await visitante.getByRole("button", { name: "Escolher meu Jogador" }).click();
+    await visitante.getByRole("dialog").getByRole("button", { name: "Sou Paredão" }).click();
+    await expect(visitante.getByRole("button", { name: /^Carta de Paredão,.*, você$/ })).toBeVisible();
+    await visitante.reload();
+    await expect(visitante.getByRole("button", { name: /^Carta de Paredão,.*, você$/ })).toBeVisible();
+
+    // The dono unlinks it: the Jogador stays, without an account.
+    await page.reload();
+    await card(page, "Paredão").hover();
+    page.once("dialog", (d) => d.accept());
+    await page.getByRole("button", { name: "Desvincular conta de Paredão" }).click();
+    await expect(page.getByRole("button", { name: "Desvincular conta de Paredão" })).toHaveCount(0);
+    const { data: paredao } = await service.from("players").select("conta_id").eq("grupo_id", FUT_DO_DEV).eq("name", "Paredão").single();
+    expect(paredao?.conta_id).toBeNull();
   } finally {
+    await service.from("players").update({ conta_id: null }).eq("grupo_id", FUT_DO_DEV).eq("name", "Paredão");
     await service.auth.admin.deleteUser(criado.user!.id);
   }
 });
