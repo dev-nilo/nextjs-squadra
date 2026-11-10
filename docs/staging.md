@@ -68,7 +68,7 @@ Until this is done, `migrate-production` refuses to run: its dry run would inclu
 
 ## Day to day
 
-- **Open a PR**: once lint, tests and E2E pass, `migrate-staging` pushes the PR's new migrations to staging, and the Vercel preview runs against them.
+- **Open a PR**: once lint, tests and E2E pass, `migrate-staging` pushes the PR's new migrations to staging, and the Vercel preview runs against them. A PR without migrations skips this step, so it never trips over another open PR's migration already on staging.
 - **Merge to `main`**: `migrate-production` pushes the same migrations to production, then `deploy-production` deploys the app. Vercel's own Git deploy is off for `main` (`vercel.json`), so the new code never goes live before the schema it needs. If a migration fails, production keeps running the previous deploy.
 - **Staging drifted** (an abandoned PR left a migration behind, or test data piled up): Actions → Staging → Run workflow → **reset**.
 - **Keep-alive**: the Staging workflow touches the database every Monday so the free project doesn't pause.

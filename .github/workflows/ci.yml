@@ -102,17 +102,32 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       PROJECT_REF: ${{ secrets.STAGING_PROJECT_REF }}
     steps:
-      - name: Check staging is configured
+      # The PR checkout is a merge commit whose first parent is the base, so
+      # two commits are enough to see what this PR adds.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+      # Staging is shared by every open PR. A PR that adds no migration has
+      # nothing to push, and pushing anyway would fail whenever another open
+      # PR's migration already reached staging ("remote migration versions
+      # not found locally"), blocking app-only PRs for no reason.
+      - name: Check staging is configured and this PR adds migrations
         id: gate
         run: |
-          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$PROJECT_REF" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$PROJECT_REF" ]; then
             echo "::notice::Staging secrets are not set, skipping. See docs/staging.md."
             echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
-      - uses: actions/checkout@v5
-        if: steps.gate.outputs.ready == 'true'
+          novas=$(git diff --name-only --diff-filter=AM HEAD^1 HEAD -- supabase/migrations)
+          if [ -z "$novas" ]; then
+            echo "::notice::This PR adds no migration, nothing to push to staging."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Migrations in this PR:"
+            echo "$novas"
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@v5
         if: steps.gate.outputs.ready == 'true'
         with:
