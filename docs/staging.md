@@ -47,10 +47,12 @@ Actions → **Staging** → Run workflow → tick **reset**. It builds the schem
 
 ### 5. Point Vercel previews at staging
 
+Do this **after** step 4. Until staging has the schema, a preview pointed at it has no tables to read.
+
 Vercel → Project → Settings → **Environment Variables**. For the **Preview** environment only:
 
 - `NEXT_PUBLIC_SUPABASE_URL` = `https://<staging ref>.supabase.co`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` = staging's anon key (Project Settings → API)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` = staging's **publishable** key, `sb_publishable_…` (Project Settings → API Keys). supabase-js 2.95 accepts it in place of the legacy anon JWT
 
 Keep the Production values as they are. Then Settings → **Deployment Protection** → turn off Vercel Authentication for previews, so the pelada can open a preview link.
 
