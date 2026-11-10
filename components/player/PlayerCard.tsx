@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 
 interface PlayerCardProps {
     player: Player;
-    onDelete: (id: string) => void;
-    onEdit: (player: Player) => void;
+    /** Omitted for a membro, who can't edit the Elenco: the card shows no actions. */
+    onDelete?: (id: string) => void;
+    onEdit?: (player: Player) => void;
     isSelected: boolean;
     onToggleSelect: (id: string) => void;
 }
@@ -83,6 +84,7 @@ export const PlayerCard = ({
             )}
 
             {/* Action Buttons - Always visible on mobile, hover on desktop */}
+            {onEdit && onDelete && (
             <div
                 className="absolute top-1 right-1 sm:top-2 sm:right-2 z-50 flex gap-1.5 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
                 role="toolbar"
@@ -117,6 +119,7 @@ export const PlayerCard = ({
                     <Trash2 size={16} />
                 </Button>
             </div>
+            )}
 
             {/* Card Container */}
             <div

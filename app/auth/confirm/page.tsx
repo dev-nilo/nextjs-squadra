@@ -9,6 +9,7 @@ import { LoadingState } from "@/components/ui/full-screen-loader";
 import { Alert } from "@/components/ui/alert";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { caminhoSeguro } from "@/lib/convite";
 import {
   applySessaoToast,
   completeEmailConfirmation,
@@ -25,6 +26,8 @@ function ConfirmContent() {
   const tokenHash = searchParams.get("token_hash");
   const type = (searchParams.get("type") || "signup") as EmailOtpType;
   const error = searchParams.get("error_description") || searchParams.get("error");
+  // The email template passes the sign-up's redirect along (an invite link, say).
+  const next = searchParams.get("next");
 
   const canConfirm = useMemo(
     () => Boolean(confirmationUrl || tokenHash),
@@ -58,7 +61,7 @@ function ConfirmContent() {
         }
         return;
       }
-      router.replace("/");
+      router.replace(caminhoSeguro(next, window.location.origin));
     } catch (err) {
       console.error("[auth/confirm]", err);
       applySessaoToast({ ok: false, code: "confirm_error" }, "confirm", toast);

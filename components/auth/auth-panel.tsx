@@ -5,7 +5,17 @@ import { Logo } from "@/components/ui/logo";
 import { LoginForm, SignUpForm } from "./auth-form";
 
 /** Login / sign-up switcher that sits in the AuthShell content column. */
-export function AuthPanel({ onSuccess }: { onSuccess?: () => void }) {
+export function AuthPanel({
+  onSuccess,
+  redirectPath,
+  title,
+}: {
+  onSuccess?: () => void;
+  /** Path the confirmation email brings a new account back to. */
+  redirectPath?: string;
+  /** Replaces the "Bora pro jogo!" heading (the invite page names the Grupo). */
+  title?: React.ReactNode;
+}) {
   const [isLogin, setIsLogin] = useState(true);
 
   return (
@@ -13,7 +23,7 @@ export function AuthPanel({ onSuccess }: { onSuccess?: () => void }) {
       <div className="flex flex-col items-center gap-3 text-center">
         <Logo className="h-12 w-12" />
         <div className="flex flex-col gap-1">
-          <h1 className="text-title">{isLogin ? "Bora pro jogo!" : "Monte seu elenco"}</h1>
+          <h1 className="text-title">{title ?? (isLogin ? "Bora pro jogo!" : "Monte seu elenco")}</h1>
           <p className="text-sm text-default-500">
             {isLogin ? "Primeira vez aqui?" : "Já tem conta?"}{" "}
             <button
@@ -27,7 +37,7 @@ export function AuthPanel({ onSuccess }: { onSuccess?: () => void }) {
         </div>
       </div>
 
-      {isLogin ? <LoginForm onSuccess={onSuccess} /> : <SignUpForm onSuccess={onSuccess} />}
+      {isLogin ? <LoginForm onSuccess={onSuccess} /> : <SignUpForm onSuccess={onSuccess} redirectPath={redirectPath} />}
     </div>
   );
 }
