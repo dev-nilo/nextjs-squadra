@@ -49,7 +49,7 @@ jobs:
           find supabase/migrations -name '*.sql' ! -name "${BASELINE}_*" -print -delete
           # An empty diff means the baseline describes production exactly.
           npx supabase db diff --remote="$PROJECT_REF" --schema public,storage | tee "$RUNNER_TEMP/diff.sql"
-          if grep -qE '^\s*(create|alter|drop|grant|revoke)' "$RUNNER_TEMP/diff.sql"; then
+          if grep -qiE '^\s*(create|alter|drop|grant|revoke)\b' "$RUNNER_TEMP/diff.sql"; then
             echo "::warning::Production differs from the baseline. Read the diff above before running repair."
           else
             echo "::notice::No schema differences: production matches the baseline. Safe to run repair."
