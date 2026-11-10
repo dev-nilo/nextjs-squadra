@@ -16,6 +16,11 @@ export function getAuthSiteUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "")
 }
 
-export function getEmailRedirectTo(): string {
-  return `${getAuthSiteUrl()}/auth/callback`
+/**
+ * Where the confirmation email sends the user back to. The email template
+ * passes it on as `next` (see supabase/templates/confirm-signup.html), so an
+ * invite link survives the email round trip.
+ */
+export function getEmailRedirectTo(path = "/auth/callback"): string {
+  return `${getAuthSiteUrl()}${path}`
 }

@@ -118,7 +118,9 @@ O template está versionado em [`supabase/templates/confirm-signup.html`](supaba
 - Assunto: `Confirme seu email no Squadra`
 - Corpo: cole o conteúdo do arquivo
 
-O link usa `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup`, então o **Site URL** do projeto precisa ser o app que fala com aquele banco.
+O link usa `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next={{ .RedirectTo }}`, então o **Site URL** do projeto precisa ser o app que fala com aquele banco.
+
+O `next` traz de volta o destino do cadastro: quem cria a conta a partir de um convite volta pro `/convite/<token>` depois de confirmar, mesmo que confirme em outro aparelho. O `/auth/confirm` só aceita caminhos do próprio site (`lib/convite.ts`, `caminhoSeguro`). Pra isso funcionar, o `https://SEU-DOMINIO.vercel.app/**` precisa estar nas Redirect URLs; sem ele, o Supabase troca o destino pelo Site URL e a pessoa cai em `/`, onde o app ainda a manda pro convite guardado no navegador.
 
 ### 3. Variável opcional em produção
 

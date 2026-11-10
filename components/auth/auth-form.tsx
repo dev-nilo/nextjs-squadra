@@ -17,6 +17,8 @@ import {
 
 interface AuthFormProps {
   onSuccess?: () => void;
+  /** Path the confirmation email brings the user back to (an invite, say). */
+  redirectPath?: string;
 }
 
 export function LoginForm({ onSuccess }: AuthFormProps) {
@@ -70,7 +72,7 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
   );
 }
 
-export function SignUpForm({ onSuccess }: AuthFormProps) {
+export function SignUpForm({ onSuccess, redirectPath }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -85,7 +87,7 @@ export function SignUpForm({ onSuccess }: AuthFormProps) {
       const result = await signup(
         toSessaoAuth(createClient()),
         { email, password, confirmPassword },
-        getEmailRedirectTo(),
+        getEmailRedirectTo(redirectPath),
       );
       applySessaoToast(result, "signup", toast);
       if (result.ok) {
@@ -104,7 +106,7 @@ export function SignUpForm({ onSuccess }: AuthFormProps) {
       const result = await resendConfirmation(
         toSessaoAuth(createClient()),
         target,
-        getEmailRedirectTo(),
+        getEmailRedirectTo(redirectPath),
       );
       applySessaoToast(result, "resend", toast);
     } finally {

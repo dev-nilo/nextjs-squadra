@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
-import { Plus, X, Trash2, User, Shuffle, CheckCircle2, Loader2, Pencil, Search, Grid3x3, List, Cloud, HardDrive, FileUp } from "lucide-react";
+import { Plus, X, Trash2, User, Shuffle, CheckCircle2, Loader2, Pencil, Search, Grid3x3, List, Cloud, HardDrive, FileUp, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useElenco } from "@/hooks/use-elenco";
@@ -11,6 +11,8 @@ import { useGrupo } from "@/hooks/use-grupo";
 import { NomearGrupo } from "@/components/grupo/nomear-grupo";
 import { GrupoSwitcher } from "@/components/grupo/grupo-switcher";
 import { slugDoCaminho } from "@/lib/grupo";
+import { ConvidarModal } from "@/components/convite/convidar-modal";
+import { caminhoDoConvite, convitePendente } from "@/lib/convite";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { AuthPanel } from "@/components/auth/auth-panel";
 import { AuthErrorWatcher } from "@/components/auth/auth-error-watcher";
@@ -38,6 +40,10 @@ export function ElencoApp() {
   const slug = slugDoCaminho(usePathname());
   const { state: grupoState, participacoes, definirGrupo, tentarDeNovo } = useGrupo(user?.id, slug);
   const grupo = grupoState.status === "pronto" ? grupoState.grupo : null;
+  // Only the dono and admins edit the Elenco (RLS enforces it; this just hides what would fail).
+  const podeEditar = grupo?.papel === "dono" || grupo?.papel === "admin";
+  // Someone who opened an invite and has no Grupo yet goes back to it, never to the naming screen.
+  const conviteDoNovato = grupoState.status === "sem-grupo" ? convitePendente() : null;
   const userId = user?.id;
   const grupoId = grupo?.id;
   const elencoScope = useMemo(
@@ -58,6 +64,7 @@ export function ElencoApp() {
   const [isDrawModalOpen, setIsDrawModalOpen] = useState(false);
   const [isTeamConfigOpen, setIsTeamConfigOpen] = useState(false);
   const [isImportCsvOpen, setIsImportCsvOpen] = useState(false);
+  const [isConvidarOpen, setIsConvidarOpen] = useState(false);
 
   const [generatedTeams, setGeneratedTeams] = useState<Time[] | null>(null);
 
@@ -84,6 +91,10 @@ export function ElencoApp() {
   useEffect(() => {
     if (grupoSlug && slug !== grupoSlug) window.history.replaceState(null, "", `/g/${grupoSlug}`);
   }, [grupoSlug, slug]);
+
+  useEffect(() => {
+    if (conviteDoNovato) window.location.replace(caminhoDoConvite(conviteDoNovato));
+  }, [conviteDoNovato]);
 
   // Switching Grupos only changes the URL; the app follows it without remounting.
   const trocarDeGrupo = useCallback((novo: string) => {
@@ -166,6 +177,7 @@ export function ElencoApp() {
   }
 
   if (grupoState.status === "sem-grupo") {
+    if (conviteDoNovato) return <FullScreenLoader />;
     return <NomearGrupo onCriado={definirGrupo} />;
   }
 
@@ -290,6 +302,8 @@ export function ElencoApp() {
                   <span className="hidden sm:inline">{players.every((p) => selectedIds.has(p.id)) ? "Desmarcar Todas" : "Selecionar Todas"}</span>
                 </Button>
 
+                {podeEditar && (
+                  <>
                 <Button
                   onClick={handleOpenNew}
                   color="primary"
@@ -309,6 +323,19 @@ export function ElencoApp() {
                   <span className="sm:hidden">CSV</span>
                   <span className="hidden sm:inline">Importar CSV</span>
                 </Button>
+
+                    {grupo && (
+                      <Button
+                        onClick={() => setIsConvidarOpen(true)}
+                        variant="flat"
+                        startContent={<UserPlus size={16} />}
+                        size="sm"
+                      >
+                        Convidar
+                      </Button>
+                    )}
+                  </>
+                )}
 
                 {selectedIds.size > 0 && (
                   <Button
@@ -339,7 +366,11 @@ export function ElencoApp() {
                 {searchQuery ? "Nenhuma carta encontrada" : "Nenhuma carta criada ainda"}
               </p>
               <p className="text-muted mt-2">
-                {searchQuery ? "Tente ajustar a busca" : "Clique em 'Nova Carta' para começar"}
+                {searchQuery
+                  ? "Tente ajustar a busca"
+                  : podeEditar
+                    ? "Clique em 'Nova Carta' para começar"
+                    : "Quem organiza o fut cadastra os Jogadores"}
               </p>
             </div>
           ) : viewMode === "grid" ? (
@@ -348,8 +379,8 @@ export function ElencoApp() {
                 <PlayerCard
                   key={player.id}
                   player={player}
-                  onDelete={elencoActions.delete}
-                  onEdit={handleEdit}
+                  onDelete={podeEditar ? elencoActions.delete : undefined}
+                  onEdit={podeEditar ? handleEdit : undefined}
                   isSelected={selectedIds.has(player.id)}
                   onToggleSelect={elencoActions.toggleSelect}
                 />
@@ -367,6 +398,7 @@ export function ElencoApp() {
                     player={player}
                     isSelected={selectedIds.has(player.id)}
                     actions={
+                      podeEditar ? (
                       <div className="flex gap-1.5 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <Button
                             isIconOnly
@@ -395,6 +427,7 @@ export function ElencoApp() {
                             <Trash2 size={14} />
                         </Button>
                       </div>
+                      ) : undefined
                     }
                   />
                 </div>
@@ -409,6 +442,10 @@ export function ElencoApp() {
             onSave={elencoActions.save}
             initialData={editingPlayer}
         />
+
+        {grupo && podeEditar && (
+          <ConvidarModal isOpen={isConvidarOpen} onClose={() => setIsConvidarOpen(false)} grupo={grupo} />
+        )}
 
         <ImportCsvModal
             isOpen={isImportCsvOpen}
