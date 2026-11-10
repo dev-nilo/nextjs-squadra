@@ -64,8 +64,8 @@ describe("player-images under {grupo_id}/", () => {
     expect(error?.message).toMatch(/row-level security|policy/i);
   });
 
-  it("still accepts the old {user_id}/ folder, for the deploy before this one", async () => {
+  it("no longer accepts writes to the old {user_id}/ folder", async () => {
     const dono = await user("dono");
-    expect((await upload(dono, `${dono.id}/antiga.png`)).error).toBeNull();
+    expect((await upload(dono, `${dono.id}/antiga.png`)).error).not.toBeNull();
   });
 });

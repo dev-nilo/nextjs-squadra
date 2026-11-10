@@ -42,15 +42,22 @@ Monitoramento de erros (Sentry). Sem DSN o SDK fica inativo, então dev local e 
 
 Os eventos saem com a tag `production` (deploy de produção) ou `staging` (previews). O SDK não coleta usuário, cookies, headers nem corpos das requisições (veja [`lib/sentry-options.ts`](lib/sentry-options.ts)).
 
-## Isolamento por usuário (multi-tenant)
+## Isolamento por Grupo (multi-tenant)
 
-Cada conta só vê/edita/apaga **os próprios** Jogadores:
+O Elenco pertence a um **Grupo**, e o papel de cada Membro decide o que ele pode fazer, com RLS no Postgres:
 
-- Consultas e writes no Supabase sempre filtrados por `user_id = auth.uid()`
-- Cache local (`localStorage`) separado por usuário (`fut-cards-players-v2:user:<id>`)
-- Sem upload automático de dados de outro usuário para a nuvem da conta atual
+| | ler o Elenco | criar, editar e apagar Jogadores | renomear e apagar o Grupo, promover admins |
+| --- | --- | --- | --- |
+| `dono` | sim | sim | sim |
+| `admin` | sim | sim | não |
+| `membro` | sim | não | não |
+| fora do Grupo | não | não | não |
 
-Essas regras (RLS forçada, grants e policies) estão na migration baseline em [`supabase/migrations`](supabase/migrations).
+- Jogadores são lidos e gravados por `grupo_id`. O `user_id` só registra quem criou o Jogador, e ninguém consegue reescrevê-lo.
+- As fotos ficam em `player-images/{grupo_id}/`, e só dono e admin gravam ali.
+- O cache local (`localStorage`) é separado por Grupo (`fut-cards-players-v2:grupo:<id>`).
+
+A mudança de Elenco por usuário pra Elenco por Grupo foi feita em expand/contract, uma migration e um deploy por passo, sem parar o app: veja [`supabase/migrations`](supabase/migrations) e o [ADR 0003](docs/adr/0003-elenco-belongs-to-a-grupo.md). Os testes de integração em [`tests/integration`](tests/integration) entram com usuários diferentes e conferem cada linha da tabela acima.
 
 ## Desenvolvimento
 

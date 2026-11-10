@@ -31,14 +31,15 @@ describe("criar_grupo", () => {
     expect(membros).toEqual([{ user_id: nilo.id, papel: "dono" }]);
   });
 
-  it("does not move Jogadores that already belong to a Grupo", async () => {
+  it("starts a second Grupo with an empty Elenco, leaving the first one's alone", async () => {
     const nilo = await user("nilo");
     const primeiro = await criarGrupo(nilo, "Primeiro");
-    const jogador = await addJogador(nilo, "Já no Primeiro");
-    expect(jogador.data?.grupo_id).toBe(primeiro.id);
+    const jogador = await addJogador(nilo, primeiro.id, "Já no Primeiro");
 
-    await criarGrupo(nilo, "Segundo");
+    const segundo = await criarGrupo(nilo, "Segundo");
 
+    const { data: doSegundo } = await nilo.client.from("players").select("id").eq("grupo_id", segundo.id);
+    expect(doSegundo).toEqual([]);
     const { data } = await nilo.client.from("players").select("grupo_id").eq("id", jogador.data!.id).single();
     expect(data?.grupo_id).toBe(primeiro.id);
   });
@@ -134,7 +135,7 @@ describe("renaming and deleting a Grupo", () => {
     const admin = await user("admin");
     const grupo = await criarGrupo(nilo, "Fut do Nilo");
     await addMembro(grupo.id, admin, "admin");
-    const jogador = await addJogador(nilo, "Some com o Grupo");
+    const jogador = await addJogador(nilo, grupo.id, "Some com o Grupo");
 
     const porAdmin = await admin.client.from("grupos").delete().eq("id", grupo.id).select("id");
     expect(porAdmin.data).toEqual([]);
@@ -220,17 +221,11 @@ describe("papéis", () => {
 });
 
 describe("Jogadores and their Grupo", () => {
-  it("puts a new Jogador in the Grupo its creator owns", async () => {
-    const nilo = await user("nilo");
-    const grupo = await criarGrupo(nilo, "Fut do Nilo");
-    const { data } = await addJogador(nilo, "Novato");
-    expect(data?.grupo_id).toBe(grupo.id);
-  });
-
   it("refuses a Jogador without a Grupo", async () => {
     const nilo = await user("nilo");
-    const { error } = await addJogador(nilo, "Sem Grupo");
-    // Refused by RLS (no papel in a null Grupo) before NOT NULL even runs.
+    await criarGrupo(nilo, "Fut do Nilo");
+    // Even with a Grupo of their own, nothing fills it in any more.
+    const { error } = await addJogador(nilo, null, "Sem Grupo");
     expect(error).not.toBeNull();
   });
 
@@ -239,11 +234,11 @@ describe("Jogadores and their Grupo", () => {
     const intruso = await user("intruso");
     const grupo = await criarGrupo(nilo, "Fut do Nilo");
 
-    const plantado = await addJogador(intruso, "Plantado", { grupo_id: grupo.id });
+    const plantado = await addJogador(intruso, grupo.id, "Plantado");
     expect(plantado.error).not.toBeNull();
 
-    await criarGrupo(intruso, "Fut do Intruso");
-    const { data: proprio } = await addJogador(intruso, "Do Intruso");
+    const doIntruso = await criarGrupo(intruso, "Fut do Intruso");
+    const { data: proprio } = await addJogador(intruso, doIntruso.id, "Do Intruso");
     const movido = await intruso.client.from("players").update({ grupo_id: grupo.id }).eq("id", proprio!.id);
     expect(movido.error).not.toBeNull();
   });
@@ -254,7 +249,7 @@ describe("Jogadores and their Grupo", () => {
     const grupo = await criarGrupo(nilo, "Fut do Nilo");
     await addMembro(grupo.id, amigo, "membro");
 
-    const { error } = await addJogador(amigo, "Do Membro", { grupo_id: grupo.id });
+    const { error } = await addJogador(amigo, grupo.id, "Do Membro");
     expect(error).not.toBeNull();
   });
 });
