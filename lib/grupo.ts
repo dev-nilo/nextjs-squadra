@@ -42,3 +42,9 @@ export function grupoAtual(participacoes: readonly (Participacao & { desde: stri
   const { desde: _desde, ...grupo } = ordenadas[0];
   return grupo;
 }
+
+/**
+ * Whose Elenco the app is working on. The Grupo owns the Jogadores; the user
+ * is who is signed in, recorded as the author of the Jogadores they create.
+ */
+export type ElencoScope = { userId: string; grupoId: string };

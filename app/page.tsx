@@ -32,6 +32,14 @@ import { DrawTeamsModal } from "@/components/team/DrawTeamsModal";
 
 export default function App() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { state: grupoState, definirGrupo, tentarDeNovo } = useGrupo(user?.id);
+  const grupo = grupoState.status === "pronto" ? grupoState.grupo : null;
+  const userId = user?.id;
+  const grupoId = grupo?.id;
+  const elencoScope = useMemo(
+    () => (userId && grupoId ? { userId, grupoId } : null),
+    [userId, grupoId],
+  );
   const {
     players,
     selectedIds,
@@ -39,9 +47,7 @@ export default function App() {
     isSyncing,
     isOnline,
     actions: elencoActions,
-  } = useElenco(user?.id);
-  const { state: grupoState, definirGrupo } = useGrupo(user?.id);
-  const grupo = grupoState.status === "pronto" ? grupoState.grupo : null;
+  } = useElenco(elencoScope);
 
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -145,6 +151,25 @@ export default function App() {
 
   if (grupoState.status === "sem-grupo") {
     return <NomearGrupo onCriado={definirGrupo} />;
+  }
+
+  if (grupoState.status === "erro") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Surface className="max-w-md flex flex-col gap-4">
+          <div>
+            <h1 className="text-title">Não deu pra abrir seu fut</h1>
+            <p className="text-muted mt-1">Confira a conexão e tente de novo.</p>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <Button color="primary" radius="full" onClick={tentarDeNovo}>
+              Tentar de novo
+            </Button>
+            <UserMenu />
+          </div>
+        </Surface>
+      </div>
+    );
   }
 
   return (

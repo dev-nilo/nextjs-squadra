@@ -16,6 +16,7 @@ import {
   type ElencoSessionState,
   type SaveStatus,
 } from "@/lib/elenco-session";
+import type { ElencoScope } from "@/lib/grupo";
 import type { Player } from "@/types";
 
 function notifySaveOutcome(status: SaveStatus, isNew: boolean) {
@@ -50,7 +51,14 @@ function notifyDeleteOutcome(status: SaveStatus) {
   });
 }
 
-export function useElenco(userId: string | undefined) {
+/** The Elenco of `scope.grupoId`. `null` while the user or their Grupo is still unknown. */
+export function useElenco(scope: ElencoScope | null) {
+  const userId = scope?.userId;
+  const grupoId = scope?.grupoId;
+  const current = useMemo<ElencoScope | null>(
+    () => (userId && grupoId ? { userId, grupoId } : null),
+    [userId, grupoId],
+  );
   const deps = useMemo<ElencoDeps | null>(
     () => (isSupabaseConfigured() ? createElencoDeps(createClient()) : null),
     [],
@@ -65,12 +73,12 @@ export function useElenco(userId: string | undefined) {
   useEffect(() => {
     let cancelled = false;
     const loadPlayers = async () => {
-      // Hard reset whenever the authenticated user changes
+      // Hard reset whenever the user or the Grupo changes
       setState(emptyElencoSessionState());
       setLoading(true);
       try {
-        if (!userId || !deps) return;
-        const next = await loadSession(deps, userId);
+        if (!current || !deps) return;
+        const next = await loadSession(deps, current);
         if (!cancelled) setState(next);
       } catch (e) {
         console.error("[use-elenco] Player load error:", e);
@@ -82,7 +90,7 @@ export function useElenco(userId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [userId, deps]);
+  }, [current, deps]);
 
   useEffect(() => {
     const handleOnline = () => {
@@ -103,7 +111,7 @@ export function useElenco(userId: string | undefined) {
 
   const save = useCallback(
     async (playerData: Omit<Player, "rating" | "user_id">) => {
-      if (!userId || !deps) {
+      if (!current || !deps) {
         toast.error("Não autenticado", { description: "Faça login para gerenciar suas cartas." });
         return;
       }
@@ -111,7 +119,7 @@ export function useElenco(userId: string | undefined) {
       try {
         const { state: next, status, isNew } = await saveSession(
           deps,
-          userId,
+          current,
           state,
           playerData,
           isOnline,
@@ -122,17 +130,17 @@ export function useElenco(userId: string | undefined) {
         if (isOnline) setIsSyncing(false);
       }
     },
-    [deps, state, userId, isOnline],
+    [deps, state, current, isOnline],
   );
 
   const remove = useCallback(
     async (id: string) => {
-      if (!userId || !deps) return;
-      const { state: next, status } = await deleteSession(deps, userId, state, id, isOnline);
+      if (!current || !deps) return;
+      const { state: next, status } = await deleteSession(deps, current, state, id, isOnline);
       setState(next);
       notifyDeleteOutcome(status);
     },
-    [deps, state, userId, isOnline],
+    [deps, state, current, isOnline],
   );
 
   const toggleSelect = useCallback((id: string) => {
@@ -150,13 +158,13 @@ export function useElenco(userId: string | undefined) {
   }, []);
 
   const sync = useCallback(async () => {
-    if (!userId || !deps) {
+    if (!current || !deps) {
       toast.error("Não Autenticado", { description: "Autenticação necessária para sincronizar" });
       return;
     }
     setIsSyncing(true);
     try {
-      const next = await syncSession(deps, userId, state);
+      const next = await syncSession(deps, current, state);
       setState(next);
       toast.success("Sincronização Completa", {
         description: `${next.players.length} cartas sincronizadas`,
@@ -166,11 +174,11 @@ export function useElenco(userId: string | undefined) {
     } finally {
       setIsSyncing(false);
     }
-  }, [deps, state, userId]);
+  }, [deps, state, current]);
 
   const importMany = useCallback(
     async (imported: Player[]) => {
-      if (!userId || !deps) {
+      if (!current || !deps) {
         toast.error("Não autenticado", { description: "Faça login para importar cartas." });
         throw new Error("Unauthenticated");
       }
@@ -181,7 +189,7 @@ export function useElenco(userId: string | undefined) {
         for (const jogador of imported) {
           const { state: updated, status } = await saveSession(
             deps,
-            userId,
+            current,
             next,
             {
               id: jogador.id,
@@ -206,7 +214,7 @@ export function useElenco(userId: string | undefined) {
         if (isOnline) setIsSyncing(false);
       }
     },
-    [deps, state, userId, isOnline],
+    [deps, state, current, isOnline],
   );
 
   return {

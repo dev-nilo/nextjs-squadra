@@ -23,6 +23,8 @@ const attrs = (n: number): Attributes => ({
   fisico: n,
 });
 
+const SCOPE = { userId: "user-1", grupoId: "grupo-1" };
+
 const player = (id: string, overrides: Partial<Player> = {}): Player => ({
   id,
   name: id,
@@ -39,9 +41,9 @@ function createDeps(overrides: Partial<ElencoDeps> = {}): ElencoDeps {
   const local = new Map<string, Player[]>();
   return {
     clearLegacySharedKey: vi.fn(),
-    loadLocal: vi.fn((userId: string) => local.get(userId) ?? []),
-    saveLocal: vi.fn((players: Player[], userId: string) => {
-      local.set(userId, players);
+    loadLocal: vi.fn((scope: { grupoId: string }) => local.get(scope.grupoId) ?? []),
+    saveLocal: vi.fn((players: Player[], scope: { grupoId: string }) => {
+      local.set(scope.grupoId, players);
     }),
     fetchCloud: vi.fn(async () => ({ rows: [], error: null })),
     persistImageUrl: vi.fn(async () => {}),
@@ -64,7 +66,7 @@ describe("loadSession", () => {
       fetchCloud: vi.fn(async () => ({ rows: [], error: null })),
       loadLocal: vi.fn(() => [player("a")]),
     });
-    const result = await loadSession(deps, "user-1");
+    const result = await loadSession(deps, SCOPE);
     expect(result.players.map((p) => p.id)).toEqual(["a"]);
     expect(result.selectedIds.size).toBe(0);
   });
@@ -75,7 +77,7 @@ describe("saveSession", () => {
     const deps = createDeps();
     const { state, status, isNew } = await saveSession(
       deps,
-      "user-1",
+      SCOPE,
       emptyElencoSessionState(),
       { id: "p1", name: "Novo", position: "ATA", nationality: "BR", image: null, attributes: attrs(80) },
       true,
@@ -83,6 +85,25 @@ describe("saveSession", () => {
     expect(isNew).toBe(true);
     expect(status).toBe("synced");
     expect(state.players).toHaveLength(1);
+  });
+
+  it("keeps the author when editing a Jogador someone else created", async () => {
+    const deps = createDeps();
+    const prior = stateWith([player("p1", { user_id: "admin-2", grupo_id: "grupo-1" })]);
+    const { state, isNew } = await saveSession(
+      deps,
+      SCOPE,
+      prior,
+      { id: "p1", name: "Editado", position: "ATA", nationality: "BR", image: null, attributes: attrs(80) },
+      true,
+    );
+    expect(isNew).toBe(false);
+    expect(state.players[0]).toMatchObject({ name: "Editado", user_id: "admin-2", grupo_id: "grupo-1" });
+    expect(deps.syncRow).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: "admin-2", grupo_id: "grupo-1" }),
+      SCOPE,
+      "update",
+    );
   });
 
   it("reports offline when online but cloud sync fails", async () => {
@@ -93,7 +114,7 @@ describe("saveSession", () => {
     });
     const { status } = await saveSession(
       deps,
-      "user-1",
+      SCOPE,
       emptyElencoSessionState(),
       { id: "p1", name: "Novo", position: "ATA", nationality: "BR", image: null, attributes: attrs(80) },
       true,
@@ -105,7 +126,7 @@ describe("saveSession", () => {
     const deps = createDeps();
     const { status } = await saveSession(
       deps,
-      "user-1",
+      SCOPE,
       emptyElencoSessionState(),
       { id: "p1", name: "Novo", position: "ATA", nationality: "BR", image: null, attributes: attrs(80) },
       false,
@@ -122,7 +143,7 @@ describe("saveSession", () => {
     const prior = stateWith([player("existing")]);
     const { state, status } = await saveSession(
       deps,
-      "user-1",
+      SCOPE,
       prior,
       { id: "p1", name: "Novo", position: "ATA", nationality: "BR", image: null, attributes: attrs(80) },
       true,
@@ -136,7 +157,7 @@ describe("deleteSession", () => {
   it("removes the player and drops it from selection", async () => {
     const deps = createDeps();
     const prior = stateWith([player("a"), player("b")], ["a", "b"]);
-    const { state, status } = await deleteSession(deps, "user-1", prior, "a", true);
+    const { state, status } = await deleteSession(deps, SCOPE, prior, "a", true);
     expect(state.players.map((p) => p.id)).toEqual(["b"]);
     expect(state.selectedIds.has("a")).toBe(false);
     expect(state.selectedIds.has("b")).toBe(true);
@@ -150,7 +171,7 @@ describe("deleteSession", () => {
       }),
     });
     const prior = stateWith([player("a")], ["a"]);
-    const { state, status } = await deleteSession(deps, "user-1", prior, "a", true);
+    const { state, status } = await deleteSession(deps, SCOPE, prior, "a", true);
     expect(state.players).toHaveLength(0);
     expect(status).toBe("error");
   });
@@ -162,7 +183,7 @@ describe("syncSession", () => {
       syncRow: vi.fn(async (p) => ({ id: `synced-${p.id}` })),
     });
     const prior = stateWith([player("1")]);
-    const result = await syncSession(deps, "user-1", prior);
+    const result = await syncSession(deps, SCOPE, prior);
     expect(result.players.map((p) => p.id)).toEqual(["synced-1"]);
   });
 });

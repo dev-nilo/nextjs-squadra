@@ -18,16 +18,16 @@ export function isDataUrlImage(value: string | null | undefined): boolean {
     return typeof value === "string" && value.startsWith("data:");
 }
 
-/** Upload a base64 image to Storage and return a public URL. */
+/** Upload a base64 image to Storage, under the Grupo's folder, and return a public URL. */
 export async function uploadPlayerImage(
     supabase: SupabaseClient,
-    userId: string,
+    grupoId: string,
     playerId: string,
     dataUrl: string,
 ): Promise<string> {
     const blob = dataUrlToBlob(dataUrl);
     const ext = blob.type.includes("png") ? "png" : "jpg";
-    const path = `${userId}/${playerId}.${ext}`;
+    const path = `${grupoId}/${playerId}.${ext}`;
 
     const { error } = await supabase.storage
         .from(PLAYER_IMAGES_BUCKET)
@@ -52,7 +52,7 @@ export async function uploadPlayerImage(
  */
 export async function ensurePlayerImageUrl(
     supabase: SupabaseClient,
-    userId: string,
+    grupoId: string,
     player: Player,
 ): Promise<Player> {
     if (!isDataUrlImage(player.image)) {
@@ -61,7 +61,7 @@ export async function ensurePlayerImageUrl(
 
     const publicUrl = await uploadPlayerImage(
         supabase,
-        userId,
+        grupoId,
         player.id,
         player.image as string,
     );

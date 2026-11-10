@@ -19,7 +19,9 @@ export interface Player {
     image: string | null;
     attributes: Attributes;
     rating: number;
+    /** Who created the Jogador. Ownership is the Grupo's (`grupo_id`). */
     user_id?: string;
+    grupo_id?: string;
 }
 
 /** Domain Time from a Sorteio — presentation tokens live in the UI. */

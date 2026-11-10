@@ -7,6 +7,7 @@ import {
   type ElencoDeps,
 } from "@/lib/elenco";
 import { calculateOVR } from "@/lib/jogador";
+import type { ElencoScope } from "@/lib/grupo";
 
 export type SaveStatus = "synced" | "local-only" | "offline" | "error";
 
@@ -20,29 +21,36 @@ export const emptyElencoSessionState = (): ElencoSessionState => ({
   selectedIds: new Set(),
 });
 
-/** Fetch a user's Elenco. Callers reset state first on user change. */
+/** Fetch a Grupo's Elenco. Callers reset state first when the scope changes. */
 export async function loadSession(
   deps: ElencoDeps,
-  userId: string,
+  scope: ElencoScope,
 ): Promise<ElencoSessionState> {
-  const players = await loadElenco(deps, userId);
+  const players = await loadElenco(deps, scope);
   return { players, selectedIds: new Set() };
 }
 
 /** Save (create/update) a Jogador, returning the next state and what happened. */
 export async function saveSession(
   deps: ElencoDeps,
-  userId: string,
+  scope: ElencoScope,
   state: ElencoSessionState,
   playerData: Omit<Player, "rating" | "user_id">,
   online: boolean,
 ): Promise<{ state: ElencoSessionState; status: SaveStatus; isNew: boolean }> {
-  const isNew = !state.players.some((p) => p.id === playerData.id);
+  const existing = state.players.find((p) => p.id === playerData.id);
+  const isNew = !existing;
   const rating = calculateOVR(playerData.attributes);
-  const fullPlayer: Player = { ...playerData, rating, user_id: userId };
+  // Editing keeps the Jogador's author; a new one is authored by whoever saves it.
+  const fullPlayer: Player = {
+    ...playerData,
+    rating,
+    user_id: existing?.user_id ?? scope.userId,
+    grupo_id: scope.grupoId,
+  };
 
   try {
-    const { players, synced } = await saveJogador(deps, userId, fullPlayer, {
+    const { players, synced } = await saveJogador(deps, scope, fullPlayer, {
       players: state.players,
       isNew,
       online,
@@ -66,7 +74,7 @@ export async function saveSession(
  */
 export async function deleteSession(
   deps: ElencoDeps,
-  userId: string,
+  scope: ElencoScope,
   state: ElencoSessionState,
   id: string,
   online: boolean,
@@ -77,7 +85,7 @@ export async function deleteSession(
   );
 
   try {
-    const players = await deleteJogador(deps, userId, id, {
+    const players = await deleteJogador(deps, scope, id, {
       players: state.players,
       online,
     });
@@ -87,7 +95,7 @@ export async function deleteSession(
     };
   } catch (e) {
     console.error("[elenco-session] Failed to sync delete, keeping local:", e);
-    const players = await deleteJogador(deps, userId, id, {
+    const players = await deleteJogador(deps, scope, id, {
       players: state.players,
       online: false,
     });
@@ -97,10 +105,10 @@ export async function deleteSession(
 
 export async function syncSession(
   deps: ElencoDeps,
-  userId: string,
+  scope: ElencoScope,
   state: ElencoSessionState,
 ): Promise<ElencoSessionState> {
-  const players = await syncElenco(deps, userId, state.players);
+  const players = await syncElenco(deps, scope, state.players);
   return { ...state, players };
 }
 
