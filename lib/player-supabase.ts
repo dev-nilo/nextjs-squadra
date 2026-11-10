@@ -1,5 +1,6 @@
 import type { Player } from "@/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ElencoScope } from "@/lib/grupo";
 import { ensurePlayerImageUrl, isDataUrlImage } from "@/lib/player-image";
 
 const UUID_RE =
@@ -11,7 +12,9 @@ function isUuid(value: string): boolean {
 
 export type SupabasePlayerWriteRow = {
     id?: string;
-    user_id: string;
+    /** The author. Only set on insert: editing a Jogador never changes who created it. */
+    user_id?: string;
+    grupo_id: string;
     name: string;
     image_url: string | null;
     position: string;
@@ -38,12 +41,13 @@ function isMissingNationalityColumn(error: { message?: string; code?: string } |
 
 export function playerToSupabaseRow(
     player: Player,
-    userId: string,
+    scope: ElencoScope,
     options?: { includeNationality?: boolean },
 ): SupabasePlayerWriteRow {
     const includeNationality = options?.includeNationality !== false;
     const row: SupabasePlayerWriteRow = {
-        user_id: userId,
+        user_id: player.user_id ?? scope.userId,
+        grupo_id: scope.grupoId,
         name: player.name,
         image_url: player.image,
         position: player.position,
@@ -69,14 +73,14 @@ export function playerToSupabaseRow(
 /** Upload image to Storage when possible; otherwise keep data URL / existing URL. */
 export async function preparePlayerForCloud(
     supabase: SupabaseClient,
-    userId: string,
+    scope: ElencoScope,
     player: Player,
 ): Promise<Player> {
     if (!isDataUrlImage(player.image)) {
         return player;
     }
     try {
-        return await ensurePlayerImageUrl(supabase, userId, player);
+        return await ensurePlayerImageUrl(supabase, scope.grupoId, player);
     } catch (err) {
         console.warn("[app] Storage upload unavailable, keeping inline image in image_url:", err);
         return player;
@@ -91,7 +95,18 @@ async function writeRow(
     mode: "insert" | "update" | "upsert",
     playerId: string,
 ): Promise<WriteResult> {
-    const userId = row.user_id;
+    const grupoId = row.grupo_id;
+    const { user_id: _author, ...forUpdate } = row;
+
+    const update = () =>
+        // Never touch another Grupo's row: always scope by grupo_id.
+        supabase
+            .from("players")
+            .update(forUpdate)
+            .eq("id", playerId)
+            .eq("grupo_id", grupoId)
+            .select("id")
+            .maybeSingle();
 
     if (mode === "insert") {
         const { data, error } = await supabase.from("players").insert(row).select("id").single();
@@ -99,39 +114,26 @@ async function writeRow(
     }
 
     if (mode === "update") {
-        // Never update another tenant's row — always scope by user_id
-        const { data, error } = await supabase
-            .from("players")
-            .update(row)
-            .eq("id", playerId)
-            .eq("user_id", userId)
-            .select("id")
-            .maybeSingle();
+        const { data, error } = await update();
         return { data, error };
     }
 
-    // Prefer update-or-insert scoped to this user (avoids writing into another user's row)
+    // Upsert: update the row if this Grupo already has it, else insert.
     if (isUuid(playerId)) {
         const existing = await supabase
             .from("players")
             .select("id")
             .eq("id", playerId)
-            .eq("user_id", userId)
+            .eq("grupo_id", grupoId)
             .maybeSingle();
 
         if (existing.data?.id) {
-            const { data, error } = await supabase
-                .from("players")
-                .update(row)
-                .eq("id", playerId)
-                .eq("user_id", userId)
-                .select("id")
-                .maybeSingle();
+            const { data, error } = await update();
             return { data, error };
         }
     }
 
-    // Insert as this user. If the UUID is already taken by another tenant, create a new id.
+    // If the UUID is already taken by another Grupo's row, insert under a new id.
     let { data, error } = await supabase.from("players").insert(row).select("id").single();
     if (error && (error.code === "23505" || /duplicate|unique/i.test(error.message || ""))) {
         const { id: _drop, ...withoutId } = row;
@@ -146,26 +148,26 @@ async function writeRow(
 export async function syncPlayerRow(
     supabase: SupabaseClient,
     player: Player,
-    userId: string,
+    scope: ElencoScope,
     mode: "insert" | "update" | "upsert",
 ): Promise<{ id?: string; usedNationality: boolean }> {
-    // Refuse to sync a player known to belong to another user
-    if (player.user_id && player.user_id !== userId) {
-        throw new Error("Não é permitido sincronizar jogador de outro usuário");
+    // Refuse to sync a Jogador known to belong to another Grupo
+    if (player.grupo_id && player.grupo_id !== scope.grupoId) {
+        throw new Error("Não é permitido sincronizar jogador de outro fut");
     }
 
-    const prepared = await preparePlayerForCloud(supabase, userId, {
+    const prepared = await preparePlayerForCloud(supabase, scope, {
         ...player,
-        user_id: userId,
+        grupo_id: scope.grupoId,
     });
-    const fullRow = playerToSupabaseRow(prepared, userId, { includeNationality: true });
+    const fullRow = playerToSupabaseRow(prepared, scope, { includeNationality: true });
 
     let result = await writeRow(supabase, fullRow, mode, prepared.id);
     let usedNationality = true;
 
     if (result.error && isMissingNationalityColumn(result.error)) {
         console.warn("[app] players.nationality missing — syncing without it");
-        const fallbackRow = playerToSupabaseRow(prepared, userId, { includeNationality: false });
+        const fallbackRow = playerToSupabaseRow(prepared, scope, { includeNationality: false });
         result = await writeRow(supabase, fallbackRow, mode, prepared.id);
         usedNationality = false;
     }

@@ -1,17 +1,11 @@
 import { Player } from "@/types";
 import { toast } from "sonner";
-import { getLocalStorageKey, LOCAL_STORAGE_KEY_LEGACY } from "./constants";
+import { getLocalStorageKey } from "./constants";
 import { normalizePlayer } from "./jogador";
 
-/** Keep only rows that belong to this user (or have no owner yet under this scoped key). */
-function filterPlayersForUser(
-  players: Player[],
-  userId: string | null | undefined,
-): Player[] {
-  if (!userId) {
-    return players.filter((p) => !p.user_id);
-  }
-  return players.filter((p) => !p.user_id || p.user_id === userId);
+/** Keep only Jogadores of this Grupo (or not yet stamped with one under its key). */
+function filterPlayersForGrupo(players: Player[], grupoId: string): Player[] {
+  return players.filter((p) => !p.grupo_id || p.grupo_id === grupoId);
 }
 
 const isQuotaExceededError = (e: unknown): boolean => {
@@ -38,15 +32,16 @@ const withoutAnyImages = (players: Player[]): Player[] =>
     image: null,
   }));
 
-export const saveToLocalStorage = (players: Player[], userId?: string | null) => {
+export const saveToLocalStorage = (players: Player[], grupoId: string) => {
   try {
     if (typeof window === "undefined") return;
 
-    const scoped = filterPlayersForUser(players, userId).map((p) =>
-      userId ? { ...normalizePlayer(p), user_id: userId } : normalizePlayer(p),
-    );
+    const scoped = filterPlayersForGrupo(players, grupoId).map((p) => ({
+      ...normalizePlayer(p),
+      grupo_id: grupoId,
+    }));
     const forLocal = withoutDataUrlImages(scoped);
-    const key = getLocalStorageKey(userId);
+    const key = getLocalStorageKey(grupoId);
 
     const tryWrite = (list: Player[]) => {
       localStorage.setItem(key, JSON.stringify(list));
@@ -85,22 +80,10 @@ export const saveToLocalStorage = (players: Player[], userId?: string | null) =>
   }
 };
 
-export const loadFromLocalStorage = (userId?: string | null): Player[] => {
+export const loadFromLocalStorage = (grupoId: string): Player[] => {
   try {
     if (typeof window === "undefined") return [];
-    const key = getLocalStorageKey(userId);
-    let data = localStorage.getItem(key);
-
-    // One-time migration: legacy unscoped key → guest only (never into another account)
-    if (!data && !userId) {
-      const legacy = localStorage.getItem(LOCAL_STORAGE_KEY_LEGACY);
-      if (legacy) {
-        data = legacy;
-        localStorage.setItem(getLocalStorageKey(null), legacy);
-        localStorage.removeItem(LOCAL_STORAGE_KEY_LEGACY);
-      }
-    }
-
+    const data = localStorage.getItem(getLocalStorageKey(grupoId));
     if (!data) return [];
 
     const parsed = JSON.parse(data);
@@ -109,7 +92,7 @@ export const loadFromLocalStorage = (userId?: string | null): Player[] => {
       return [];
     }
 
-    return filterPlayersForUser(parsed.map(normalizePlayer), userId);
+    return filterPlayersForGrupo(parsed.map(normalizePlayer), grupoId);
   } catch (e) {
     console.error("[app] Error loading from local storage:", e);
     toast.error("Erro ao carregar dados locais");

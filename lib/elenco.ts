@@ -1,5 +1,6 @@
 import type { Player } from "@/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ElencoScope } from "@/lib/grupo";
 import { normalizePlayer } from "@/lib/jogador";
 import { isDataUrlImage } from "@/lib/player-image";
 import {
@@ -13,33 +14,41 @@ import {
 
 export type ElencoDeps = {
   clearLegacySharedKey: () => void;
-  loadLocal: (userId: string) => Player[];
-  saveLocal: (players: Player[], userId: string) => void;
+  loadLocal: (scope: ElencoScope) => Player[];
+  saveLocal: (players: Player[], scope: ElencoScope) => void;
   fetchCloud: (
-    userId: string,
+    scope: ElencoScope,
   ) => Promise<{
     rows: Record<string, unknown>[] | null;
     error: { message?: string } | null;
   }>;
   persistImageUrl: (
-    userId: string,
+    scope: ElencoScope,
     id: string,
     imageUrl: string,
   ) => Promise<void>;
-  deleteCloud: (userId: string, id: string) => Promise<void>;
-  prepareForCloud: (userId: string, player: Player) => Promise<Player>;
+  deleteCloud: (scope: ElencoScope, id: string) => Promise<void>;
+  prepareForCloud: (scope: ElencoScope, player: Player) => Promise<Player>;
   syncRow: (
     player: Player,
-    userId: string,
+    scope: ElencoScope,
     mode: "insert" | "update" | "upsert",
   ) => Promise<{ id?: string }>;
   isDataUrl: (image: string | null | undefined) => boolean;
 };
 
-function assertUserId(userId: string): void {
-  if (!userId) {
+function assertScope(scope: ElencoScope): void {
+  if (!scope.userId) {
     throw new Error("Elenco requires an authenticated user id");
   }
+  if (!scope.grupoId) {
+    throw new Error("Elenco requires a Grupo");
+  }
+}
+
+/** A Jogador as this Grupo holds it. The author (`user_id`) is kept as stored. */
+function inGrupo(jogador: Player, scope: ElencoScope): Player {
+  return { ...jogador, grupo_id: scope.grupoId };
 }
 
 function mergeNationalityFromLocal(
@@ -48,7 +57,7 @@ function mergeNationalityFromLocal(
   local: Player | undefined,
 ): Player {
   if (!local?.nationality) {
-    return { ...normalized, user_id: normalized.user_id };
+    return normalized;
   }
   if (!normalized.nationality || normalized.nationality === "BR") {
     if (
@@ -66,60 +75,57 @@ function mergeNationalityFromLocal(
 
 export async function loadElenco(
   deps: ElencoDeps,
-  userId: string,
+  scope: ElencoScope,
 ): Promise<Player[]> {
-  assertUserId(userId);
+  assertScope(scope);
   deps.clearLegacySharedKey();
 
-  const { rows, error } = await deps.fetchCloud(userId);
+  const { rows, error } = await deps.fetchCloud(scope);
   if (error) {
-    console.error("[elenco] Failed to load players for user:", error);
-    return deps.loadLocal(userId);
+    console.error("[elenco] Failed to load the Grupo's players:", error);
+    return deps.loadLocal(scope);
   }
 
   if (!rows || rows.length === 0) {
-    return deps.loadLocal(userId);
+    return deps.loadLocal(scope);
   }
 
-  const localById = new Map(deps.loadLocal(userId).map((p) => [p.id, p]));
+  const localById = new Map(deps.loadLocal(scope).map((p) => [p.id, p]));
   let cloudPlayers: Player[] = rows.map((row) => {
-    const normalized = normalizePlayer({ ...row, user_id: userId });
+    const normalized = normalizePlayer(row);
     const local = localById.get(normalized.id);
-    return {
-      ...mergeNationalityFromLocal(row, normalized, local),
-      user_id: userId,
-    };
+    return inGrupo(mergeNationalityFromLocal(row, normalized, local), scope);
   });
 
   const migrated: Player[] = [];
   for (const jogador of cloudPlayers) {
     if (deps.isDataUrl(jogador.image)) {
       try {
-        const withUrl = await deps.prepareForCloud(userId, jogador);
+        const withUrl = await deps.prepareForCloud(scope, jogador);
         if (
           withUrl.image !== jogador.image &&
           withUrl.image &&
           !deps.isDataUrl(withUrl.image)
         ) {
-          await deps.persistImageUrl(userId, withUrl.id, withUrl.image);
+          await deps.persistImageUrl(scope, withUrl.id, withUrl.image);
         }
-        migrated.push({ ...withUrl, user_id: userId });
+        migrated.push(inGrupo(withUrl, scope));
       } catch {
-        migrated.push({ ...jogador, user_id: userId });
+        migrated.push(jogador);
       }
     } else {
-      migrated.push({ ...jogador, user_id: userId });
+      migrated.push(jogador);
     }
   }
   cloudPlayers = migrated;
 
-  deps.saveLocal(cloudPlayers, userId);
+  deps.saveLocal(cloudPlayers, scope);
   return cloudPlayers;
 }
 
 export async function saveJogador(
   deps: ElencoDeps,
-  userId: string,
+  scope: ElencoScope,
   jogador: Player,
   options: {
     players: Player[];
@@ -127,36 +133,34 @@ export async function saveJogador(
     online: boolean;
   },
 ): Promise<{ players: Player[]; player: Player; synced: boolean }> {
-  assertUserId(userId);
+  assertScope(scope);
 
-  let fullPlayer: Player = { ...jogador, user_id: userId };
+  // A new Jogador is authored by whoever creates it; an edit keeps the author.
+  let fullPlayer: Player = inGrupo({ ...jogador, user_id: jogador.user_id ?? scope.userId }, scope);
   if (options.online) {
-    fullPlayer = {
-      ...(await deps.prepareForCloud(userId, fullPlayer)),
-      user_id: userId,
-    };
+    fullPlayer = inGrupo(await deps.prepareForCloud(scope, fullPlayer), scope);
   }
 
   let players = options.isNew
     ? [...options.players, fullPlayer]
     : options.players.map((p) => (p.id === fullPlayer.id ? fullPlayer : p));
 
-  deps.saveLocal(players, userId);
+  deps.saveLocal(players, scope);
 
   let synced = false;
   if (options.online) {
     try {
       const { id } = await deps.syncRow(
         fullPlayer,
-        userId,
+        scope,
         options.isNew ? "insert" : "update",
       );
       synced = true;
       if (id && id !== fullPlayer.id) {
         const previousId = fullPlayer.id;
-        fullPlayer = { ...fullPlayer, id, user_id: userId };
+        fullPlayer = { ...fullPlayer, id };
         players = players.map((p) => (p.id === previousId ? fullPlayer : p));
-        deps.saveLocal(players, userId);
+        deps.saveLocal(players, scope);
       }
     } catch (err) {
       console.error("[elenco] Failed to sync jogador:", err);
@@ -169,49 +173,44 @@ export async function saveJogador(
 
 export async function deleteJogador(
   deps: ElencoDeps,
-  userId: string,
+  scope: ElencoScope,
   id: string,
   options: { players: Player[]; online: boolean },
 ): Promise<Player[]> {
-  assertUserId(userId);
+  assertScope(scope);
   const players = options.players.filter((p) => p.id !== id);
-  deps.saveLocal(players, userId);
+  deps.saveLocal(players, scope);
   if (options.online) {
-    await deps.deleteCloud(userId, id);
+    await deps.deleteCloud(scope, id);
   }
   return players;
 }
 
 export async function syncElenco(
   deps: ElencoDeps,
-  userId: string,
+  scope: ElencoScope,
   players: Player[],
 ): Promise<Player[]> {
-  assertUserId(userId);
+  assertScope(scope);
   const synced: Player[] = [];
 
   for (const jogador of players) {
-    if (jogador.user_id && jogador.user_id !== userId) {
-      console.warn("[elenco] Skipping player from another user:", jogador.id);
+    if (jogador.grupo_id && jogador.grupo_id !== scope.grupoId) {
+      console.warn("[elenco] Skipping player from another Grupo:", jogador.id);
       continue;
     }
+    const doGrupo = inGrupo({ ...jogador, user_id: jogador.user_id ?? scope.userId }, scope);
     try {
-      const prepared = await deps.prepareForCloud(userId, {
-        ...jogador,
-        user_id: userId,
-      });
-      const { id } = await deps.syncRow(prepared, userId, "upsert");
-      synced.push({
-        ...(id && id !== prepared.id ? { ...prepared, id } : prepared),
-        user_id: userId,
-      });
+      const prepared = inGrupo(await deps.prepareForCloud(scope, doGrupo), scope);
+      const { id } = await deps.syncRow(prepared, scope, "upsert");
+      synced.push(id && id !== prepared.id ? { ...prepared, id } : prepared);
     } catch (syncErr) {
       console.warn("[elenco] Sync failed for player:", syncErr);
-      synced.push({ ...jogador, user_id: userId });
+      synced.push(doGrupo);
     }
   }
 
-  deps.saveLocal(synced, userId);
+  deps.saveLocal(synced, scope);
   return synced;
 }
 
@@ -225,32 +224,32 @@ export function createElencoDeps(supabase: SupabaseClient): ElencoDeps {
         /* ignore */
       }
     },
-    loadLocal: (userId) => loadFromLocalStorage(userId),
-    saveLocal: (players, userId) => saveToLocalStorage(players, userId),
-    fetchCloud: async (userId) => {
+    loadLocal: (scope) => loadFromLocalStorage(scope.grupoId),
+    saveLocal: (players, scope) => saveToLocalStorage(players, scope.grupoId),
+    fetchCloud: async (scope) => {
       const { data, error } = await supabase
         .from("players")
         .select("*")
-        .eq("user_id", userId);
+        .eq("grupo_id", scope.grupoId);
       return {
         rows: (data as Record<string, unknown>[] | null) ?? null,
         error,
       };
     },
-    persistImageUrl: async (userId, id, imageUrl) => {
+    persistImageUrl: async (scope, id, imageUrl) => {
       await supabase
         .from("players")
         .update({ image_url: imageUrl })
         .eq("id", id)
-        .eq("user_id", userId);
+        .eq("grupo_id", scope.grupoId);
     },
-    deleteCloud: async (userId, id) => {
-      await supabase.from("players").delete().eq("id", id).eq("user_id", userId);
+    deleteCloud: async (scope, id) => {
+      await supabase.from("players").delete().eq("id", id).eq("grupo_id", scope.grupoId);
     },
-    prepareForCloud: (userId, player) =>
-      preparePlayerForCloud(supabase, userId, player),
-    syncRow: async (player, userId, mode) => {
-      const { id } = await syncPlayerRow(supabase, player, userId, mode);
+    prepareForCloud: (scope, player) =>
+      preparePlayerForCloud(supabase, scope, player),
+    syncRow: async (player, scope, mode) => {
+      const { id } = await syncPlayerRow(supabase, player, scope, mode);
       return { id };
     },
     isDataUrl: isDataUrlImage,
