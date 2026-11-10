@@ -11,7 +11,7 @@ function admin() {
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-test("a user with no Grupo names it on first access and keeps their Elenco", async ({ page }) => {
+test("a user with no Grupo names it on first access", async ({ page }) => {
   const service = admin();
   const email = `primeiro-acesso-${randomUUID()}@squadra.test`;
   const { data: created, error } = await service.auth.admin.createUser({
@@ -21,8 +21,6 @@ test("a user with no Grupo names it on first access and keeps their Elenco", asy
   });
   if (error || !created.user) throw error ?? new Error("createUser returned no user");
   const userId = created.user.id;
-  const jogador = `Veterano ${Date.now()}`;
-  await service.from("players").insert({ user_id: userId, name: jogador, position: "ALA", nationality: "BR" }).throwOnError();
 
   try {
     await signIn(page, email);
@@ -39,18 +37,27 @@ test("a user with no Grupo names it on first access and keeps their Elenco", asy
     await campo.fill("  Fut de Quinta  ");
     await page.getByRole("button", { name: "Criar fut" }).click();
 
-    // The Elenco opens with the Grupo's name, and the Jogador made before it is still there.
+    // The Elenco opens with the Grupo's name, and the user is its dono.
     await expect(page.getByText("Fut de Quinta", { exact: true })).toBeVisible();
-    await expect(card(page, jogador)).toBeVisible();
-
-    // The Jogador moved into the new Grupo, and the screen doesn't come back.
-    const { data: player } = await service.from("players").select("grupo_id").eq("user_id", userId).single().throwOnError();
     const { data: grupo } = await service.from("grupos").select("id, slug").eq("criado_por", userId).single().throwOnError();
-    expect(player?.grupo_id).toBe(grupo?.id);
     expect(grupo?.slug).toMatch(/^fut-de-quinta(-\d+)?$/);
+    const { data: membro } = await service.from("grupo_membros").select("papel").eq("grupo_id", grupo!.id).eq("user_id", userId).single().throwOnError();
+    expect(membro?.papel).toBe("dono");
+
+    // The first Jogador lands in the new Grupo, and the naming screen doesn't come back.
+    const jogador = `Primeiro ${Date.now()}`;
+    await page.getByRole("button", { name: /^Nova( Carta)?$/ }).click();
+    const modal = page.getByRole("dialog");
+    await modal.getByLabel("Nome do Jogador").fill(jogador);
+    await modal.getByLabel("Posição").selectOption("ALA");
+    await modal.getByRole("button", { name: "Criar Carta" }).click();
+    await expect(card(page, jogador)).toBeVisible();
+    const { data: player } = await service.from("players").select("grupo_id").eq("user_id", userId).single().throwOnError();
+    expect(player?.grupo_id).toBe(grupo?.id);
 
     await page.reload();
     await expect(page.getByText("Fut de Quinta", { exact: true })).toBeVisible();
+    await expect(card(page, jogador)).toBeVisible();
     await expect(page.getByRole("heading", { name: "Dê um nome pro seu fut" })).toHaveCount(0);
   } finally {
     await service.from("grupos").delete().eq("criado_por", userId);

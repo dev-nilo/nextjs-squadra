@@ -65,8 +65,9 @@ Requer Docker. `npm run db:start` sobe um Supabase local, aplica todas as migrat
 
 Usuários do seed (senha `squadra-dev-123`):
 
-- `dev@squadra.test`: Elenco com 20 Jogadores
-- `amigo@squadra.test`: Elenco com 3 Jogadores (pra conferir o isolamento)
+- `dev@squadra.test`: dono do "Fut do Dev", Elenco com 20 Jogadores
+- `amigo@squadra.test`: dono do "Fut do Amigo", Elenco com 3 Jogadores (pra conferir o isolamento entre Grupos)
+- `novato@squadra.test`: sem Grupo e sem Jogadores, cai na tela "Dê um nome pro seu fut"
 
 Mudanças de schema são sempre uma nova migration (`npx supabase migration new <nome>`), nunca SQL rodado na mão no dashboard.
 
