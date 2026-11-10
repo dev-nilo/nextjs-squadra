@@ -44,7 +44,7 @@ Optional: Settings → Environments → `supabase-production` → add yourself a
 
 ### 4. Fill staging
 
-Actions → **Staging** → Run workflow → tick **reset**. It builds the schema from every migration and loads `supabase/seed.sql`: `dev@squadra.test` and `amigo@squadra.test`, password `squadra-dev-123`.
+Actions → **Staging** → Run workflow → tick **reset**. It builds the schema from every migration and loads `supabase/seed.sql`: `dev@squadra.test`, `amigo@squadra.test` and `novato@squadra.test` (no Grupo yet), password `squadra-dev-123`.
 
 ### 5. Point Vercel previews at staging
 

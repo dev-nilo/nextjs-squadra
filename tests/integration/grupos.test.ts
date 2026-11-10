@@ -20,10 +20,8 @@ async function criarGrupo(owner: TestUser, nome: string) {
 }
 
 describe("criar_grupo", () => {
-  it("makes the caller dono and moves their Jogadores without a Grupo into it", async () => {
+  it("makes the caller dono", async () => {
     const nilo = await user("nilo");
-    const antes = await addJogador(nilo, "Jogador Antigo");
-    expect(antes.data?.grupo_id).toBeNull();
 
     const grupo = await criarGrupo(nilo, "Fut do Nilo");
 
@@ -31,8 +29,6 @@ describe("criar_grupo", () => {
     expect(grupo.slug).toMatch(/^fut-do-nilo(-\d+)?$/);
     const { data: membros } = await nilo.client.from("grupo_membros").select("user_id, papel").eq("grupo_id", grupo.id);
     expect(membros).toEqual([{ user_id: nilo.id, papel: "dono" }]);
-    const { data: jogador } = await nilo.client.from("players").select("grupo_id").eq("id", antes.data!.id).single();
-    expect(jogador?.grupo_id).toBe(grupo.id);
   });
 
   it("does not move Jogadores that already belong to a Grupo", async () => {
@@ -223,7 +219,7 @@ describe("papéis", () => {
   });
 });
 
-describe("Jogadores during the transition", () => {
+describe("Jogadores and their Grupo", () => {
   it("puts a new Jogador in the Grupo its creator owns", async () => {
     const nilo = await user("nilo");
     const grupo = await criarGrupo(nilo, "Fut do Nilo");
@@ -231,10 +227,11 @@ describe("Jogadores during the transition", () => {
     expect(data?.grupo_id).toBe(grupo.id);
   });
 
-  it("leaves a Jogador without Grupo when its creator has none yet", async () => {
+  it("refuses a Jogador without a Grupo", async () => {
     const nilo = await user("nilo");
-    const { data } = await addJogador(nilo, "Sem Grupo");
-    expect(data?.grupo_id).toBeNull();
+    const { error } = await addJogador(nilo, "Sem Grupo");
+    // Refused by RLS (no papel in a null Grupo) before NOT NULL even runs.
+    expect(error).not.toBeNull();
   });
 
   it("refuses a Jogador aimed at someone else's Grupo", async () => {
@@ -245,6 +242,7 @@ describe("Jogadores during the transition", () => {
     const plantado = await addJogador(intruso, "Plantado", { grupo_id: grupo.id });
     expect(plantado.error).not.toBeNull();
 
+    await criarGrupo(intruso, "Fut do Intruso");
     const { data: proprio } = await addJogador(intruso, "Do Intruso");
     const movido = await intruso.client.from("players").update({ grupo_id: grupo.id }).eq("id", proprio!.id);
     expect(movido.error).not.toBeNull();
