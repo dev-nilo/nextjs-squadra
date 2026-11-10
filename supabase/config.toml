@@ -249,6 +249,12 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# Same template as hosted projects (paste it in Authentication → Emails). It links to
+# /auth/confirm, where the user taps Confirmar, so email scanners can't burn the token.
+[auth.email.template.confirmation]
+subject = "Confirme seu email no Squadra"
+content_path = "./supabase/templates/confirm-signup.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"

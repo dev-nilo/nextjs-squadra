@@ -20,10 +20,10 @@ These steps need the owner's Supabase, GitHub and Vercel accounts.
 1. In Supabase, create a **free** project named `squadra-staging`, in the same region as production.
 2. Copy its **project ref**: the `xxxx` in `https://xxxx.supabase.co`.
 3. **Authentication → URL Configuration**:
-   - Site URL: `https://squadra-eight.vercel.app`
+   - Site URL: `http://localhost:3000`. The confirmation email links to `{{ .SiteURL }}`, so it must be an app that talks to staging, never production. To test sign-up on a Vercel preview, set it to that preview's URL for the test.
    - Redirect URLs: `https://*-ayanno-team.vercel.app/**`, `http://localhost:3000/**`
 4. **Authentication → Providers → Email**: leave "Confirm email" **on**, as in production.
-5. **Authentication → Email Templates → Confirm sign up**: use the same template as production (see the README, "Auth Supabase").
+5. **Authentication → Emails → Confirm sign up**: subject `Confirme seu email no Squadra`, body = [`supabase/templates/confirm-signup.html`](../supabase/templates/confirm-signup.html). Same as production.
 
 ### 2. Create an access token
 
