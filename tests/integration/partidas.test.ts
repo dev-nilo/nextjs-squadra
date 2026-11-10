@@ -196,13 +196,14 @@ describe("dropping out", () => {
   it("coming back after não vou goes to the end of the line", async () => {
     const dono = await user("dono");
     const grupoId = await grupoCom(dono);
-    const [a, b, c] = await Promise.all(["a", "b", "c"].map((n) => membroComJogador(grupoId, n)));
-    const id = await partida(dono, grupoId, 1);
-    for (const m of [a, b, c]) await responder(m.u, id, m.jogadorId, true);
+    const [a, b, c, d] = await Promise.all(["a", "b", "c", "d"].map((n) => membroComJogador(grupoId, n)));
+    const id = await partida(dono, grupoId, 2);
+    for (const m of [a, b, c, d]) await responder(m.u, id, m.jogadorId, true);
 
+    // b drops out (c takes the vaga), then says vou again: behind d.
     await responder(b.u, id, b.jogadorId, false);
     await responder(b.u, id, b.jogadorId, true);
-    expect((await lista(id)).filter((p) => p.situacao === "espera").map((p) => p.jogador_id)).toEqual([c.jogadorId, b.jogadorId]);
+    expect((await lista(id)).filter((p) => p.situacao === "espera").map((p) => p.jogador_id)).toEqual([d.jogadorId, b.jogadorId]);
   });
 });
 
