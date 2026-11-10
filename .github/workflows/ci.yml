@@ -173,3 +173,35 @@ jobs:
       - name: Apply migrations to production
         if: steps.gate.outputs.ready == 'true'
         run: npx supabase db push --remote="$PROJECT_REF" --yes
+
+  # Production deploys from here, not from Vercel's Git integration (vercel.json
+  # turns that off for main), so the app never goes live before the migrations
+  # it depends on. Vercel still builds it, with the Production env vars it holds.
+  deploy-production:
+    name: Deploy production
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [migrate-production]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: vercel-production
+      cancel-in-progress: false
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      # Not secret: they name the team and project, the token grants access.
+      VERCEL_ORG_ID: team_C1FkuendGkhTzvyVD2k0Cpra
+      VERCEL_PROJECT_ID: prj_HS599jsot57tfq3rjZASbDKhA068
+    steps:
+      # No skip here: with Git deploys off for main, skipping would mean
+      # production silently stops updating.
+      - name: Check Vercel is configured
+        run: |
+          test -n "$VERCEL_TOKEN" || {
+            echo "::error::Set the VERCEL_TOKEN secret. Production only deploys from this job. See docs/staging.md."
+            exit 1
+          }
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+      - name: Deploy to production
+        run: npx --yes vercel@64.7.0 deploy --prod --yes --token "$VERCEL_TOKEN"

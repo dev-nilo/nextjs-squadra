@@ -3,7 +3,7 @@
 | | Local / CI | Staging | Production |
 | --- | --- | --- | --- |
 | Supabase | `npm run db:start` (Docker), thrown away | `squadra-staging` (free project) | the current project |
-| App | `npm run dev` / CI runner | Vercel **Preview**, one per PR | Vercel **Production** |
+| App | `npm run dev` / CI runner | Vercel **Preview**, one per PR (Vercel's Git integration) | Vercel **Production**, deployed by CI (`deploy-production`) |
 | Data | `supabase/seed.sql` | `supabase/seed.sql`, fake only | real users |
 | Who changes the schema | `supabase start` / `db reset` | CI, on every PR (`migrate-staging`) | CI, after merge to `main` (`migrate-production`) |
 
@@ -38,6 +38,7 @@ Repo → Settings → Secrets and variables → **Actions**:
 | `SUPABASE_ACCESS_TOKEN` | the token from step 2 |
 | `STAGING_PROJECT_REF` | the staging ref from step 1 |
 | `PROD_PROJECT_REF` | `rellxqqnjlehwonedyvz` |
+| `VERCEL_TOKEN` | a Vercel token scoped to the `ayanno-team` team (Vercel → Account Settings → Tokens). Production deploys only through it |
 
 Optional: Settings → Environments → `supabase-production` → add yourself as a **required reviewer**, so every production migration waits for one click.
 
@@ -68,7 +69,7 @@ Until this is done, `migrate-production` refuses to run: its dry run would inclu
 ## Day to day
 
 - **Open a PR**: once lint, tests and E2E pass, `migrate-staging` pushes the PR's new migrations to staging, and the Vercel preview runs against them.
-- **Merge to `main`**: `migrate-production` pushes the same migrations to production, then Vercel deploys.
+- **Merge to `main`**: `migrate-production` pushes the same migrations to production, then `deploy-production` deploys the app. Vercel's own Git deploy is off for `main` (`vercel.json`), so the new code never goes live before the schema it needs. If a migration fails, production keeps running the previous deploy.
 - **Staging drifted** (an abandoned PR left a migration behind, or test data piled up): Actions → Staging → Run workflow → **reset**.
 - **Keep-alive**: the Staging workflow touches the database every Monday so the free project doesn't pause.
 
