@@ -143,6 +143,23 @@ export function useElenco(scope: ElencoScope | null) {
     [deps, state, current, isOnline],
   );
 
+  /**
+   * Fetch the Elenco again after the database changed it (a Jogador linked to
+   * an account, say), keeping the screen and the selection as they are.
+   */
+  const recarregar = useCallback(async () => {
+    if (!current || !deps) return;
+    try {
+      const next = await loadSession(deps, current);
+      setState((prev) => ({
+        players: next.players,
+        selectedIds: new Set([...prev.selectedIds].filter((id) => next.players.some((p) => p.id === id))),
+      }));
+    } catch (e) {
+      console.error("[use-elenco] Reload error:", e);
+    }
+  }, [current, deps]);
+
   const toggleSelect = useCallback((id: string) => {
     setState((prev) => toggleSelectState(prev, id));
   }, []);
@@ -230,6 +247,7 @@ export function useElenco(scope: ElencoScope | null) {
       toggleSelectAll,
       sync,
       importMany,
+      recarregar,
     },
   };
 }
