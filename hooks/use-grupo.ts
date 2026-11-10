@@ -1,14 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { grupoAtual, type Papel, type Participacao } from "@/lib/grupo";
+import { resolverGrupo, type Papel, type Participacao, type ParticipacaoDesde } from "@/lib/grupo";
 
 export type GrupoState =
   | { status: "loading" }
   /** Signed in, member of no Grupo yet: show the naming screen. */
   | { status: "sem-grupo" }
   | { status: "pronto"; grupo: Participacao }
+  /** The URL names a Grupo that doesn't exist or this user isn't in. */
+  | { status: "nao-encontrado" }
   /** Couldn't load the Grupos and none is remembered on this device. */
   | { status: "erro" };
 
@@ -18,15 +20,16 @@ type Linha = {
   grupos: { id: string; slug: string; nome: string } | null;
 };
 
-type Resultado = { userId: string; state: Exclude<GrupoState, { status: "loading" }> };
+type Carga =
+  | { userId: string; participacoes: ParticipacaoDesde[] }
+  | { userId: string; erro: true };
 
-/** The last Grupo opened on this device, so the Elenco still opens offline. */
+/** The last Grupo opened on this device, so `/` reopens it and the Elenco still opens offline. */
 const chaveDoGrupoAtual = (userId: string) => `squadra:grupo-atual:${userId}`;
 
-function lembrar(userId: string, grupo: Participacao | null) {
+function lembrar(userId: string, grupo: Participacao) {
   try {
-    if (grupo) localStorage.setItem(chaveDoGrupoAtual(userId), JSON.stringify(grupo));
-    else localStorage.removeItem(chaveDoGrupoAtual(userId));
+    localStorage.setItem(chaveDoGrupoAtual(userId), JSON.stringify(grupo));
   } catch {
     /* storage unavailable: nothing to remember */
   }
@@ -42,9 +45,13 @@ function lembrado(userId: string): Participacao | null {
   }
 }
 
-export function useGrupo(userId: string | undefined) {
+/**
+ * The user's Grupos and the one to open: `slug` (from `/g/<slug>`) when given,
+ * else the last one used on this device, else the default.
+ */
+export function useGrupo(userId: string | undefined, slug: string | null) {
   // Keyed by user, so switching accounts reads as loading until that user's Grupos arrive.
-  const [resultado, setResultado] = useState<Resultado | null>(null);
+  const [carga, setCarga] = useState<Carga | null>(null);
   const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
@@ -59,16 +66,13 @@ export function useGrupo(userId: string | undefined) {
         if (cancelled) return;
         if (error) {
           console.warn("[grupo] Could not load Grupos:", error.message);
-          const salvo = lembrado(userId);
-          setResultado({ userId, state: salvo ? { status: "pronto", grupo: salvo } : { status: "erro" } });
+          setCarga({ userId, erro: true });
           return;
         }
         const participacoes = ((data ?? []) as unknown as Linha[]).flatMap((linha) =>
           linha.grupos ? [{ ...linha.grupos, papel: linha.papel, desde: linha.created_at }] : [],
         );
-        const atual = grupoAtual(participacoes);
-        lembrar(userId, atual);
-        setResultado({ userId, state: atual ? { status: "pronto", grupo: atual } : { status: "sem-grupo" } });
+        setCarga({ userId, participacoes });
       });
 
     return () => {
@@ -76,22 +80,41 @@ export function useGrupo(userId: string | undefined) {
     };
   }, [userId, tentativa]);
 
+  const atual = carga && userId && carga.userId === userId ? carga : null;
+
+  const state = useMemo<GrupoState>(() => {
+    if (!atual || !userId) return { status: "loading" };
+    if ("erro" in atual) {
+      const salvo = lembrado(userId);
+      return salvo && (!slug || salvo.slug === slug) ? { status: "pronto", grupo: salvo } : { status: "erro" };
+    }
+    return resolverGrupo({ participacoes: atual.participacoes, slug, ultimoId: lembrado(userId)?.id ?? null });
+  }, [atual, userId, slug]);
+
+  const grupoAberto = state.status === "pronto" ? state.grupo : null;
+  useEffect(() => {
+    if (userId && grupoAberto) lembrar(userId, grupoAberto);
+  }, [userId, grupoAberto]);
+
   /** After the naming screen creates the Grupo, use it without refetching. */
   const definirGrupo = useCallback(
     (grupo: Participacao) => {
       if (!userId) return;
       lembrar(userId, grupo);
-      setResultado({ userId, state: { status: "pronto", grupo } });
+      setCarga((prev) => {
+        const antes = prev && prev.userId === userId && "participacoes" in prev ? prev.participacoes : [];
+        return { userId, participacoes: [...antes, { ...grupo, desde: new Date().toISOString() }] };
+      });
     },
     [userId],
   );
 
   const tentarDeNovo = useCallback(() => {
-    setResultado(null);
+    setCarga(null);
     setTentativa((n) => n + 1);
   }, []);
 
-  const state: GrupoState = userId && resultado?.userId === userId ? resultado.state : { status: "loading" };
+  const participacoes = useMemo(() => (atual && "participacoes" in atual ? atual.participacoes : []), [atual]);
 
-  return { state, definirGrupo, tentarDeNovo };
+  return { state, participacoes, definirGrupo, tentarDeNovo };
 }
