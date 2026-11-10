@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { grupoAtual, validarNomeDoGrupo } from "./grupo";
+import { grupoAtual, resolverGrupo, slugDoCaminho, validarNomeDoGrupo } from "./grupo";
 
 describe("validarNomeDoGrupo", () => {
   it("accepts a name and trims it", () => {
@@ -48,5 +48,53 @@ describe("grupoAtual", () => {
       grupo("antigo", "membro", "2026-02-01"),
     ]);
     expect(atual?.slug).toBe("antigo");
+  });
+});
+
+describe("resolverGrupo", () => {
+  const p = (slug: string, papel: "dono" | "admin" | "membro", desde: string) => ({
+    id: `id-${slug}`,
+    slug,
+    nome: slug,
+    papel,
+    desde,
+  });
+  const participacoes = [p("antigo", "dono", "2026-01-01"), p("novo", "membro", "2026-06-01")];
+
+  it("opens the Grupo the URL names", () => {
+    expect(resolverGrupo({ participacoes, slug: "novo", ultimoId: null })).toEqual({
+      status: "pronto",
+      grupo: { id: "id-novo", slug: "novo", nome: "novo", papel: "membro" },
+    });
+  });
+
+  it("refuses a slug the user isn't in, even when they have other Grupos", () => {
+    expect(resolverGrupo({ participacoes, slug: "de-outro", ultimoId: null })).toEqual({ status: "nao-encontrado" });
+  });
+
+  it("refuses a slug when the user has no Grupo at all", () => {
+    expect(resolverGrupo({ participacoes: [], slug: "qualquer", ultimoId: null })).toEqual({ status: "nao-encontrado" });
+  });
+
+  it("on /, reopens the last Grupo used, if the user is still in it", () => {
+    expect(resolverGrupo({ participacoes, slug: null, ultimoId: "id-novo" })).toMatchObject({ grupo: { slug: "novo" } });
+    expect(resolverGrupo({ participacoes, slug: null, ultimoId: "id-saiu" })).toMatchObject({ grupo: { slug: "antigo" } });
+  });
+
+  it("on /, with no Grupo, shows the first-access screen", () => {
+    expect(resolverGrupo({ participacoes: [], slug: null, ultimoId: null })).toEqual({ status: "sem-grupo" });
+  });
+});
+
+describe("slugDoCaminho", () => {
+  it("reads the slug from /g/<slug>", () => {
+    expect(slugDoCaminho("/g/fut-de-quinta")).toBe("fut-de-quinta");
+    expect(slugDoCaminho("/g/fut-de-quinta/")).toBe("fut-de-quinta");
+  });
+
+  it("is null anywhere else", () => {
+    expect(slugDoCaminho("/")).toBeNull();
+    expect(slugDoCaminho("/auth")).toBeNull();
+    expect(slugDoCaminho(null)).toBeNull();
   });
 });

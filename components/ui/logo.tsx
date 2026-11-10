@@ -41,17 +41,24 @@ const LOCKUP_SIZES = {
 export function BrandLockup({
   size = "sm",
   stacked = false,
+  compactOnMobile = false,
   className = "",
 }: {
   size?: keyof typeof LOCKUP_SIZES;
   stacked?: boolean;
+  /** Below `sm`, keep only the mark (the wordmark stays for screen readers). */
+  compactOnMobile?: boolean;
   className?: string;
 }) {
   const s = LOCKUP_SIZES[size];
   return (
     <div className={`flex items-center ${s.gap} ${stacked ? "flex-col" : ""} ${className}`}>
       <Logo className={s.mark} />
-      <span className={`${s.text} font-black tracking-tight text-brand leading-none`}>Squadra</span>
+      <span
+        className={`${s.text} font-black tracking-tight text-brand leading-none ${compactOnMobile ? "sr-only sm:not-sr-only" : ""}`}
+      >
+        Squadra
+      </span>
     </div>
   );
 }
