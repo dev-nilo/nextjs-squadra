@@ -29,8 +29,7 @@ export function validarNomeDoGrupo(input: unknown): ValidacaoNome {
 
 /**
  * The Grupo the app opens. Until switching at /g/[slug] exists, that's the
- * oldest Grupo the user owns (where the transition trigger puts their new
- * Jogadores), else the oldest one they joined.
+ * oldest Grupo the user owns, else the oldest one they joined.
  */
 export function grupoAtual(participacoes: readonly (Participacao & { desde: string })[]): Participacao | null {
   if (participacoes.length === 0) return null;

@@ -46,10 +46,16 @@ export async function removeUsers(...users: TestUser[]) {
   for (const id of ids) await service.auth.admin.deleteUser(id);
 }
 
-export async function addJogador(owner: TestUser, name: string, extra: Record<string, unknown> = {}) {
+/** A Jogador created by `owner` in `grupoId` (null to check that it's refused). */
+export async function addJogador(
+  owner: TestUser,
+  grupoId: string | null,
+  name: string,
+  extra: Record<string, unknown> = {},
+) {
   return owner.client
     .from("players")
-    .insert({ user_id: owner.id, name, position: "ALA", nationality: "BR", ...extra })
+    .insert({ user_id: owner.id, grupo_id: grupoId, name, position: "ALA", nationality: "BR", ...extra })
     .select("id, grupo_id")
     .single();
 }
