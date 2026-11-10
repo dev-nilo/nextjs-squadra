@@ -33,7 +33,8 @@ test("a user with no Grupo names it on first access and keeps their Elenco", asy
     await expect(campo).not.toHaveAttribute("placeholder");
 
     await page.getByRole("button", { name: "Criar fut" }).click();
-    await expect(page.getByRole("alert")).toHaveText("Dê um nome pro seu fut.");
+    // Filtered: Next's route announcer is an (empty) role="alert" too.
+    await expect(page.getByRole("alert").filter({ hasText: "Dê um nome pro seu fut." })).toBeVisible();
 
     await campo.fill("  Fut de Quinta  ");
     await page.getByRole("button", { name: "Criar fut" }).click();

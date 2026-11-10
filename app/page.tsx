@@ -159,7 +159,6 @@ export default function App() {
                       <BrandLockup />
                       {grupo && (
                         <p className="max-w-[9rem] truncate text-xs font-semibold text-default-500" title={grupo.nome}>
-                          <span className="sr-only">Fut: </span>
                           {grupo.nome}
                         </p>
                       )}
