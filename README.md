@@ -103,27 +103,14 @@ Se o link do email redirecionar com `otp_expired` / `Email link is invalid or ha
 
 ### 2. Template de confirmação (anti-prefetch)
 
-Scanners (Outlook Safe Links, etc.) abrem `{{ .ConfirmationURL }}` sozinhos e queimam o token.
+Scanners (Outlook Safe Links, etc.) abrem os links dos emails sozinhos e queimam o token. Por isso o link leva pra `/auth/confirm`, e a confirmação só acontece quando a pessoa toca em **Confirmar**.
 
-Em **Authentication → Email Templates → Confirm sign up**, use:
+O template está versionado em [`supabase/templates/confirm-signup.html`](supabase/templates/confirm-signup.html), e o Supabase local já usa ele (`supabase/config.toml`). Nos projetos hospedados, vá em **Authentication → Emails → Confirm sign up** e:
 
-```html
-<h2>Confirme seu email</h2>
-<p>Clique no link abaixo. Na página aberta, pressione o botão Confirmar.</p>
-<p>
-  <a href="{{ .SiteURL }}/auth/confirm?confirmation_url={{ .ConfirmationURL }}">
-    Confirmar email
-  </a>
-</p>
-```
+- Assunto: `Confirme seu email no Squadra`
+- Corpo: cole o conteúdo do arquivo
 
-Alternativa com `token_hash`:
-
-```html
-<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup">
-  Confirmar email
-</a>
-```
+O link usa `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup`, então o **Site URL** do projeto precisa ser o app que fala com aquele banco.
 
 ### 3. Variável opcional em produção
 

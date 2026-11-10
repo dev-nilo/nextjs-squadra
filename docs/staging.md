@@ -20,10 +20,10 @@ These steps need the owner's Supabase, GitHub and Vercel accounts.
 1. In Supabase, create a **free** project named `squadra-staging`, in the same region as production.
 2. Copy its **project ref**: the `xxxx` in `https://xxxx.supabase.co`.
 3. **Authentication → URL Configuration**:
-   - Site URL: `https://squadra-eight.vercel.app`
+   - Site URL: `http://localhost:3000`. The confirmation email links to `{{ .SiteURL }}`, so it must be an app that talks to staging, never production. To test sign-up on a Vercel preview, set it to that preview's URL for the test.
    - Redirect URLs: `https://*-ayanno-team.vercel.app/**`, `http://localhost:3000/**`
 4. **Authentication → Providers → Email**: leave "Confirm email" **on**, as in production.
-5. **Authentication → Email Templates → Confirm sign up**: use the same template as production (see the README, "Auth Supabase").
+5. **Authentication → Emails → Confirm sign up**: subject `Confirme seu email no Squadra`, body = [`supabase/templates/confirm-signup.html`](../supabase/templates/confirm-signup.html). Same as production.
 
 ### 2. Create an access token
 
@@ -47,10 +47,12 @@ Actions → **Staging** → Run workflow → tick **reset**. It builds the schem
 
 ### 5. Point Vercel previews at staging
 
+Do this **after** step 4. Until staging has the schema, a preview pointed at it has no tables to read.
+
 Vercel → Project → Settings → **Environment Variables**. For the **Preview** environment only:
 
 - `NEXT_PUBLIC_SUPABASE_URL` = `https://<staging ref>.supabase.co`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` = staging's anon key (Project Settings → API)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` = staging's **publishable** key, `sb_publishable_…` (Project Settings → API Keys). supabase-js 2.95 accepts it in place of the legacy anon JWT
 
 Keep the Production values as they are. Then Settings → **Deployment Protection** → turn off Vercel Authentication for previews, so the pelada can open a preview link.
 
