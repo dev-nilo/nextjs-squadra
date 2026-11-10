@@ -443,8 +443,9 @@ export function ElencoApp() {
             initialData={editingPlayer}
         />
 
-        {grupo && podeEditar && (
-          <ConvidarModal isOpen={isConvidarOpen} onClose={() => setIsConvidarOpen(false)} grupo={grupo} />
+        {/* Mounted only while open, so its copy of the Grupo's name isn't on the page otherwise. */}
+        {grupo && podeEditar && isConvidarOpen && (
+          <ConvidarModal isOpen onClose={() => setIsConvidarOpen(false)} grupo={grupo} />
         )}
 
         <ImportCsvModal

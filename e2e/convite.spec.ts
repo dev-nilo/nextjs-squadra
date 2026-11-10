@@ -129,16 +129,13 @@ test("someone who opened an invite and signs in on / is sent back to it, not to 
 
 test("a cancelled, expired or unknown link says so", async ({ page }) => {
   const service = admin();
-  const { data } = await service
-    .from("convites")
-    .insert([
-      { grupo_id: FUT_DO_DEV, revogado_em: new Date().toISOString() },
-      { grupo_id: FUT_DO_DEV, expira_em: new Date(Date.now() - 60_000).toISOString() },
-    ])
-    .select("token, revogado_em")
-    .throwOnError();
-  const revogado = data!.find((c) => c.revogado_em)!.token;
-  const expirado = data!.find((c) => !c.revogado_em)!.token;
+  // One insert each: a bulk insert with different keys sends null for the missing ones.
+  const inserir = async (campos: Record<string, string>) => {
+    const { data } = await service.from("convites").insert({ grupo_id: FUT_DO_DEV, ...campos }).select("token").single().throwOnError();
+    return data!.token as string;
+  };
+  const revogado = await inserir({ revogado_em: new Date().toISOString() });
+  const expirado = await inserir({ expira_em: new Date(Date.now() - 60_000).toISOString() });
 
   await page.goto(`/convite/${revogado}`);
   await expect(page.getByRole("heading", { name: "Esse convite foi cancelado" })).toBeVisible();
