@@ -91,7 +91,7 @@ test("someone new signs up through an invite, confirms the email and joins as me
     // Not in the Elenco yet: they add themselves, already linked to their account.
     await convidado.getByRole("button", { name: "Escolher meu Jogador" }).click();
     const escolher = convidado.getByRole("dialog");
-    await escolher.getByLabel("Seu nome").fill("Convidado Novo");
+    await escolher.getByLabel("Seu nome", { exact: true }).fill("Convidado Novo");
     await escolher.getByLabel("Posição").selectOption("ATA");
     await escolher.getByRole("button", { name: "Criar meu Jogador" }).click();
     await expect(convidado.getByRole("button", { name: /^Carta de Convidado Novo, ATA, rating 60, você$/ })).toBeVisible();
