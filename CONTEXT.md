@@ -37,7 +37,7 @@ The Jogadores who said *vou* after the vagas ran out, in the order they asked. W
 _Avoid_: Fila (fine in speech, but the code says espera), reserve list, bench
 
 **Sorteio**:
-Distributing the selected Jogadores into Times using attribute-sum balancing (shuffle, rating tiers, assign to the Time with the lowest attribute total).
+Distributing Jogadores into Times using attribute-sum balancing (shuffle, rating tiers, assign to the Time with the lowest attribute total). A Partida's Sorteio runs on the server over its confirmed Jogadores only (never the Lista de espera), and is saved on the Partida with a snapshot of each Jogador's rating at draw time (ADR 0004). The `dono` and admins can draw again and move Jogadores between Times until they publish; then every Membro sees the Times, frozen. The Elenco page keeps a quick local Sorteio over any selected Jogadores, with nothing saved.
 _Avoid_: Draw (ambiguous), balance API, snake-draft
 
 **Time**:
