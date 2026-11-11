@@ -10,6 +10,7 @@ import { useElenco } from "@/hooks/use-elenco";
 import { useGrupo } from "@/hooks/use-grupo";
 import { NomearGrupo } from "@/components/grupo/nomear-grupo";
 import { GrupoSwitcher } from "@/components/grupo/grupo-switcher";
+import { AbasDoGrupo } from "@/components/partida/grupo-nav";
 import { slugDoCaminho } from "@/lib/grupo";
 import { ConvidarModal } from "@/components/convite/convidar-modal";
 import { caminhoDoConvite, convitePendente } from "@/lib/convite";
@@ -368,6 +369,7 @@ export function ElencoApp() {
                 )}
               </div>
             </div>
+            {grupo && <AbasDoGrupo slug={grupo.slug} aba="elenco" className="-mb-3 sm:-mb-4" />}
           </div>
         </header>
 

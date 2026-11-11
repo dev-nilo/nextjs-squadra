@@ -103,3 +103,29 @@ from (values
   ('22222222-2222-4222-8222-222222222222', 'Ala do Amigo',     'ALA', 'BR', 80, 75, 65, 66, 55, 74, 70, 62),
   ('22222222-2222-4222-8222-222222222222', 'Pivô do Amigo',    'ATA', 'BR', 64, 70, 78, 74, 48, 64, 66, 82)
 ) as v(user_id, name, position, nationality, vel, res, chu, pos, def, dri, pas, fis);
+
+-- ---------------------------------------------------------------------------
+-- A Partida next week (20:00 in Brasília, 23:00 UTC), half answered, so the
+-- Partidas screens have something to show. Presence normally only changes
+-- through responder_presenca(); the seed runs as the database owner.
+-- ---------------------------------------------------------------------------
+insert into public.partidas (id, grupo_id, inicio, local, vagas, criado_por)
+values (
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  date_trunc('day', now() + interval '7 days') + interval '23 hours',
+  'Society da Vila',
+  14,
+  '11111111-1111-4111-8111-111111111111'
+);
+
+insert into public.presencas (partida_id, jogador_id, situacao, pediu_vaga_em, respondido_por)
+select
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  p.id,
+  case when p.name in ('Bagre', 'Perna de Pau') then 'nao_vou' else 'confirmado' end::public.situacao_presenca,
+  case when p.name in ('Bagre', 'Perna de Pau') then null else now() - (row_number() over (order by p.name)) * interval '1 minute' end,
+  '11111111-1111-4111-8111-111111111111'
+from public.players p
+where p.grupo_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+  and p.name in ('Paredão', 'Xerife', 'Muralha', 'Foguete', 'Motorzinho', 'Maestro', 'Matador', 'Artilheiro', 'Bagre', 'Perna de Pau');

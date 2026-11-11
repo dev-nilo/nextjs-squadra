@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  doCampoDeData,
   estadoDaPartida,
+  formatarInicio,
   oQueVouFaz,
   organizarPresencas,
+  paraCampoDeData,
   partidaSchema,
   situacaoDoJogador,
   type Presenca,
@@ -87,5 +90,22 @@ describe("partidaSchema", () => {
     expect(partidaSchema.safeParse({ inicio: "2026-11-12T20:00", local: "Quadra", vagas: 61 }).success).toBe(false);
     expect(partidaSchema.safeParse({ inicio: "2026-11-12T20:00", local: "  ", vagas: 10 }).success).toBe(false);
     expect(partidaSchema.safeParse({ inicio: "não é data", local: "Quadra", vagas: 10 }).success).toBe(false);
+  });
+});
+
+describe("dates in Brasília time", () => {
+  it("reads a datetime-local value as Brasília time", () => {
+    expect(doCampoDeData("2026-11-12T20:00")).toBe("2026-11-12T23:00:00.000Z");
+    expect(doCampoDeData("12/11/2026 20:00")).toBeNull();
+    expect(doCampoDeData("")).toBeNull();
+  });
+
+  it("writes an instant back as the same datetime-local value", () => {
+    expect(paraCampoDeData("2026-11-12T23:00:00.000Z")).toBe("2026-11-12T20:00");
+    expect(paraCampoDeData(doCampoDeData("2026-12-31T23:30")!)).toBe("2026-12-31T23:30");
+  });
+
+  it("formats the start the same way whatever the machine's timezone", () => {
+    expect(formatarInicio("2026-11-12T23:00:00.000Z")).toMatch(/12\/11.*20:00/);
   });
 });

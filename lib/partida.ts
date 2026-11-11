@@ -81,3 +81,50 @@ export const MOTIVO_DA_PRESENCA: Record<string, string> = {
   "sem-permissao": "Você só responde pelo seu Jogador.",
   "vagas-abaixo-dos-confirmados": "Já tem mais confirmados do que essas vagas.",
 };
+
+// ---------------------------------------------------------------------------
+// Dates. The pelada plays in Brazil, and the server renders in UTC, so every
+// date is shown and typed in Brasília time. Brasília has had no daylight
+// saving since 2019, so its offset is a constant.
+// ---------------------------------------------------------------------------
+export const FUSO = "America/Sao_Paulo";
+const OFFSET = "-03:00";
+
+const formatoInicio = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: FUSO,
+  weekday: "short",
+  day: "2-digit",
+  month: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+/** "qui., 12/11, 20:00" in Brasília time, the same on the server and in the browser. */
+export function formatarInicio(iso: string): string {
+  return formatoInicio.format(new Date(iso));
+}
+
+/** An instant as a `datetime-local` value ("2026-11-12T20:00") in Brasília time. */
+export function paraCampoDeData(iso: string): string {
+  const partes = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: FUSO,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date(iso))
+      .map((p) => [p.type, p.value]),
+  );
+  return `${partes.year}-${partes.month}-${partes.day}T${partes.hour}:${partes.minute}`;
+}
+
+/** A `datetime-local` value, read as Brasília time, as an ISO instant. Null if it isn't one. */
+export function doCampoDeData(valor: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(valor)) return null;
+  const data = new Date(`${valor}:00${OFFSET}`);
+  return Number.isNaN(data.getTime()) ? null : data.toISOString();
+}
