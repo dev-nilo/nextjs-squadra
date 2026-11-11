@@ -39,7 +39,7 @@ export function AbasDoGrupo({ slug, aba, className = "" }: { slug: string; aba: 
           href={a.href}
           aria-current={a.id === aba ? "page" : undefined}
           className={`-mb-px border-b-2 px-3 py-2 text-sm font-semibold transition-colors ${
-            a.id === aba ? "border-primary text-foreground" : "border-transparent text-default-500 hover:text-foreground"
+            a.id === aba ? "border-accent text-foreground" : "border-transparent text-default-500 hover:text-foreground"
           }`}
         >
           {a.rotulo}

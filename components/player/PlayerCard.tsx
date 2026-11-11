@@ -91,7 +91,7 @@ export const PlayerCard = ({
 
             {isMine && (
                 <span
-                    className="absolute -bottom-2 left-1/2 z-50 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-primary-foreground shadow-lg"
+                    className="absolute -bottom-2 left-1/2 z-50 -translate-x-1/2 rounded-full bg-accent px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-accent-foreground shadow-lg"
                     aria-hidden="true"
                 >
                     Você

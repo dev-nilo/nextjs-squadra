@@ -56,10 +56,10 @@ export function QuemSouEu({
         <div
           role="region"
           aria-label="Vincular sua conta"
-          className="mb-6 flex flex-col gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+          className="mb-6 flex flex-col gap-3 rounded-2xl border border-accent/50 bg-accent/10 p-4 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="flex items-start gap-3">
-            <UserCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+            <UserCheck className="mt-0.5 h-5 w-5 shrink-0 text-foreground" aria-hidden="true" />
             <div>
               <p className="font-bold text-foreground">Qual desses é você?</p>
               <p className="text-sm text-default-500">
