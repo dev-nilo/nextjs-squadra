@@ -24,6 +24,18 @@ _Avoid_: Member of the Elenco, player (a Jogador may have no account at all)
 A link a Grupo's `dono` or `admin` shares (`/convite/<token>`). Whoever opens it signs in or signs up and joins as `membro`; someone already in the Grupo keeps their papel. Valid for 7 days, and can be cancelled. Cancelling stops new joins; Membros who already joined stay.
 _Avoid_: Invitation code, magic link (it doesn't sign anyone in)
 
+**Partida**:
+One game of the Grupo: a start (date and time), a place and a number of vagas. The `dono` and admins create, edit and cancel it; every Membro sees it. A cancelled Partida keeps its presence list but takes no more answers.
+_Avoid_: Jogo (ambiguous with the app), match, event
+
+**Presença**:
+A Jogador's answer to a Partida: *vou* or *não vou* (no "talvez"). It belongs to the Jogador, not the account: a Membro answers for the Jogador linked to them, and the `dono` or an admin can answer for any Jogador, including ones with no account. A *vou* is *confirmado* while there are vagas, otherwise it joins the Lista de espera.
+_Avoid_: RSVP (in the UI), check-in
+
+**Lista de espera**:
+The Jogadores who said *vou* after the vagas ran out, in the order they asked. When a confirmed Jogador drops out, or the vagas go up, the first in line takes the vaga in the same transaction. Saying *não vou* and then *vou* again goes to the end of the line.
+_Avoid_: Fila (fine in speech, but the code says espera), reserve list, bench
+
 **Sorteio**:
 Distributing the selected Jogadores into Times using attribute-sum balancing (shuffle, rating tiers, assign to the Time with the lowest attribute total).
 _Avoid_: Draw (ambiguous), balance API, snake-draft
