@@ -1,7 +1,7 @@
 import "server-only";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
-import type { Papel, Participacao } from "@/lib/grupo";
+import type { Papel, Participacao, ParticipacaoDesde } from "@/lib/grupo";
 
 export type ContextoDoGrupo =
   | { status: "sem-sessao" }
@@ -37,6 +37,24 @@ export async function carregarGrupo(slug: string): Promise<ContextoDoGrupo> {
   const linha = data as { papel: Papel; grupos: { id: string; slug: string; nome: string } } | null;
   if (!linha?.grupos) return { status: "nao-encontrado", user };
   return { status: "pronto", user, grupo: { ...linha.grupos, papel: linha.papel }, supabase, agora: Date.now() };
+}
+
+type ClienteDoServidor = Awaited<ReturnType<typeof createClient>>;
+
+/** Every Grupo the user is a Membro of, with since when. Null when the query failed. */
+export async function carregarParticipacoes(
+  supabase: ClienteDoServidor,
+  userId: string,
+): Promise<ParticipacaoDesde[] | null> {
+  const { data, error } = await supabase
+    .from("grupo_membros")
+    .select("papel, created_at, grupos(id, slug, nome)")
+    .eq("user_id", userId);
+  if (error) return null;
+  type Linha = { papel: Papel; created_at: string; grupos: { id: string; slug: string; nome: string } | null };
+  return ((data ?? []) as unknown as Linha[]).flatMap((linha) =>
+    linha.grupos ? [{ ...linha.grupos, papel: linha.papel, desde: linha.created_at }] : [],
+  );
 }
 
 export const ehGestor = (papel: Papel) => papel === "dono" || papel === "admin";

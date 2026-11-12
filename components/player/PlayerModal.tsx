@@ -21,7 +21,8 @@ import { Select } from "@/components/ui/select";
 interface PlayerModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (playerData: Omit<Player, "rating" | "user_id">) => Promise<void>;
+    /** Resolves true once saved; false keeps the modal open so nothing typed is lost. */
+    onSave: (playerData: Omit<Player, "rating" | "user_id">) => Promise<boolean>;
     initialData?: Player | null;
 }
 
@@ -36,6 +37,7 @@ export const PlayerModal = ({
     const [nationality, setNationality] = useState(DEFAULT_COUNTRY_CODE);
     const [image, setImage] = useState<string | null>(null);
     const [attributes, setAttributes] = useState<Attributes>(DEFAULT_ATTRIBUTES);
+    const [salvando, setSalvando] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -89,8 +91,12 @@ export const PlayerModal = ({
             attributes: { ...attributes },
         };
 
-        await onSave(playerData);
-        onClose();
+        setSalvando(true);
+        try {
+            if (await onSave(playerData)) onClose();
+        } finally {
+            setSalvando(false);
+        }
     };
 
     return (
@@ -253,6 +259,7 @@ export const PlayerModal = ({
                 <Button
                     color="primary"
                     onClick={handleSubmit}
+                    isLoading={salvando}
                     startContent={<Save size={18} />}
                     className="w-full sm:w-auto"
                 >
