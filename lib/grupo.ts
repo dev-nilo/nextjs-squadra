@@ -44,36 +44,40 @@ export function grupoAtual(participacoes: readonly ParticipacaoDesde[]): Partici
   return grupo;
 }
 
-export type GrupoResolvido =
-  | { status: "pronto"; grupo: Participacao }
-  /** No Grupo at all: the first-access screen. */
-  | { status: "sem-grupo" }
-  /** The URL names a Grupo that doesn't exist or the user isn't in. */
-  | { status: "nao-encontrado" };
+/** Cookie with the slugs of the Grupos last opened on this device, most recent first. */
+export const COOKIE_FUTS_RECENTES = "squadra-futs";
+const MAX_FUTS_RECENTES = 5;
+/** Same check as `grupos.slug` in the database. */
+const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+/** The recent slugs in the cookie's value, ignoring anything that isn't a slug. */
+export function lerFutsRecentes(valor: string | null | undefined): string[] {
+  return (valor ?? "").split(",").filter((slug) => slug.length <= 80 && SLUG.test(slug)).slice(0, MAX_FUTS_RECENTES);
+}
+
+/** The cookie's next value after opening `slug`. */
+export function lembrarFut(valor: string | null | undefined, slug: string): string {
+  const recentes = lerFutsRecentes(valor).filter((s) => s !== slug);
+  return (SLUG.test(slug) ? [slug, ...recentes] : recentes).slice(0, MAX_FUTS_RECENTES).join(",");
+}
 
 /**
- * Which Grupo to open. `/g/<slug>` opens that one, if the user is in it.
- * `/` opens the last one used on this device, if they're still in it, else
- * the default.
+ * Which Grupo `/` opens: the most recent one on this device the user is still
+ * in (a slug of a Grupo they aren't in is skipped), else the default. Null
+ * means no Grupo at all, so the first-access screen.
  */
-export function resolverGrupo(input: {
-  participacoes: readonly ParticipacaoDesde[];
-  slug: string | null;
-  ultimoId: string | null;
-}): GrupoResolvido {
-  const semDesde = ({ desde: _desde, ...grupo }: ParticipacaoDesde): Participacao => grupo;
-  const { participacoes, slug, ultimoId } = input;
-
-  if (slug) {
-    const pedido = participacoes.find((p) => p.slug === slug);
-    return pedido ? { status: "pronto", grupo: semDesde(pedido) } : { status: "nao-encontrado" };
+export function grupoParaAbrir(
+  participacoes: readonly ParticipacaoDesde[],
+  recentes: readonly string[],
+): Participacao | null {
+  for (const slug of recentes) {
+    const recente = participacoes.find((p) => p.slug === slug);
+    if (recente) {
+      const { desde: _desde, ...grupo } = recente;
+      return grupo;
+    }
   }
-
-  const ultimo = ultimoId ? participacoes.find((p) => p.id === ultimoId) : undefined;
-  if (ultimo) return { status: "pronto", grupo: semDesde(ultimo) };
-
-  const padrao = grupoAtual(participacoes);
-  return padrao ? { status: "pronto", grupo: padrao } : { status: "sem-grupo" };
+  return grupoAtual(participacoes);
 }
 
 /** The Grupo's slug in a pathname like `/g/fut-de-quinta`, or null. */
@@ -82,8 +86,3 @@ export function slugDoCaminho(pathname: string | null): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-/**
- * Whose Elenco the app is working on. The Grupo owns the Jogadores; the user
- * is who is signed in, recorded as the author of the Jogadores they create.
- */
-export type ElencoScope = { userId: string; grupoId: string };

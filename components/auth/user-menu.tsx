@@ -2,12 +2,14 @@
 
 import { useId, useRef, useState } from "react"
 import { KeyRound, LogOut } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { toast } from "sonner"
 import { ChangePasswordModal } from "@/components/auth/change-password-modal"
 
 export function UserMenu() {
   const { user, logout } = useAuth()
+  const router = useRouter()
   const menuId = useId()
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -18,6 +20,8 @@ export function UserMenu() {
   const handleLogout = async () => {
     await logout()
     toast.success("Desconectado com sucesso!")
+    // Server-rendered pages render again without the session: the sign-in screen.
+    router.refresh()
   }
 
   const initials = user.email?.substring(0, 2).toUpperCase() || "US"

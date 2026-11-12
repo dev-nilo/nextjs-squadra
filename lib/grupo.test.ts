@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { grupoAtual, resolverGrupo, slugDoCaminho, validarNomeDoGrupo } from "./grupo";
+import { grupoAtual, grupoParaAbrir, lembrarFut, lerFutsRecentes, slugDoCaminho, validarNomeDoGrupo } from "./grupo";
 
 describe("validarNomeDoGrupo", () => {
   it("accepts a name and trims it", () => {
@@ -51,7 +51,7 @@ describe("grupoAtual", () => {
   });
 });
 
-describe("resolverGrupo", () => {
+describe("grupoParaAbrir", () => {
   const p = (slug: string, papel: "dono" | "admin" | "membro", desde: string) => ({
     id: `id-${slug}`,
     slug,
@@ -61,28 +61,39 @@ describe("resolverGrupo", () => {
   });
   const participacoes = [p("antigo", "dono", "2026-01-01"), p("novo", "membro", "2026-06-01")];
 
-  it("opens the Grupo the URL names", () => {
-    expect(resolverGrupo({ participacoes, slug: "novo", ultimoId: null })).toEqual({
-      status: "pronto",
-      grupo: { id: "id-novo", slug: "novo", nome: "novo", papel: "membro" },
+  it("reopens the most recent Grupo used on this device", () => {
+    expect(grupoParaAbrir(participacoes, ["novo", "antigo"])).toEqual({
+      id: "id-novo",
+      slug: "novo",
+      nome: "novo",
+      papel: "membro",
     });
   });
 
-  it("refuses a slug the user isn't in, even when they have other Grupos", () => {
-    expect(resolverGrupo({ participacoes, slug: "de-outro", ultimoId: null })).toEqual({ status: "nao-encontrado" });
+  it("skips a recent slug the user isn't in", () => {
+    expect(grupoParaAbrir(participacoes, ["de-outro", "novo"])).toMatchObject({ slug: "novo" });
   });
 
-  it("refuses a slug when the user has no Grupo at all", () => {
-    expect(resolverGrupo({ participacoes: [], slug: "qualquer", ultimoId: null })).toEqual({ status: "nao-encontrado" });
+  it("falls back to the default Grupo", () => {
+    expect(grupoParaAbrir(participacoes, [])).toMatchObject({ slug: "antigo" });
+    expect(grupoParaAbrir(participacoes, ["saiu"])).toMatchObject({ slug: "antigo" });
   });
 
-  it("on /, reopens the last Grupo used, if the user is still in it", () => {
-    expect(resolverGrupo({ participacoes, slug: null, ultimoId: "id-novo" })).toMatchObject({ grupo: { slug: "novo" } });
-    expect(resolverGrupo({ participacoes, slug: null, ultimoId: "id-saiu" })).toMatchObject({ grupo: { slug: "antigo" } });
+  it("is null with no Grupo at all, so the first-access screen", () => {
+    expect(grupoParaAbrir([], ["qualquer"])).toBeNull();
+  });
+});
+
+describe("futs recentes cookie", () => {
+  it("puts the opened slug first, without repeats, keeping five", () => {
+    expect(lembrarFut("a,b,c", "b")).toBe("b,a,c");
+    expect(lembrarFut(undefined, "a")).toBe("a");
+    expect(lembrarFut("a,b,c,d,e", "f")).toBe("f,a,b,c,d");
   });
 
-  it("on /, with no Grupo, shows the first-access screen", () => {
-    expect(resolverGrupo({ participacoes: [], slug: null, ultimoId: null })).toEqual({ status: "sem-grupo" });
+  it("ignores anything that isn't a slug", () => {
+    expect(lerFutsRecentes("ok,Not Ok,,../x,fut-2")).toEqual(["ok", "fut-2"]);
+    expect(lembrarFut("a", "<script>")).toBe("a");
   });
 });
 
