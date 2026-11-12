@@ -1,37 +1,26 @@
 "use client";
 
-import type React from "react";
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { usePathname } from "next/navigation";
-import { Plus, X, Trash2, User, Shuffle, CheckCircle2, Loader2, Pencil, Search, Grid3x3, List, Cloud, HardDrive, FileUp, UserPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Plus, X, Trash2, User, Shuffle, CheckCircle2, Pencil, Search, Grid3x3, List, FileUp, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/use-auth";
-import { useElenco } from "@/hooks/use-elenco";
-import { useGrupo } from "@/hooks/use-grupo";
-import { NomearGrupo } from "@/components/grupo/nomear-grupo";
+import { excluirJogador, importarJogadores, salvarJogador } from "@/app/actions/jogador";
+import { desvincularJogador } from "@/app/actions/vinculo";
 import { GrupoSwitcher } from "@/components/grupo/grupo-switcher";
 import { AbasDoGrupo } from "@/components/partida/grupo-nav";
-import { slugDoCaminho } from "@/lib/grupo";
 import { ConvidarModal } from "@/components/convite/convidar-modal";
-import { caminhoDoConvite, convitePendente } from "@/lib/convite";
 import { QuemSouEu } from "@/components/jogador/quem-sou-eu";
-import { desvincularJogador } from "@/app/actions/vinculo";
-import { meuJogador } from "@/lib/vinculo";
-import { AuthShell } from "@/components/auth/auth-shell";
-import { AuthPanel } from "@/components/auth/auth-panel";
-import { AuthErrorWatcher } from "@/components/auth/auth-error-watcher";
 import { UserMenu } from "@/components/auth/user-menu";
-import { isSupabaseConfigured } from "@/lib/sessao";
-import type { Player, Time } from "@/types";
+import type { Participacao } from "@/lib/grupo";
+import { isDataUrlImage, uploadPlayerImage } from "@/lib/player-image";
 import { sortearTimes } from "@/lib/sorteio";
+import { createClient } from "@/lib/supabase/client";
+import { meuJogador } from "@/lib/vinculo";
+import type { Player, Time } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { FullScreenLoader } from "@/components/ui/full-screen-loader";
 import { BrandLockup, Logo } from "@/components/ui/logo";
-import { Surface } from "@/components/ui/surface";
-
-// Import refactored components
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { MiniPlayerRow } from "@/components/player/MiniPlayerRow";
 import { PlayerModal } from "@/components/player/PlayerModal";
@@ -39,29 +28,54 @@ import { ImportCsvModal } from "@/components/player/ImportCsvModal";
 import { TeamConfigModal } from "@/components/team/TeamConfigModal";
 import { DrawTeamsModal } from "@/components/team/DrawTeamsModal";
 
-export function ElencoApp() {
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const slug = slugDoCaminho(usePathname());
-  const { state: grupoState, participacoes, definirGrupo, tentarDeNovo } = useGrupo(user?.id, slug);
-  const grupo = grupoState.status === "pronto" ? grupoState.grupo : null;
-  // Only the dono and admins edit the Elenco (RLS enforces it; this just hides what would fail).
-  const podeEditar = grupo?.papel === "dono" || grupo?.papel === "admin";
-  // Someone who opened an invite and has no Grupo yet goes back to it, never to the naming screen.
-  const conviteDoNovato = grupoState.status === "sem-grupo" ? convitePendente() : null;
-  const userId = user?.id;
-  const grupoId = grupo?.id;
-  const elencoScope = useMemo(
-    () => (userId && grupoId ? { userId, grupoId } : null),
-    [userId, grupoId],
-  );
-  const {
-    players,
-    selectedIds,
-    loading,
-    isSyncing,
-    isOnline,
-    actions: elencoActions,
-  } = useElenco(elencoScope);
+type DadosDaCarta = Omit<Player, "rating" | "user_id">;
+
+/** What the Server Actions take: no rating (the server computes it), author or link. */
+const paraSalvar = (j: DadosDaCarta) => ({
+  id: j.id,
+  name: j.name,
+  position: j.position,
+  nationality: j.nationality,
+  image: j.image,
+  attributes: j.attributes,
+});
+
+/**
+ * Before the Elenco was read on the server, the browser kept a copy of each
+ * Grupo's Jogadores and the last Grupo opened. Drop those leftovers.
+ */
+function esquecerCacheAntigo() {
+  try {
+    const antigas = Object.keys(localStorage).filter(
+      (k) => k.startsWith("fut-cards-players-v2") || k.startsWith("squadra:grupo-atual:"),
+    );
+    for (const k of antigas) localStorage.removeItem(k);
+  } catch {
+    /* storage unavailable: nothing to clean */
+  }
+}
+
+/**
+ * `/g/<slug>`: the Grupo's Elenco. The Jogadores come from the server render;
+ * every change goes through a Server Action, which revalidates the page and
+ * brings the new list back. Only view state (search, sort, selection, the
+ * quick draw) lives here.
+ */
+export function ElencoView({
+  grupo,
+  participacoes,
+  jogadores: players,
+  userId,
+  podeEditar,
+}: {
+  grupo: Participacao;
+  participacoes: readonly Participacao[];
+  jogadores: Player[];
+  userId: string;
+  /** The dono and admins edit the Elenco. RLS enforces it; this only hides what would fail. */
+  podeEditar: boolean;
+}) {
+  const router = useRouter();
 
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -80,30 +94,86 @@ export function ElencoApp() {
   const [minPlayersPerTeam, setMinPlayersPerTeam] = useState(5);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
 
-  useEffect(() => {
-    const resetViewState = () => {
-      setGeneratedTeams(null);
-      setEditingPlayer(null);
-    };
-    // Hard reset view-local state whenever the user or the Grupo changes
-    resetViewState();
-  }, [user?.id, grupoId]);
+  // Ids picked for the quick draw. Only those still in the Elenco count.
+  const [marcados, setMarcados] = useState<ReadonlySet<string>>(() => new Set());
+  const selectedIds = useMemo(
+    () => new Set(players.filter((p) => marcados.has(p.id)).map((p) => p.id)),
+    [players, marcados],
+  );
+  const todosMarcados = players.length > 0 && selectedIds.size === players.length;
 
-  // The URL always names the open Grupo: `/` becomes `/g/<slug>`, so the link
-  // can be shared. Replace, not push, so Back doesn't bounce through `/`.
-  const grupoSlug = grupo?.slug;
-  useEffect(() => {
-    if (grupoSlug && slug !== grupoSlug) window.history.replaceState(null, "", `/g/${grupoSlug}`);
-  }, [grupoSlug, slug]);
+  useEffect(esquecerCacheAntigo, []);
 
-  useEffect(() => {
-    if (conviteDoNovato) window.location.replace(caminhoDoConvite(conviteDoNovato));
-  }, [conviteDoNovato]);
-
-  // Switching Grupos only changes the URL; the app follows it without remounting.
-  const trocarDeGrupo = useCallback((novo: string) => {
-    window.history.pushState(null, "", `/g/${novo}`);
+  const toggleSelect = useCallback((id: string) => {
+    setMarcados((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }, []);
+
+  const toggleSelectAll = () => {
+    if (todosMarcados) {
+      setMarcados(new Set());
+      toast.info("Seleção limpa");
+    } else {
+      setMarcados(new Set(players.map((p) => p.id)));
+      toast.success(`${players.length} carta(s) selecionada(s)`);
+    }
+  };
+
+  const trocarDeGrupo = useCallback((novo: string) => router.push(`/g/${novo}`), [router]);
+
+  const salvar = useCallback(
+    async (dados: DadosDaCarta): Promise<boolean> => {
+      let image = dados.image;
+      // A new photo (or one still stored inline) goes to Storage first; the action only takes its URL.
+      if (image && isDataUrlImage(image)) {
+        try {
+          image = await uploadPlayerImage(createClient(), grupo.id, dados.id, image);
+        } catch (e) {
+          console.error("[elenco] Photo upload failed:", e);
+          toast.error("Não deu pra enviar a foto", { description: "Tente de novo, ou salve sem foto." });
+          return false;
+        }
+      }
+      const resultado = await salvarJogador(grupo.slug, grupo.id, paraSalvar({ ...dados, image }));
+      if (!resultado.ok) {
+        toast.error("Não deu pra salvar a carta", { description: resultado.message });
+        return false;
+      }
+      toast.success(resultado.valor.criado ? "Carta Criada" : "Carta Atualizada");
+      return true;
+    },
+    [grupo.id, grupo.slug],
+  );
+
+  const excluir = useCallback(
+    async (id: string) => {
+      const resultado = await excluirJogador(grupo.slug, id);
+      if (!resultado.ok) {
+        toast.error("Não deu pra excluir a carta", { description: resultado.message });
+        return;
+      }
+      toast.success("Carta Excluída");
+    },
+    [grupo.slug],
+  );
+
+  const importar = useCallback(
+    async (lista: Player[]) => {
+      const resultado = await importarJogadores(grupo.slug, grupo.id, lista.map(paraSalvar));
+      if (!resultado.ok) {
+        toast.error("Não deu pra importar", { description: resultado.message });
+        throw new Error(resultado.message);
+      }
+      toast.success("Importação concluída", { description: `${resultado.valor.total} carta(s)` });
+    },
+    [grupo.id, grupo.slug],
+  );
+
+  const recarregar = useCallback(() => router.refresh(), [router]);
 
   const handleEdit = useCallback((player: Player) => {
     setEditingPlayer(player);
@@ -119,9 +189,9 @@ export function ElencoApp() {
         return;
       }
       toast.success("Conta desvinculada", { description: `${player.name} continua no Elenco.` });
-      await elencoActions.recarregar();
+      recarregar();
     },
-    [elencoActions],
+    [recarregar],
   );
 
   const handleOpenNew = () => {
@@ -158,85 +228,6 @@ export function ElencoApp() {
     return result;
   }, [players, searchQuery, sortBy]);
 
-  if (!isSupabaseConfigured()) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Surface className="max-w-md">
-          <h1 className="text-title">Supabase não configurado</h1>
-          <p className="text-muted mt-1">
-            Crie <code className="text-foreground">.env.local</code> na raiz com
-            NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY, depois reinicie{" "}
-            <code className="text-foreground">npm run dev</code>.
-          </p>
-        </Surface>
-      </div>
-    );
-  }
-
-  if (authLoading || loading) {
-    return (
-      <FullScreenLoader />
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <>
-        <AuthErrorWatcher />
-        <AuthShell>
-          <AuthPanel />
-        </AuthShell>
-      </>
-    );
-  }
-
-  if (grupoState.status === "loading") {
-    return <FullScreenLoader />;
-  }
-
-  if (grupoState.status === "sem-grupo") {
-    if (conviteDoNovato) return <FullScreenLoader />;
-    return <NomearGrupo onCriado={definirGrupo} />;
-  }
-
-  if (grupoState.status === "nao-encontrado") {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Surface className="max-w-md flex flex-col gap-4">
-          <div>
-            <h1 className="text-title">Esse fut não existe</h1>
-            <p className="text-muted mt-1">Ou você ainda não faz parte dele. Peça o convite pra quem organiza.</p>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <Button color="primary" radius="full" onClick={() => window.history.pushState(null, "", "/")}>
-              Ir pro meu fut
-            </Button>
-            <UserMenu />
-          </div>
-        </Surface>
-      </div>
-    );
-  }
-
-  if (grupoState.status === "erro") {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Surface className="max-w-md flex flex-col gap-4">
-          <div>
-            <h1 className="text-title">Não deu pra abrir seu fut</h1>
-            <p className="text-muted mt-1">Confira a conexão e tente de novo.</p>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <Button color="primary" radius="full" onClick={tentarDeNovo}>
-              Tentar de novo
-            </Button>
-            <UserMenu />
-          </div>
-        </Surface>
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -247,14 +238,10 @@ export function ElencoApp() {
                 <div className="flex flex-1 w-full min-w-0 items-center gap-3">
                     <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
                       <BrandLockup compactOnMobile />
-                      {grupo && (
-                        <>
-                          <span aria-hidden="true" className="h-6 w-px shrink-0 bg-divider" />
-                          <div className="min-w-0 max-w-[9rem] sm:max-w-[16rem]">
-                            <GrupoSwitcher grupo={grupo} participacoes={participacoes} onTrocar={trocarDeGrupo} />
-                          </div>
-                        </>
-                      )}
+                      <span aria-hidden="true" className="h-6 w-px shrink-0 bg-divider" />
+                      <div className="min-w-0 max-w-[9rem] sm:max-w-[16rem]">
+                        <GrupoSwitcher grupo={grupo} participacoes={participacoes} onTrocar={trocarDeGrupo} />
+                      </div>
                     </div>
                     <div className="flex-1 min-w-0">
                         <Input
@@ -281,43 +268,30 @@ export function ElencoApp() {
                     <option value="position">Posição</option>
                   </Select>
 
-                  <div className="flex shrink-0 overflow-hidden rounded-xl">
-                    <Button
-                        isIconOnly
-                        variant="flat"
-                        size="sm"
-                        className="rounded-r-none"
-                        onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-                        aria-label={viewMode === "grid" ? "Modo lista" : "Modo grid"}
-                    >
-                        {viewMode === "grid" ? <List size={20} /> : <Grid3x3 size={20} />}
-                    </Button>
-                    <Button
-                        isIconOnly
-                        variant="flat"
-                        size="sm"
-                        className="rounded-l-none border-l border-default-300"
-                        onClick={elencoActions.sync}
-                        isDisabled={!isAuthenticated || isSyncing}
-                        aria-label={isOnline ? "Sincronizar com nuvem" : "Offline - Salvando localmente"}
-                    >
-                        {isSyncing ? <Loader2 size={18} className="animate-spin" /> : isOnline ? <Cloud size={18} /> : <HardDrive size={18} />}
-                    </Button>
-                  </div>
+                  <Button
+                      isIconOnly
+                      variant="flat"
+                      size="sm"
+                      className="shrink-0"
+                      onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+                      aria-label={viewMode === "grid" ? "Modo lista" : "Modo grid"}
+                  >
+                      {viewMode === "grid" ? <List size={20} /> : <Grid3x3 size={20} />}
+                  </Button>
                   <UserMenu />
                 </div>
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
                 <Button
-                  onClick={elencoActions.toggleSelectAll}
+                  onClick={toggleSelectAll}
                   variant="flat"
-                  startContent={players.every((p) => selectedIds.has(p.id)) ? <X size={16} /> : <CheckCircle2 size={16} />}
+                  startContent={todosMarcados ? <X size={16} /> : <CheckCircle2 size={16} />}
                   size="sm"
                   className="min-w-0"
                 >
-                  <span className="sm:hidden">{players.every((p) => selectedIds.has(p.id)) ? "Desmarcar" : "Selecionar"}</span>
-                  <span className="hidden sm:inline">{players.every((p) => selectedIds.has(p.id)) ? "Desmarcar Todas" : "Selecionar Todas"}</span>
+                  <span className="sm:hidden">{todosMarcados ? "Desmarcar" : "Selecionar"}</span>
+                  <span className="hidden sm:inline">{todosMarcados ? "Desmarcar Todas" : "Selecionar Todas"}</span>
                 </Button>
 
                 {podeEditar && (
@@ -342,16 +316,14 @@ export function ElencoApp() {
                   <span className="hidden sm:inline">Importar CSV</span>
                 </Button>
 
-                    {grupo && (
-                      <Button
-                        onClick={() => setIsConvidarOpen(true)}
-                        variant="flat"
-                        startContent={<UserPlus size={16} />}
-                        size="sm"
-                      >
-                        Convidar
-                      </Button>
-                    )}
+                    <Button
+                      onClick={() => setIsConvidarOpen(true)}
+                      variant="flat"
+                      startContent={<UserPlus size={16} />}
+                      size="sm"
+                    >
+                      Convidar
+                    </Button>
                   </>
                 )}
 
@@ -369,13 +341,13 @@ export function ElencoApp() {
                 )}
               </div>
             </div>
-            {grupo && <AbasDoGrupo slug={grupo.slug} aba="elenco" className="-mb-3 sm:-mb-4" />}
+            <AbasDoGrupo slug={grupo.slug} aba="elenco" className="-mb-3 sm:-mb-4" />
           </div>
         </header>
 
         <main className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
-          {grupo && !meuJogador(players, user?.id) && (
-            <QuemSouEu key={grupo.id} grupoId={grupo.id} players={players} onVinculado={elencoActions.recarregar} />
+          {!meuJogador(players, userId) && (
+            <QuemSouEu grupoId={grupo.id} players={players} onVinculado={recarregar} />
           )}
           {filteredPlayers.length === 0 ? (
             <div className="text-center py-12 sm:py-16 px-2">
@@ -401,12 +373,12 @@ export function ElencoApp() {
                 <PlayerCard
                   key={player.id}
                   player={player}
-                  onDelete={podeEditar ? elencoActions.delete : undefined}
+                  onDelete={podeEditar ? excluir : undefined}
                   onEdit={podeEditar ? handleEdit : undefined}
                   onDesvincular={podeEditar ? handleDesvincular : undefined}
-                  isMine={!!user && player.conta_id === user.id}
+                  isMine={player.conta_id === userId}
                   isSelected={selectedIds.has(player.id)}
-                  onToggleSelect={elencoActions.toggleSelect}
+                  onToggleSelect={toggleSelect}
                 />
               ))}
             </div>
@@ -415,7 +387,7 @@ export function ElencoApp() {
               {filteredPlayers.map((player) => (
                 <div
                   key={player.id}
-                  onClick={() => elencoActions.toggleSelect(player.id)}
+                  onClick={() => toggleSelect(player.id)}
                   className={`relative cursor-pointer transition-all group ${selectedIds.has(player.id) ? "ring-2 ring-primary rounded-lg bg-primary/10" : ""}`}
                 >
                   <MiniPlayerRow
@@ -444,7 +416,7 @@ export function ElencoApp() {
                             radius="full"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                elencoActions.delete(player.id);
+                                void excluir(player.id);
                             }}
                             aria-label={`Excluir ${player.name}`}
                         >
@@ -463,19 +435,19 @@ export function ElencoApp() {
         <PlayerModal
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
-            onSave={elencoActions.save}
+            onSave={salvar}
             initialData={editingPlayer}
         />
 
         {/* Mounted only while open, so its copy of the Grupo's name isn't on the page otherwise. */}
-        {grupo && podeEditar && isConvidarOpen && (
+        {podeEditar && isConvidarOpen && (
           <ConvidarModal isOpen onClose={() => setIsConvidarOpen(false)} grupo={grupo} />
         )}
 
         <ImportCsvModal
             isOpen={isImportCsvOpen}
             onClose={() => setIsImportCsvOpen(false)}
-            onImport={elencoActions.importMany}
+            onImport={importar}
         />
 
         <TeamConfigModal

@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { cancelarPartida, editarPartida, responderPresenca } from "@/app/actions/partida";
 import { GrupoNav } from "@/components/partida/grupo-nav";
 import { PartidaForm } from "@/components/partida/partida-form";
+import { SorteioDaPartida } from "@/components/partida/sorteio-da-partida";
+import type { SorteioSalvo } from "@/lib/sorteio-partida";
 import { Button } from "@/components/ui/button";
 import type { Participacao } from "@/lib/grupo";
 import {
@@ -31,6 +33,7 @@ export function PartidaView({
   partidaInicial,
   presencasIniciais,
   jogadores,
+  sorteioInicial,
   agora,
 }: {
   grupo: Participacao;
@@ -39,11 +42,13 @@ export function PartidaView({
   partidaInicial: Partida;
   presencasIniciais: Presenca[];
   jogadores: JogadorDaLista[];
+  sorteioInicial: SorteioSalvo | null;
   agora: number;
 }) {
   const router = useRouter();
   const [partida, setPartida] = useState(partidaInicial);
   const [presencas, setPresencas] = useState(presencasIniciais);
+  const [sorteio, setSorteio] = useState(sorteioInicial);
   const [aoVivo, setAoVivo] = useState(false);
   const [respondendo, setRespondendo] = useState<string | null>(null);
   const [editando, setEditando] = useState(false);
@@ -53,6 +58,15 @@ export function PartidaView({
   const recarregar = useCallback(async () => {
     const { data } = await createClient().from("presencas").select("jogador_id, situacao, pediu_vaga_em").eq("partida_id", id);
     if (data) setPresencas(data as Presenca[]);
+  }, [id]);
+
+  const recarregarSorteio = useCallback(async () => {
+    const { data } = await createClient()
+      .from("sorteios")
+      .select("times, publicado_em, sorteado_em")
+      .eq("partida_id", id)
+      .maybeSingle();
+    setSorteio((data ?? null) as SorteioSalvo | null);
   }, [id]);
 
   // Supabase Realtime, filtered by this Partida and by the subscriber's RLS:
@@ -72,13 +86,19 @@ export function PartidaView({
         .on("postgres_changes", { event: "*", schema: "public", table: "presencas", filter: `partida_id=eq.${id}` }, () => {
           void recarregar();
         })
+        .on("postgres_changes", { event: "*", schema: "public", table: "sorteios", filter: `partida_id=eq.${id}` }, () => {
+          void recarregarSorteio();
+        })
         .on("postgres_changes", { event: "UPDATE", schema: "public", table: "partidas", filter: `id=eq.${id}` }, (payload) => {
           setPartida((atual) => ({ ...atual, ...(payload.new as Partial<Partida>) }));
         })
         .subscribe((status) => {
           setAoVivo(status === "SUBSCRIBED");
           // Catch up on anything that changed between the server render and the subscription.
-          if (status === "SUBSCRIBED") void recarregar();
+          if (status === "SUBSCRIBED") {
+            void recarregar();
+            void recarregarSorteio();
+          }
         });
     })();
 
@@ -86,7 +106,7 @@ export function PartidaView({
       ativo = false;
       if (canal) void supabase.removeChannel(canal);
     };
-  }, [id, recarregar]);
+  }, [id, recarregar, recarregarSorteio]);
 
   const lista = useMemo(() => organizarPresencas(presencas, partida.vagas), [presencas, partida.vagas]);
   const estado = estadoDaPartida(partida, new Date(agora));
@@ -215,6 +235,16 @@ export function PartidaView({
             </p>
           )}
         </section>
+
+        <SorteioDaPartida
+          slug={grupo.slug}
+          partidaId={id}
+          sorteio={sorteio}
+          confirmados={lista.confirmados.map((p) => p.jogador_id)}
+          podeGerir={podeGerir}
+          aberta={estado !== "cancelada"}
+          onMudou={recarregarSorteio}
+        />
 
         <ListaDeJogadores
           titulo={`Confirmados (${lista.confirmados.length}/${partida.vagas})`}

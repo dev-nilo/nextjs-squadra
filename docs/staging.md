@@ -74,3 +74,14 @@ Until this is done, `migrate-production` refuses to run: its dry run would inclu
 - **Keep-alive**: the Staging workflow touches the database every Monday so the free project doesn't pause.
 
 Staging is shared by every open PR. Two PRs adding migrations at once both land there. That's fine for a solo project; reset staging if it gets confusing.
+
+## Error monitoring (Sentry)
+
+Without a DSN the SDK stays off, so local dev and CI need none of this.
+
+| Variable | Where | What for |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SENTRY_DSN` | Vercel (Production and Preview) | Sends browser and server errors |
+| `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` | Vercel (build) | Uploads source maps |
+
+Events are tagged `production` (production deploy) or `staging` (previews). The SDK collects no user, cookies, headers or request bodies ([`lib/sentry-options.ts`](../lib/sentry-options.ts)).

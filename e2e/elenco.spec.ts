@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { card, DEV_USER, signIn } from "./support";
 
-test("a new Jogador is saved to the database, not only to the local cache", async ({ page, browser }) => {
+test("a new Jogador is saved through the server and shows in another browser", async ({ page, browser }) => {
   const name = `E2E Craque ${Date.now()}`;
   await signIn(page, DEV_USER);
 
@@ -13,8 +13,7 @@ test("a new Jogador is saved to the database, not only to the local cache", asyn
   await modal.getByRole("button", { name: "Criar Carta" }).click();
   await expect(card(page, name)).toBeVisible();
 
-  // A fresh browser context has an empty localStorage, so the card can only
-  // come from Supabase.
+  // Another browser context shares nothing with this one: the card comes from the database.
   const fresh = await browser.newContext();
   const freshPage = await fresh.newPage();
   await signIn(freshPage, DEV_USER);

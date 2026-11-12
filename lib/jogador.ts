@@ -1,5 +1,7 @@
+import { z } from "zod";
 import { Attributes, Player, PlayerPosition } from "@/types";
 import { getCountryCode } from "./countries";
+import { PLAYER_IMAGES_BUCKET } from "./player-image";
 
 export const DEFAULT_ATTRIBUTES: Attributes = {
   velocidade: 60,
@@ -134,3 +136,63 @@ export const normalizePlayer = (player: unknown): Player => {
     conta_id: typeof source.conta_id === "string" ? source.conta_id : undefined,
   };
 };
+
+const atributo = z
+  .number({ message: "Atributo inválido." })
+  .int("Atributo inválido.")
+  .min(0, "Os atributos vão de 0 a 99.")
+  .max(99, "Os atributos vão de 0 a 99.");
+
+/**
+ * A Jogador as the Elenco's Server Actions accept it. The rating isn't here:
+ * the server computes it from the attributes. `id` comes from the browser so
+ * a new photo can be uploaded under it before the row exists.
+ */
+export const jogadorSchema = z.object({
+  id: z.string().uuid("Jogador inválido."),
+  name: z.string().trim().min(1, "Dê um nome pro Jogador.").max(40, "Use até 40 caracteres no nome."),
+  position: z.enum(["GOL", "FIX", "ALA", "ATA"], { message: "Escolha uma posição." }),
+  nationality: z.string().regex(/^[A-Z]{2}$/, "País inválido."),
+  image: z.string().max(2048).nullable(),
+  attributes: z.object({
+    velocidade: atributo,
+    resistencia: atributo,
+    chute: atributo,
+    posicionamento: atributo,
+    defesa: atributo,
+    drible: atributo,
+    passe: atributo,
+    fisico: atributo,
+  }),
+});
+
+export type DadosDoJogador = z.infer<typeof jogadorSchema>;
+
+/** The `players` columns a save writes. The author and the Grupo are set by the caller. */
+export function jogadorParaLinha(jogador: DadosDoJogador) {
+  return {
+    name: jogador.name,
+    position: jogador.position,
+    nationality: jogador.nationality,
+    image_url: jogador.image,
+    ovr: calculateOVR(jogador.attributes),
+    ...jogador.attributes,
+  };
+}
+
+/**
+ * A photo the app uploaded for this Grupo: a public URL in the player-images
+ * bucket, under the Grupo's folder, on this project's Supabase. Anything else
+ * (another site, another Grupo's folder, an inline image) isn't saved.
+ */
+export function ehFotoDoGrupo(url: string, grupoId: string, supabaseUrl: string): boolean {
+  try {
+    const foto = new URL(url);
+    return (
+      foto.origin === new URL(supabaseUrl).origin &&
+      foto.pathname.startsWith(`/storage/v1/object/public/${PLAYER_IMAGES_BUCKET}/${grupoId}/`)
+    );
+  } catch {
+    return false;
+  }
+}

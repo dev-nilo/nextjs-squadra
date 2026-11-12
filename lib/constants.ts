@@ -24,13 +24,6 @@ export const GK_LABELS = {
 
 export const POSITIONS: PlayerPosition[] = ["GOL", "FIX", "ALA", "ATA"];
 
-export const LOCAL_STORAGE_KEY = "fut-cards-players-v2";
-
-/** Per-Grupo cache key: a browser shared by two accounts never mixes their Elencos. */
-export function getLocalStorageKey(grupoId: string): string {
-    return `${LOCAL_STORAGE_KEY}:grupo:${grupoId}`;
-}
-
 /** Team kit colors by Time index (`--team-1…6` tokens). `crest` fills the team badge, `ring` marks a drop target. */
 export const TEAM_COLORS = [
     { crest: "bg-team-1", ring: "ring-team-1" },

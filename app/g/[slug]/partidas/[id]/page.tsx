@@ -4,6 +4,7 @@ import { EntrarParaVer, FutNaoEncontrado } from "@/components/partida/entrar-par
 import { PartidaView, type JogadorDaLista } from "@/components/partida/partida-view";
 import { carregarGrupo, ehGestor } from "@/lib/grupo-server";
 import type { Partida, Presenca } from "@/lib/partida";
+import type { SorteioSalvo } from "@/lib/sorteio-partida";
 
 export const metadata: Metadata = { title: "Partida · Squadra" };
 
@@ -18,7 +19,7 @@ export default async function PartidaPage({ params }: { params: Promise<{ slug: 
   if (ctx.status === "nao-encontrado" || !z.string().uuid().safeParse(id).success) return <FutNaoEncontrado />;
 
   const { supabase, grupo, user, agora } = ctx;
-  const [{ data: partida }, { data: presencas }, { data: jogadores }] = await Promise.all([
+  const [{ data: partida }, { data: presencas }, { data: jogadores }, { data: sorteio }] = await Promise.all([
     supabase
       .from("partidas")
       .select("id, grupo_id, inicio, local, vagas, cancelada_em")
@@ -27,6 +28,8 @@ export default async function PartidaPage({ params }: { params: Promise<{ slug: 
       .maybeSingle(),
     supabase.from("presencas").select("jogador_id, situacao, pediu_vaga_em").eq("partida_id", id),
     supabase.from("players").select("id, name, position, ovr, conta_id").eq("grupo_id", grupo.id).order("name"),
+    // RLS: the dono and admins get the draft; everyone else only a published one.
+    supabase.from("sorteios").select("times, publicado_em, sorteado_em").eq("partida_id", id).maybeSingle(),
   ]);
   if (!partida) return <FutNaoEncontrado />;
 
@@ -38,6 +41,7 @@ export default async function PartidaPage({ params }: { params: Promise<{ slug: 
       partidaInicial={partida as Partida}
       presencasIniciais={(presencas ?? []) as Presenca[]}
       jogadores={(jogadores ?? []) as JogadorDaLista[]}
+      sorteioInicial={(sorteio ?? null) as SorteioSalvo | null}
       agora={agora}
     />
   );

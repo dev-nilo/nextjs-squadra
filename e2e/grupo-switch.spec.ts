@@ -79,7 +79,7 @@ test("a user in two Grupos switches between their Elencos at /g/<slug>", async (
     // A Grupo they're not in (or that doesn't exist) isn't opened.
     await page.goto(`/g/nao-existe-${sufixo}`);
     await expect(page.getByRole("heading", { name: "Esse fut não existe" })).toBeVisible();
-    await page.getByRole("button", { name: "Ir pro meu fut" }).click();
+    await page.getByRole("link", { name: "Ir pro meu fut" }).click();
     await expect(page).toHaveURL(new RegExp(`/g/${sabado.slug}$`));
   } finally {
     await service.from("grupos").delete().in("id", grupos!.map((g) => g.id));

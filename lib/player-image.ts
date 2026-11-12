@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Player } from "@/types";
 
 export const PLAYER_IMAGES_BUCKET = "player-images";
 
@@ -44,27 +43,4 @@ export async function uploadPlayerImage(
     const { data } = supabase.storage.from(PLAYER_IMAGES_BUCKET).getPublicUrl(path);
     // Bust CDN/browser cache after replace
     return `${data.publicUrl}?v=${Date.now()}`;
-}
-
-/**
- * If the player still has an inline base64 image, upload it and return
- * a copy with the public URL. Otherwise returns the same player.
- */
-export async function ensurePlayerImageUrl(
-    supabase: SupabaseClient,
-    grupoId: string,
-    player: Player,
-): Promise<Player> {
-    if (!isDataUrlImage(player.image)) {
-        return player;
-    }
-
-    const publicUrl = await uploadPlayerImage(
-        supabase,
-        grupoId,
-        player.id,
-        player.image as string,
-    );
-
-    return { ...player, image: publicUrl };
 }
