@@ -64,7 +64,7 @@ values
 -- Jogadores. OVR = rounded mean of the 8 attributes, same rule as lib/jogador.ts
 -- ---------------------------------------------------------------------------
 insert into public.players (
-  user_id, grupo_id, name, position, nationality, ovr,
+  user_id, grupo_id, created_at, name, position, nationality, ovr,
   velocidade, resistencia, chute, posicionamento, defesa, drible, passe, fisico
 )
 select
@@ -73,6 +73,8 @@ select
     when '11111111-1111-4111-8111-111111111111' then 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'::uuid
     when '22222222-2222-4222-8222-222222222222' then 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'::uuid
   end,
+  -- In the Elenco well before the past Partidas below, so they all count toward Frequência.
+  now() - interval '90 days',
   v.name, v.position, v.nationality,
   round((v.vel + v.res + v.chu + v.pos + v.def + v.dri + v.pas + v.fis) / 8.0),
   v.vel, v.res, v.chu, v.pos, v.def, v.dri, v.pas, v.fis
@@ -129,3 +131,89 @@ select
 from public.players p
 where p.grupo_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
   and p.name in ('Paredão', 'Xerife', 'Muralha', 'Foguete', 'Motorzinho', 'Maestro', 'Matador', 'Artilheiro', 'Bagre', 'Perna de Pau');
+
+-- ---------------------------------------------------------------------------
+-- History: four past Partidas in Fut do Dev with a known presence pattern,
+-- plus a cancelled one. tests/integration/frequencia.test.ts expects exactly:
+--   Paredão 100% (4/4) · Xerife 75% (3/4) · Foguete 50% (2/4, waited once)
+--   Maestro 25% · Matador 25% · Bagre 0% (confirmed only in the cancelled one)
+--   everyone else 0% (0/4)
+-- ---------------------------------------------------------------------------
+insert into public.partidas (id, grupo_id, inicio, local, vagas, criado_por, cancelada_em)
+select
+  v.id::uuid,
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  date_trunc('day', now() - v.semanas * interval '7 days') + interval '23 hours',
+  'Society da Vila',
+  v.vagas,
+  '11111111-1111-4111-8111-111111111111',
+  case when v.cancelada then now() - v.semanas * interval '7 days' end
+from (values
+  ('dddddddd-dddd-4ddd-8ddd-000000000004', 4, 2, false),
+  ('dddddddd-dddd-4ddd-8ddd-000000000003', 3, 14, false),
+  ('dddddddd-dddd-4ddd-8ddd-000000000002', 2, 14, false),
+  ('dddddddd-dddd-4ddd-8ddd-000000000001', 1, 14, false),
+  ('dddddddd-dddd-4ddd-8ddd-0000000000c5', 5, 14, true)
+) as v(id, semanas, vagas, cancelada);
+
+insert into public.presencas (partida_id, jogador_id, situacao, pediu_vaga_em, respondido_por)
+select
+  v.partida::uuid,
+  p.id,
+  v.situacao::public.situacao_presenca,
+  case when v.situacao = 'nao_vou' then null else now() - interval '30 days' + v.ordem * interval '1 minute' end,
+  '11111111-1111-4111-8111-111111111111'
+from (values
+  -- 4 weeks ago (2 vagas): Paredão and Xerife in, Foguete waited, Bagre out
+  ('dddddddd-dddd-4ddd-8ddd-000000000004', 'Paredão', 'confirmado', 1),
+  ('dddddddd-dddd-4ddd-8ddd-000000000004', 'Xerife', 'confirmado', 2),
+  ('dddddddd-dddd-4ddd-8ddd-000000000004', 'Foguete', 'espera', 3),
+  ('dddddddd-dddd-4ddd-8ddd-000000000004', 'Bagre', 'nao_vou', 4),
+  -- 3 weeks ago
+  ('dddddddd-dddd-4ddd-8ddd-000000000003', 'Paredão', 'confirmado', 1),
+  ('dddddddd-dddd-4ddd-8ddd-000000000003', 'Xerife', 'confirmado', 2),
+  -- 2 weeks ago
+  ('dddddddd-dddd-4ddd-8ddd-000000000002', 'Paredão', 'confirmado', 1),
+  ('dddddddd-dddd-4ddd-8ddd-000000000002', 'Xerife', 'confirmado', 2),
+  ('dddddddd-dddd-4ddd-8ddd-000000000002', 'Foguete', 'confirmado', 3),
+  -- last week
+  ('dddddddd-dddd-4ddd-8ddd-000000000001', 'Paredão', 'confirmado', 1),
+  ('dddddddd-dddd-4ddd-8ddd-000000000001', 'Foguete', 'confirmado', 2),
+  ('dddddddd-dddd-4ddd-8ddd-000000000001', 'Maestro', 'confirmado', 3),
+  ('dddddddd-dddd-4ddd-8ddd-000000000001', 'Matador', 'confirmado', 4),
+  ('dddddddd-dddd-4ddd-8ddd-000000000001', 'Xerife', 'nao_vou', 5),
+  -- 5 weeks ago, cancelled: must not count
+  ('dddddddd-dddd-4ddd-8ddd-0000000000c5', 'Bagre', 'confirmado', 1)
+) as v(partida, nome, situacao, ordem)
+join public.players p
+  on p.grupo_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and p.name = v.nome;
+
+-- Last week's Times, published, with the usual snapshot shape (ADR 0004).
+insert into public.sorteios (partida_id, times, sorteado_por, sorteado_em, publicado_em)
+select
+  'dddddddd-dddd-4ddd-8ddd-000000000001',
+  jsonb_agg(
+    jsonb_build_object(
+      'nome', 'Time ' || t.ordem,
+      'jogadores', (
+        select jsonb_agg(
+          jsonb_build_object(
+            'id', p.id, 'name', p.name, 'position', p.position, 'rating', p.ovr, 'image', p.image_url,
+            'attributes', jsonb_build_object(
+              'velocidade', p.velocidade, 'resistencia', p.resistencia, 'chute', p.chute,
+              'posicionamento', p.posicionamento, 'defesa', p.defesa, 'drible', p.drible,
+              'passe', p.passe, 'fisico', p.fisico
+            )
+          )
+          order by p.name
+        )
+        from public.players p
+        where p.grupo_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and p.name = any (t.nomes)
+      )
+    )
+    order by t.ordem
+  ),
+  '11111111-1111-4111-8111-111111111111',
+  now() - interval '8 days',
+  now() - interval '8 days'
+from (values (1, array['Paredão', 'Maestro']), (2, array['Foguete', 'Matador'])) as t(ordem, nomes);

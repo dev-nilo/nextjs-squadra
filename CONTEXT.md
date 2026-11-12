@@ -36,6 +36,10 @@ _Avoid_: RSVP (in the UI), check-in
 The Jogadores who said *vou* after the vagas ran out, in the order they asked. When a confirmed Jogador drops out, or the vagas go up, the first in line takes the vaga in the same transaction. Saying *não vou* and then *vou* again goes to the end of the line.
 _Avoid_: Fila (fine in speech, but the code says espera), reserve list, bench
 
+**Frequência**:
+How often a Jogador shows up: the share of the Grupo's last 10 Partidas (already started, not cancelled, and since the Jogador joined the Elenco) where they were *confirmado*. The Lista de espera and *não vou* count as absent. Computed by the `frequencia_jogadores` view, which runs under the caller's RLS.
+_Avoid_: Attendance (in the UI), presença (that's one answer, not the rate), assiduidade
+
 **Sorteio**:
 Distributing Jogadores into Times using attribute-sum balancing (shuffle, rating tiers, assign to the Time with the lowest attribute total). A Partida's Sorteio runs on the server over its confirmed Jogadores only (never the Lista de espera), and is saved on the Partida with a snapshot of each Jogador's rating at draw time (ADR 0004). The `dono` and admins can draw again and move Jogadores between Times until they publish; then every Membro sees the Times, frozen. The Elenco page keeps a quick local Sorteio over any selected Jogadores, with nothing saved.
 _Avoid_: Draw (ambiguous), balance API, snake-draft
