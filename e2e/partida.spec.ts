@@ -31,12 +31,12 @@ test("the dono creates a Partida, and a second browser sees presence change live
   await page.getByRole("link", { name: "Partidas" }).click();
   await expect(page.getByRole("heading", { name: "Partidas" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Nova Partida" }).click();
+  await page.getByRole("button", { name: "Nova partida" }).click();
   const form = page.getByRole("dialog");
   await form.getByLabel("Dia e hora").fill(emDias(3));
   await form.getByLabel("Local").fill(local);
   await form.getByLabel("Vagas").fill("2");
-  await form.getByRole("button", { name: "Criar Partida" }).click();
+  await form.getByRole("button", { name: "Criar partida" }).click();
   await expect(page).toHaveURL(/\/g\/fut-do-dev\/partidas\/[0-9a-f-]{36}$/);
   await expect(page.getByText(local)).toBeVisible();
 

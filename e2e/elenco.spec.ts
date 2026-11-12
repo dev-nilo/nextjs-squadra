@@ -5,12 +5,12 @@ test("a new Jogador is saved through the server and shows in another browser", a
   const name = `E2E Craque ${Date.now()}`;
   await signIn(page, DEV_USER);
 
-  await page.getByRole("button", { name: /^Nova( Carta)?$/ }).click();
+  await page.getByRole("button", { name: /^Nova( carta)?$/ }).click();
   const modal = page.getByRole("dialog");
-  await expect(modal.getByRole("heading", { name: "Nova Carta" })).toBeVisible();
-  await modal.getByLabel("Nome do Jogador").fill(name);
+  await expect(modal.getByRole("heading", { name: "Nova carta" })).toBeVisible();
+  await modal.getByLabel("Nome do jogador").fill(name);
   await modal.getByLabel("Posição").selectOption("ATA");
-  await modal.getByRole("button", { name: "Criar Carta" }).click();
+  await modal.getByRole("button", { name: "Criar carta" }).click();
   await expect(card(page, name)).toBeVisible();
 
   // Another browser context shares nothing with this one: the card comes from the database.

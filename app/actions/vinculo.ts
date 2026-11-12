@@ -41,7 +41,7 @@ export async function criarMeuJogador(grupoId: string, nome: string, posicao: st
     nome: dados.data.nome,
     posicao: dados.data.posicao,
   });
-  if (error || !data) return falha(error, "criarMeuJogador", "Não deu pra criar seu Jogador agora. Tenta de novo.");
+  if (error || !data) return falha(error, "criarMeuJogador", "Não deu pra criar seu jogador agora. Tenta de novo.");
   return { ok: true };
 }
 

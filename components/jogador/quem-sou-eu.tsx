@@ -63,7 +63,7 @@ export function QuemSouEu({
             <div>
               <p className="font-bold text-foreground">Qual desses é você?</p>
               <p className="text-sm text-default-500">
-                Vincule sua conta ao seu Jogador. É assim que o fut vai saber quem confirmou presença.
+                Vincule sua conta ao seu jogador. É assim que o fut vai saber quem confirmou presença.
               </p>
             </div>
           </div>
@@ -72,7 +72,7 @@ export function QuemSouEu({
               Agora não
             </Button>
             <Button size="sm" color="primary" onClick={() => setAberto(true)}>
-              Escolher meu Jogador
+              Escolher meu jogador
             </Button>
           </div>
         </div>
@@ -132,7 +132,7 @@ function EscolherJogador({
     <Modal isOpen onClose={onClose} className="max-w-lg">
       <ModalHeader className="flex flex-col gap-1">
         <h2 className="text-title">Qual desses é você?</h2>
-        <p className="text-muted">Só aparecem os Jogadores que ninguém escolheu ainda.</p>
+        <p className="text-muted">Só aparecem os jogadores que ninguém escolheu ainda.</p>
       </ModalHeader>
 
       <ModalBody className="flex flex-col gap-4">
@@ -141,7 +141,7 @@ function EscolherJogador({
         <Input label="Buscar seu nome" value={busca} onChange={(e) => setBusca(e.target.value)} size="sm" autoComplete="off" />
 
         {livres.length === 0 ? (
-          <p className="text-sm text-default-500">Nenhum Jogador livre com esse nome.</p>
+          <p className="text-sm text-default-500">Nenhum jogador livre com esse nome.</p>
         ) : (
           <ul className="flex max-h-64 flex-col gap-1 overflow-y-auto" aria-label="Jogadores sem conta">
             {livres.map((p) => (
@@ -149,7 +149,7 @@ function EscolherJogador({
                 <span className="min-w-0">
                   <span className="block truncate font-semibold text-foreground">{p.name}</span>
                   <span className="text-xs text-default-500">
-                    {p.position} · OVR {p.rating}
+                    {p.position}, OVR {p.rating}
                   </span>
                 </span>
                 <Button
@@ -171,7 +171,7 @@ function EscolherJogador({
           className="flex flex-col gap-3 border-t border-divider pt-4"
           onSubmit={(e) => {
             e.preventDefault();
-            concluir(() => criarMeuJogador(grupoId, nome, posicao), "Seu Jogador entrou no Elenco");
+            concluir(() => criarMeuJogador(grupoId, nome, posicao), "Seu jogador entrou no elenco");
           }}
         >
           <p className="text-sm font-bold text-foreground">Não estou na lista</p>
@@ -187,7 +187,7 @@ function EscolherJogador({
           </div>
           <p className="text-xs text-default-500">Entra com os atributos padrão. Quem organiza o fut ajusta depois.</p>
           <Button type="submit" color="primary" isLoading={pendente} className="self-start">
-            Criar meu Jogador
+            Criar meu jogador
           </Button>
         </form>
       </ModalBody>

@@ -102,14 +102,14 @@ export const PlayerModal = ({
     return (
         <Modal isOpen={isOpen} onClose={onClose} className="max-w-3xl">
             <ModalHeader>
-                <h2 className="text-title">{initialData ? "Editar Carta" : "Nova Carta"}</h2>
+                <h2 className="text-title">{initialData ? "Editar carta" : "Nova carta"}</h2>
             </ModalHeader>
 
             <ModalBody>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     <div className="space-y-4">
                         <Input
-                            label="Nome do Jogador"
+                            label="Nome do jogador"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Nome do jogador"
@@ -142,7 +142,7 @@ export const PlayerModal = ({
 
                         <div className="flex flex-col gap-2">
                             <label className="text-sm font-medium text-foreground">
-                                Foto do Jogador
+                                Foto do jogador
                             </label>
                             <div className="flex flex-wrap gap-2">
                                 <Button
@@ -151,7 +151,7 @@ export const PlayerModal = ({
                                     variant="flat"
                                     className="flex-1 sm:flex-none min-w-0"
                                 >
-                                    {image ? "Alterar Foto" : "Adicionar Foto"}
+                                    {image ? "Alterar foto" : "Adicionar foto"}
                                 </Button>
                                 {image && (
                                     <Button
@@ -263,7 +263,7 @@ export const PlayerModal = ({
                     startContent={<Save size={18} />}
                     className="w-full sm:w-auto"
                 >
-                    {initialData ? "Atualizar Carta" : "Criar Carta"}
+                    {initialData ? "Atualizar carta" : "Criar carta"}
                 </Button>
             </ModalFooter>
         </Modal>

@@ -42,7 +42,7 @@ export const MiniPlayerRow = ({
                 </p>
             </div>
         </div>
-        <div className="text-lg sm:text-xl font-black text-default-700 shrink-0 tabular-nums">
+        <div className="text-numeral text-2xl text-default-700 shrink-0">
             {player.rating}
         </div>
         {actions}

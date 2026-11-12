@@ -6,9 +6,11 @@ import { Toaster } from "sonner";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const bricolage = Bricolage_Grotesque({ 
+// Variable axes: wdth (75–100) for the condensed printed numerals, opsz for display sizes.
+const bricolage = Bricolage_Grotesque({
     subsets: ["latin"],
     variable: "--font-sans",
+    axes: ["wdth", "opsz"],
 });
 
 export const metadata: Metadata = {
@@ -36,8 +38,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F4EDE0" },
-    { media: "(prefers-color-scheme: dark)", color: "#090E1C" },
+    { media: "(prefers-color-scheme: light)", color: "#F2F4F7" },
+    { media: "(prefers-color-scheme: dark)", color: "#14213D" },
   ],
   width: "device-width",
   initialScale: 1,

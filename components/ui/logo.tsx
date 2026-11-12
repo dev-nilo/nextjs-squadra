@@ -27,9 +27,9 @@ export function Logo({ className = "h-8 w-8", tossing = false, title }: LogoProp
       <path fill="currentColor" d="M50 16 A34 34 0 0 0 50 84 A17 17 0 0 0 50 50 A17 17 0 0 1 50 16 Z" />
       <circle cx="50" cy="50" r="34" fill="none" stroke="currentColor" strokeWidth="5" />
       <path d="M50 3 V16 M50 84 V97" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
-      {/* The center spot is the mark's one coral point. A literal color, like the
+      {/* The center spot is the mark's one Colete-orange point. A literal color, like the
           other two, so the PNG export (html-to-image) keeps it on the cloned child. */}
-      <circle cx="50" cy="50" r="4.2" fill="#FF6B5B" stroke="currentColor" strokeWidth="2.4" />
+      <circle cx="50" cy="50" r="4.2" fill="#FF5B14" stroke="currentColor" strokeWidth="2.4" />
     </svg>
   );
 }

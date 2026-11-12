@@ -9,9 +9,9 @@ export const meuJogadorSchema = z.object({
 
 /** Why the database refused a link, from the function's HINT. */
 export const MOTIVO_DO_VINCULO: Record<string, string> = {
-  "nao-membro": "Esse Jogador não é do seu fut.",
-  "ja-vinculado": "Esse Jogador já é de outra pessoa. Fala com quem organiza o fut.",
-  "ja-tem-jogador": "Você já tem um Jogador nesse fut.",
+  "nao-membro": "Esse jogador não é do seu fut.",
+  "ja-vinculado": "Esse jogador já é de outra pessoa. Fala com quem organiza o fut.",
+  "ja-tem-jogador": "Você já tem um jogador nesse fut.",
   "sem-permissao": "Só quem organiza o fut, ou a própria pessoa, desfaz o vínculo.",
 };
 

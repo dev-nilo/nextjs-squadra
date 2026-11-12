@@ -142,7 +142,7 @@ export function SignUpForm({ onSuccess, redirectPath }: AuthFormProps) {
       />
 
       <PasswordInput
-        aria-label="Confirmar Senha"
+        aria-label="Confirmar senha"
         id="confirm-password"
         placeholder="Confirme a senha"
         value={confirmPassword}

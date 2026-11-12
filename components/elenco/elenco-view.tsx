@@ -143,7 +143,7 @@ export function ElencoView({
         toast.error("Não deu pra salvar a carta", { description: resultado.message });
         return false;
       }
-      toast.success(resultado.valor.criado ? "Carta Criada" : "Carta Atualizada");
+      toast.success(resultado.valor.criado ? "Carta criada" : "Carta atualizada");
       return true;
     },
     [grupo.id, grupo.slug],
@@ -156,7 +156,7 @@ export function ElencoView({
         toast.error("Não deu pra excluir a carta", { description: resultado.message });
         return;
       }
-      toast.success("Carta Excluída");
+      toast.success("Carta excluída");
     },
     [grupo.slug],
   );
@@ -182,13 +182,13 @@ export function ElencoView({
 
   const handleDesvincular = useCallback(
     async (player: Player) => {
-      if (!window.confirm(`Desvincular a conta de ${player.name}? O Jogador continua no Elenco.`)) return;
+      if (!window.confirm(`Desvincular a conta de ${player.name}? O jogador continua no elenco.`)) return;
       const resultado = await desvincularJogador(player.id);
       if (!resultado.ok) {
         toast.error("Não deu pra desvincular", { description: resultado.message });
         return;
       }
-      toast.success("Conta desvinculada", { description: `${player.name} continua no Elenco.` });
+      toast.success("Conta desvinculada", { description: `${player.name} continua no elenco.` });
       recarregar();
     },
     [recarregar],
@@ -204,7 +204,7 @@ export function ElencoView({
     const minRequiredPlayers = numTeams * minPlayersPerTeam;
 
     if (selectedPlayers.length < minRequiredPlayers) {
-      toast.error("Poucos Jogadores", {
+      toast.error("Poucos jogadores", {
         description: `Selecione pelo menos ${minRequiredPlayers} jogadores`,
       });
       return;
@@ -291,7 +291,7 @@ export function ElencoView({
                   className="min-w-0"
                 >
                   <span className="sm:hidden">{todosMarcados ? "Desmarcar" : "Selecionar"}</span>
-                  <span className="hidden sm:inline">{todosMarcados ? "Desmarcar Todas" : "Selecionar Todas"}</span>
+                  <span className="hidden sm:inline">{todosMarcados ? "Desmarcar todas" : "Selecionar todas"}</span>
                 </Button>
 
                 {podeEditar && (
@@ -303,7 +303,7 @@ export function ElencoView({
                   size="sm"
                 >
                   <span className="sm:hidden">Nova</span>
-                  <span className="hidden sm:inline">Nova Carta</span>
+                  <span className="hidden sm:inline">Nova carta</span>
                 </Button>
 
                 <Button
@@ -336,7 +336,7 @@ export function ElencoView({
                     className="min-w-0"
                   >
                     <span className="sm:hidden">Sortear ({selectedIds.size})</span>
-                    <span className="hidden sm:inline">Sortear Times ({selectedIds.size})</span>
+                    <span className="hidden sm:inline">Sortear times ({selectedIds.size})</span>
                   </Button>
                 )}
               </div>
@@ -363,8 +363,8 @@ export function ElencoView({
                 {searchQuery
                   ? "Tente ajustar a busca"
                   : podeEditar
-                    ? "Clique em 'Nova Carta' para começar"
-                    : "Quem organiza o fut cadastra os Jogadores"}
+                    ? "Clique em Nova carta para começar"
+                    : "Quem organiza o fut cadastra os jogadores"}
               </p>
             </div>
           ) : viewMode === "grid" ? (

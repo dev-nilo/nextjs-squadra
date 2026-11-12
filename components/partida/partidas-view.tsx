@@ -62,12 +62,12 @@ export function PartidasView({
           <h1 className="text-title">Partidas</h1>
           {podeCriar && (
             <Button color="primary" size="sm" startContent={<CalendarPlus size={16} />} onClick={() => setCriando(true)}>
-              Nova Partida
+              Nova partida
             </Button>
           )}
         </div>
 
-        <Secao titulo="Próximas" vazio={podeCriar ? "Nenhuma Partida marcada. Crie a próxima." : "Nenhuma Partida marcada ainda."}>
+        <Secao titulo="Próximas" vazio={podeCriar ? "Nenhuma partida marcada. Crie a próxima." : "Nenhuma partida marcada ainda."}>
           {proximas.map((p) => (
             <ItemDaPartida key={p.id} slug={grupo.slug} partida={p} estado="aberta" />
           ))}
@@ -86,8 +86,8 @@ export function PartidasView({
 
       {criando && (
         <PartidaForm
-          titulo="Nova Partida"
-          acao="Criar Partida"
+          titulo="Nova partida"
+          acao="Criar partida"
           onClose={() => setCriando(false)}
           onSalvo={async (dados) => {
             const resultado = await criarPartida(grupo.slug, grupo.id, dados);
@@ -103,7 +103,7 @@ export function PartidasView({
 function Secao({ titulo, vazio, children }: { titulo: string; vazio?: string; children: React.ReactNode[] }) {
   return (
     <section aria-label={titulo} className="flex flex-col gap-3">
-      <h2 className="text-sm font-bold uppercase tracking-wide text-default-500">{titulo}</h2>
+      <h2 className="text-label">{titulo}</h2>
       {children.length === 0 ? (
         <p className="text-sm text-default-500">{vazio}</p>
       ) : (
@@ -180,8 +180,8 @@ function Frequencia({ linhas }: { linhas: FrequenciaDoJogador[] }) {
   return (
     <section aria-label="Frequência" className="flex flex-col gap-3">
       <div className="flex flex-col gap-0.5">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-default-500">Frequência</h2>
-        <p className="text-xs text-default-500">Nas últimas 10 Partidas, desde que cada um entrou no Elenco. Lista de espera conta como falta.</p>
+        <h2 className="text-label">Frequência</h2>
+        <p className="text-xs text-default-500">Nas últimas 10 partidas, desde que cada um entrou no elenco. Lista de espera conta como falta.</p>
       </div>
       <ul className="flex flex-col divide-y divide-divider rounded-2xl border border-divider bg-content1">
         {linhas.map((l) => (
@@ -191,7 +191,7 @@ function Frequencia({ linhas }: { linhas: FrequenciaDoJogador[] }) {
               <span className="block h-full rounded-full bg-primary" style={{ width: `${l.frequencia}%` }} />
             </span>
             <span className="w-24 shrink-0 text-right text-sm tabular-nums text-default-600">
-              <span className="font-bold text-foreground">{l.frequencia}%</span> · {l.presencas}/{l.partidas}
+              <span className="font-semibold text-foreground">{l.frequencia}%</span> ({l.presencas} de {l.partidas})
             </span>
           </li>
         ))}

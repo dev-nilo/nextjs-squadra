@@ -2,15 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Palette derived from the logo: navy (#14213D) on cream paper (#F4EDE0), with coral
-   (#FF6B5B) for a few highlights. See DESIGN.md. */
+/* "Quadra à noite": chalk-white court (Giz) and navy night (Noite), with the Jogador card as the
+   one warm, printed object (Papel). Colete orange marks "you / live / active"; Gramado is the
+   Sorteio action. See DESIGN.md. */
 :root {
-  --background: 244 237 224;
+  --background: 242 244 247;
   --foreground: 18 27 48;
-  --divider: 224 214 196;
+  --divider: 221 226 234;
   --focus: 20 33 61;
   --overlay: 5 8 18;
 
+  /* The mark keeps its own navy and cream in both themes (only swapped). */
   --brand: 20 33 61;
   --brand-foreground: 244 237 224;
 
@@ -18,26 +20,30 @@
   --panel: 20 33 61;
   --panel-foreground: 244 237 224;
 
-  --content1: 250 247 240;
-  --content1-foreground: 18 27 48;
-  --content2: 237 229 214;
-  --content2-foreground: 43 38 32;
-  --content3: 224 214 196;
-  --content3-foreground: 65 58 49;
-  --content4: 206 194 174;
-  --content4-foreground: 85 77 66;
+  /* Papel: figurinha card stock. Same in both themes, it's a physical object. */
+  --paper: 251 246 234;
+  --paper-foreground: 20 33 61;
 
-  --default-50: 250 247 240;
-  --default-100: 237 229 214;
-  --default-200: 224 214 196;
-  --default-300: 206 194 174;
-  --default-400: 160 149 131;
-  --default-500: 108 99 85;
-  --default-600: 85 77 66;
-  --default-700: 65 58 49;
-  --default-800: 43 38 32;
-  --default-900: 28 24 20;
-  --default: 206 194 174;
+  --content1: 255 255 255;
+  --content1-foreground: 18 27 48;
+  --content2: 233 237 243;
+  --content2-foreground: 36 44 62;
+  --content3: 221 226 234;
+  --content3-foreground: 55 64 84;
+  --content4: 203 210 221;
+  --content4-foreground: 66 76 96;
+
+  --default-50: 247 248 250;
+  --default-100: 233 237 243;
+  --default-200: 221 226 234;
+  --default-300: 203 210 221;
+  --default-400: 96 106 126;
+  --default-500: 80 90 110;
+  --default-600: 66 76 96;
+  --default-700: 55 64 84;
+  --default-800: 36 44 62;
+  --default-900: 22 29 45;
+  --default: 203 210 221;
   --default-foreground: 18 27 48;
 
   --primary-50: 236 240 247;
@@ -51,21 +57,22 @@
   --primary-800: 9 15 28;
   --primary-900: 5 9 18;
   --primary: 20 33 61;
-  --primary-foreground: 244 237 224;
+  --primary-foreground: 242 244 247;
 
-  /* Coral: a few highlights only. As a fill under navy text (5.7:1), never as text on cream (2.4:1). */
-  --accent: 255 107 91;
+  /* Colete: fluorescent bib orange. A fill under navy text (5.1:1), never text on Giz (2.8:1). */
+  --accent: 255 91 20;
   --accent-foreground: 20 33 61;
 
-  --secondary: 70 120 40;
-  --secondary-foreground: 250 247 240;
+  /* Gramado: artificial-turf green, only for Sorteio actions. Navy text on it (5.4:1). */
+  --secondary: 67 170 84;
+  --secondary-foreground: 20 33 61;
   --success: 31 122 92;
-  --success-foreground: 250 247 240;
+  --success-foreground: 255 255 255;
   --warning: 214 148 40;
   --warning-600: 142 92 16;
   --warning-foreground: 18 27 48;
   --danger: 178 50 40;
-  --danger-foreground: 250 247 240;
+  --danger-foreground: 255 255 255;
 
   /* Team colors: vintage kit colors, assigned by Time index. Not semantic. */
   --team-1: 20 33 61;
@@ -76,44 +83,49 @@
   --team-6: 118 42 72;
 }
 
+/* Dark is the night itself: the brand navy is the canvas (no tinted near-black). */
 .dark {
-  --background: 9 14 28;
-  --foreground: 244 237 224;
-  --divider: 30 42 68;
+  --background: 20 33 61;
+  --foreground: 242 244 247;
+  --divider: 40 56 92;
   --focus: 150 172 224;
   --overlay: 5 8 18;
 
   --brand: 244 237 224;
   --brand-foreground: 20 33 61;
 
-  --panel: 22 35 66;
+  /* Deeper than the canvas, so the auth card still floats over it. */
+  --panel: 11 19 36;
   --panel-foreground: 244 237 224;
 
-  --content1: 16 24 44;
-  --content1-foreground: 244 237 224;
-  --content2: 24 34 58;
-  --content2-foreground: 236 232 224;
-  --content3: 36 48 76;
-  --content3-foreground: 220 223 230;
-  --content4: 52 66 96;
-  --content4-foreground: 194 200 214;
+  --paper: 251 246 234;
+  --paper-foreground: 20 33 61;
 
-  --default-50: 16 24 44;
-  --default-100: 24 34 58;
-  --default-200: 36 48 76;
-  --default-300: 52 66 96;
-  --default-400: 98 110 138;
-  --default-500: 148 157 179;
-  --default-600: 194 200 214;
-  --default-700: 220 223 230;
-  --default-800: 235 233 228;
-  --default-900: 245 241 233;
-  --default: 36 48 76;
-  --default-foreground: 244 237 224;
+  --content1: 27 42 76;
+  --content1-foreground: 242 244 247;
+  --content2: 35 52 90;
+  --content2-foreground: 236 239 244;
+  --content3: 48 66 108;
+  --content3-foreground: 222 227 236;
+  --content4: 64 84 128;
+  --content4-foreground: 200 208 222;
 
-  --primary-50: 13 20 38;
-  --primary-100: 20 30 56;
-  --primary-200: 33 48 88;
+  --default-50: 27 42 76;
+  --default-100: 35 52 90;
+  --default-200: 48 66 108;
+  --default-300: 64 84 128;
+  --default-400: 150 162 186;
+  --default-500: 176 186 206;
+  --default-600: 200 208 222;
+  --default-700: 222 227 236;
+  --default-800: 236 239 244;
+  --default-900: 246 247 250;
+  --default: 48 66 108;
+  --default-foreground: 242 244 247;
+
+  --primary-50: 24 38 70;
+  --primary-100: 30 46 84;
+  --primary-200: 40 60 108;
   --primary-300: 62 82 136;
   --primary-400: 104 126 184;
   --primary-500: 150 172 224;
@@ -122,20 +134,20 @@
   --primary-800: 225 232 248;
   --primary-900: 240 244 252;
   --primary: 150 172 224;
-  --primary-foreground: 9 14 28;
+  --primary-foreground: 20 33 61;
 
-  --accent: 255 122 107;
-  --accent-foreground: 9 14 28;
+  --accent: 255 122 64;
+  --accent-foreground: 20 33 61;
 
-  --secondary: 129 179 77;
-  --secondary-foreground: 9 14 28;
+  --secondary: 95 196 110;
+  --secondary-foreground: 20 33 61;
   --success: 86 190 150;
-  --success-foreground: 9 14 28;
+  --success-foreground: 20 33 61;
   --warning: 232 170 70;
   --warning-600: 240 192 112;
-  --warning-foreground: 9 14 28;
+  --warning-foreground: 20 33 61;
   --danger: 236 112 98;
-  --danger-foreground: 9 14 28;
+  --danger-foreground: 20 33 61;
 
   --team-1: 150 172 224;
   --team-2: 232 128 108;
@@ -171,17 +183,30 @@ html [data-sonner-toaster][data-theme] {
 }
 
 @layer components {
+  /* Type scale (Bringhurst): 12 · 14 · 16 · 18 · 24 · 36 · 48. See DESIGN.md. */
   .text-title {
-    @apply text-xl font-black text-foreground sm:text-2xl;
+    @apply text-2xl font-bold tracking-tight text-foreground;
   }
   .text-section {
-    @apply text-base font-bold text-foreground sm:text-lg;
+    @apply text-lg font-semibold text-foreground;
+  }
+  /* A heading over a list or group, in sentence case (no tracked-out caps). */
+  .text-label {
+    @apply text-sm font-medium text-default-500;
   }
   .text-muted {
     @apply text-sm text-default-500;
   }
   .text-display {
-    @apply text-2xl font-normal leading-tight tracking-tight sm:text-3xl lg:text-4xl;
+    @apply text-2xl font-normal leading-tight tracking-tight sm:text-4xl;
+  }
+  /* Printed numerals: OVR, "8 de 14", Time averages. Bricolage condensed at display size. */
+  .text-numeral {
+    font-variation-settings: "wdth" 75, "opsz" 96;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    line-height: 1;
   }
   /* Inside the navy panel the mark inverts, as on the dark canvas. */
   .on-panel {

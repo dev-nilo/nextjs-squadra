@@ -13,7 +13,7 @@ test("the Partidas page shows past Partidas with their Times, and each Jogador's
 
   // Seeded pattern (see supabase/seed.sql): Paredão 4/4, Xerife 3/4, Foguete 2/4.
   const frequencia = page.getByRole("region", { name: "Frequência" });
-  await expect(frequencia.getByRole("listitem", { name: "Paredão: 100%" })).toContainText("4/4");
-  await expect(frequencia.getByRole("listitem", { name: "Xerife: 75%" })).toContainText("3/4");
-  await expect(frequencia.getByRole("listitem", { name: "Foguete: 50%" })).toContainText("2/4");
+  await expect(frequencia.getByRole("listitem", { name: "Paredão: 100%" })).toContainText("4 de 4");
+  await expect(frequencia.getByRole("listitem", { name: "Xerife: 75%" })).toContainText("3 de 4");
+  await expect(frequencia.getByRole("listitem", { name: "Foguete: 50%" })).toContainText("2 de 4");
 });

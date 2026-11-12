@@ -70,7 +70,7 @@ test("someone new signs up through an invite, confirms the email and joins as me
     await convidado.getByRole("button", { name: "Criar conta" }).click();
     await convidado.getByLabel("Email").fill(email);
     await convidado.getByLabel("Senha", { exact: true }).fill(SEED_PASSWORD);
-    await convidado.getByLabel("Confirmar Senha").fill(SEED_PASSWORD);
+    await convidado.getByLabel("Confirmar senha").fill(SEED_PASSWORD);
     await convidado.getByRole("button", { name: "Criar conta", exact: true }).last().click();
 
     // The email link carries the invite back (next=…/convite/<token>).
@@ -85,15 +85,15 @@ test("someone new signs up through an invite, confirms the email and joins as me
     await expect(convidado).toHaveURL(/\/g\/fut-do-dev$/);
     await expect(card(convidado, "Paredão")).toBeVisible();
     // A membro reads the Elenco but doesn't get the editing actions.
-    await expect(convidado.getByRole("button", { name: /^Nova( Carta)?$/ })).toHaveCount(0);
+    await expect(convidado.getByRole("button", { name: /^Nova( carta)?$/ })).toHaveCount(0);
     await expect(convidado.getByRole("button", { name: "Convidar" })).toHaveCount(0);
 
     // Not in the Elenco yet: they add themselves, already linked to their account.
-    await convidado.getByRole("button", { name: "Escolher meu Jogador" }).click();
+    await convidado.getByRole("button", { name: "Escolher meu jogador" }).click();
     const escolher = convidado.getByRole("dialog");
     await escolher.getByLabel("Seu nome", { exact: true }).fill("Convidado Novo");
     await escolher.getByLabel("Posição").selectOption("ATA");
-    await escolher.getByRole("button", { name: "Criar meu Jogador" }).click();
+    await escolher.getByRole("button", { name: "Criar meu jogador" }).click();
     await expect(convidado.getByRole("button", { name: /^Carta de Convidado Novo, ATA, rating 60, você$/ })).toBeVisible();
     await expect(convidado.getByRole("region", { name: "Vincular sua conta" })).toHaveCount(0);
 
@@ -134,7 +134,7 @@ test("someone who opened an invite and signs in on / is sent back to it, not to 
     expect(membros).toEqual([{ papel: "membro" }]);
 
     // "Sou esse aqui": they claim a seeded Jogador nobody had claimed.
-    await visitante.getByRole("button", { name: "Escolher meu Jogador" }).click();
+    await visitante.getByRole("button", { name: "Escolher meu jogador" }).click();
     await visitante.getByRole("dialog").getByRole("button", { name: "Sou Paredão" }).click();
     await expect(visitante.getByRole("button", { name: /^Carta de Paredão,.*, você$/ })).toBeVisible();
     await visitante.reload();

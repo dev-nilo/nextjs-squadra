@@ -150,7 +150,7 @@ const atributo = z
  */
 export const jogadorSchema = z.object({
   id: z.string().uuid("Jogador inválido."),
-  name: z.string().trim().min(1, "Dê um nome pro Jogador.").max(40, "Use até 40 caracteres no nome."),
+  name: z.string().trim().min(1, "Dê um nome pro jogador.").max(40, "Use até 40 caracteres no nome."),
   position: z.enum(["GOL", "FIX", "ALA", "ATA"], { message: "Escolha uma posição." }),
   nationality: z.string().regex(/^[A-Z]{2}$/, "País inválido."),
   image: z.string().max(2048).nullable(),

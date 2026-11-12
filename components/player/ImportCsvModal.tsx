@@ -89,7 +89,7 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
       <ModalHeader className="flex flex-col gap-1">
         <h2 className="text-title">Importar CSV</h2>
         <p className="text-muted">
-          UTF-8 · cabeçalhos JOGADOR, VEL, RES, CHU, PAS, POS, DEF, DRI, FIS
+          UTF-8, com os cabeçalhos JOGADOR, VEL, RES, CHU, PAS, POS, DEF, DRI, FIS
           (ordem das colunas não importa)
         </p>
       </ModalHeader>
@@ -127,7 +127,7 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
           <div className="rounded-xl border border-divider bg-default-50 p-3">
             <p className="text-sm font-medium text-foreground mb-2">
               {preview.length} jogador(es) prontos
-              {skippedRows > 0 ? ` · ${skippedRows} linha(s) ignorada(s)` : ""}
+              {skippedRows > 0 ? `, ${skippedRows} linha(s) ignorada(s)` : ""}
             </p>
             <ul className="max-h-40 overflow-y-auto space-y-1 text-sm text-default-600">
               {preview.slice(0, 12).map((p) => (

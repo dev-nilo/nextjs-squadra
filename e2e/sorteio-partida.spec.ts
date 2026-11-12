@@ -45,12 +45,12 @@ test("the dono draws and publishes the Times; a membro sees them appear, read-on
     await signIn(membro, email);
     await membro.goto(caminho);
     await expect(membro.getByText("Ao vivo")).toBeVisible();
-    await expect(membro.getByText("Os Times aparecem aqui quando quem organiza publicar o sorteio.")).toBeVisible();
+    await expect(membro.getByText("Os times aparecem aqui quando quem organiza publicar o sorteio.")).toBeVisible();
 
     await signIn(page, DEV_USER);
     await page.goto(caminho);
     const sorteio = page.getByRole("region", { name: "Sorteio" });
-    await sorteio.getByRole("button", { name: "Sortear Times" }).click();
+    await sorteio.getByRole("button", { name: "Sortear times" }).click();
     await expect(sorteio.getByText("Rascunho: só quem organiza vê")).toBeVisible();
     await expect(sorteio.getByRole("list", { name: /^Jogadores do Time/ })).toHaveCount(2);
     await expect(sorteio.getByText("Bagre")).toHaveCount(0);
@@ -65,7 +65,7 @@ test("the dono draws and publishes the Times; a membro sees them appear, read-on
     await expect(sorteio.getByRole("list", { name: `Jogadores do Time ${Number(destino) + 1}` }).getByText("Paredão")).toBeVisible();
 
     page.once("dialog", (d) => d.accept());
-    await sorteio.getByRole("button", { name: "Publicar Times" }).click();
+    await sorteio.getByRole("button", { name: "Publicar times" }).click();
     await expect(sorteio.getByText("Publicados")).toBeVisible();
     await expect(sorteio.getByLabel("Mover Paredão")).toHaveCount(0);
 
