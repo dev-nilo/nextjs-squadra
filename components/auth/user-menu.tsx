@@ -5,6 +5,7 @@ import { KeyRound, LogOut } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { toast } from "sonner"
 import { ChangePasswordModal } from "@/components/auth/change-password-modal"
+import { ehContaDemo } from "@/lib/demo"
 
 export function UserMenu() {
   const { user, logout } = useAuth()
@@ -20,7 +21,8 @@ export function UserMenu() {
     toast.success("Desconectado com sucesso!")
   }
 
-  const initials = user.email?.substring(0, 2).toUpperCase() || "US"
+  const demo = ehContaDemo(user)
+  const initials = demo ? "DE" : user.email?.substring(0, 2).toUpperCase() || "US"
 
   const positionMenu = () => {
     const trigger = triggerRef.current
@@ -53,19 +55,22 @@ export function UserMenu() {
       >
         <div className="flex flex-col gap-0.5 border-b border-divider px-3 py-3">
           <p className="text-xs text-default-500">Logado como</p>
-          <p className="max-w-[16rem] truncate text-sm font-semibold">{user.email}</p>
+          <p className="max-w-[16rem] truncate text-sm font-semibold">{demo ? "Conta demo" : user.email}</p>
         </div>
 
-        <button
-          type="button"
-          popoverTarget={menuId}
-          popoverTargetAction="hide"
-          onClick={() => setPasswordOpen(true)}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-default-100"
-        >
-          <KeyRound className="h-4 w-4" />
-          Alterar senha
-        </button>
+        {/* The demo account has no password, and keeps it that way. */}
+        {!demo && (
+          <button
+            type="button"
+            popoverTarget={menuId}
+            popoverTargetAction="hide"
+            onClick={() => setPasswordOpen(true)}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-default-100"
+          >
+            <KeyRound className="h-4 w-4" />
+            Alterar senha
+          </button>
+        )}
 
         <button
           type="button"

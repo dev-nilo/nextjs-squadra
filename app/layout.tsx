@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { Providers } from "./providers";
+import { AvisoDemo } from "@/components/demo/aviso-demo";
 
 const bricolage = Bricolage_Grotesque({ 
     subsets: ["latin"],
@@ -53,6 +54,7 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${bricolage.variable} font-sans antialiased overflow-x-hidden bg-background text-foreground`}>
         <Providers>
+          <AvisoDemo />
           {children}
           <Toaster position="top-center" richColors theme="system" />
           <Analytics />

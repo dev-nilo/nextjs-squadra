@@ -7,6 +7,9 @@
 --                        check one Grupo never sees another's
 --   novato@squadra.test  no Grupo and no Jogadores yet: signing in shows the
 --                        "Dê um nome pro seu fut" screen
+--   demo@example.com     the demo account ("Entrar como demo"), no password:
+--                        the app signs it in with a link it generates on the
+--                        server. Its Grupo comes from resetar_demo(), at the end.
 
 -- ---------------------------------------------------------------------------
 -- Auth users, already confirmed
@@ -217,3 +220,30 @@ select
   now() - interval '8 days',
   now() - interval '8 days'
 from (values (1, array['Paredão', 'Maestro']), (2, array['Foguete', 'Matador'])) as t(ordem, nomes);
+
+-- ---------------------------------------------------------------------------
+-- The demo (ADR 0005): the account, then its Grupo exactly as the nightly
+-- reset leaves it. In production the app creates the account (admin API).
+-- ---------------------------------------------------------------------------
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change
+)
+values (
+  '00000000-0000-0000-0000-000000000000', 'dede0000-0000-4000-8000-000000000001',
+  'authenticated', 'authenticated', 'demo@example.com', '', now(),
+  '{"provider":"email","providers":["email"],"demo":true}', '{}', now(), now(), '', '', '', ''
+);
+
+insert into auth.identities (
+  id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+)
+values (
+  'dede0000-0000-4000-8000-000000000001', 'dede0000-0000-4000-8000-000000000001',
+  'dede0000-0000-4000-8000-000000000001',
+  '{"sub":"dede0000-0000-4000-8000-000000000001","email":"demo@example.com","email_verified":true}',
+  'email', now(), now(), now()
+);
+
+select public.resetar_demo();
