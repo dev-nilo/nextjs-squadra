@@ -2,68 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Palette derived from the logo: navy (#1E4360) on cream paper (#F2EEE6). See DESIGN.md. */
+/* Palette derived from the logo: navy (#14213D) on cream paper (#F4EDE0), with coral
+   (#FF6B5B) for a few highlights. See DESIGN.md. */
 :root {
-  --background: 242 238 230;
-  --foreground: 23 33 43;
-  --divider: 222 215 202;
-  --focus: 30 67 96;
-  --overlay: 6 12 18;
+  --background: 244 237 224;
+  --foreground: 18 27 48;
+  --divider: 224 214 196;
+  --focus: 20 33 61;
+  --overlay: 5 8 18;
 
-  --brand: 30 67 96;
-  --brand-foreground: 242 238 230;
+  --brand: 20 33 61;
+  --brand-foreground: 244 237 224;
 
-  /* Auth "pitch" panel */
-  --panel: 30 67 96;
-  --panel-foreground: 242 238 230;
+  /* The auth "pitch" panel: navy with cream on top. */
+  --panel: 20 33 61;
+  --panel-foreground: 244 237 224;
 
-  --content1: 250 248 243;
-  --content1-foreground: 23 33 43;
-  --content2: 236 231 221;
-  --content2-foreground: 42 39 34;
-  --content3: 222 215 202;
-  --content3-foreground: 64 59 51;
-  --content4: 204 196 181;
-  --content4-foreground: 84 78 68;
+  --content1: 250 247 240;
+  --content1-foreground: 18 27 48;
+  --content2: 237 229 214;
+  --content2-foreground: 43 38 32;
+  --content3: 224 214 196;
+  --content3-foreground: 65 58 49;
+  --content4: 206 194 174;
+  --content4-foreground: 85 77 66;
 
-  --default-50: 250 248 243;
-  --default-100: 236 231 221;
-  --default-200: 222 215 202;
-  --default-300: 204 196 181;
-  --default-400: 158 150 136;
-  --default-500: 107 100 88;
-  --default-600: 84 78 68;
-  --default-700: 64 59 51;
-  --default-800: 42 39 34;
-  --default-900: 27 25 22;
-  --default: 204 196 181;
-  --default-foreground: 23 33 43;
+  --default-50: 250 247 240;
+  --default-100: 237 229 214;
+  --default-200: 224 214 196;
+  --default-300: 206 194 174;
+  --default-400: 160 149 131;
+  --default-500: 108 99 85;
+  --default-600: 85 77 66;
+  --default-700: 65 58 49;
+  --default-800: 43 38 32;
+  --default-900: 28 24 20;
+  --default: 206 194 174;
+  --default-foreground: 18 27 48;
 
-  --primary-50: 237 242 247;
-  --primary-100: 218 228 238;
-  --primary-200: 180 200 219;
-  --primary-300: 132 162 190;
-  --primary-400: 75 113 146;
-  --primary-500: 30 67 96;
-  --primary-600: 24 55 80;
-  --primary-700: 19 44 64;
-  --primary-800: 14 32 47;
-  --primary-900: 9 21 31;
-  --primary: 30 67 96;
-  --primary-foreground: 242 238 230;
+  --primary-50: 236 240 247;
+  --primary-100: 217 225 239;
+  --primary-200: 178 193 219;
+  --primary-300: 128 150 189;
+  --primary-400: 72 98 145;
+  --primary-500: 20 33 61;
+  --primary-600: 16 27 50;
+  --primary-700: 12 21 39;
+  --primary-800: 9 15 28;
+  --primary-900: 5 9 18;
+  --primary: 20 33 61;
+  --primary-foreground: 244 237 224;
+
+  /* Coral: a few highlights only. As a fill under navy text (5.7:1), never as text on cream (2.4:1). */
+  --accent: 255 107 91;
+  --accent-foreground: 20 33 61;
 
   --secondary: 70 120 40;
-  --secondary-foreground: 250 248 243;
+  --secondary-foreground: 250 247 240;
   --success: 31 122 92;
-  --success-foreground: 250 248 243;
+  --success-foreground: 250 247 240;
   --warning: 214 148 40;
   --warning-600: 142 92 16;
-  --warning-foreground: 23 33 43;
+  --warning-foreground: 18 27 48;
   --danger: 178 50 40;
-  --danger-foreground: 250 248 243;
+  --danger-foreground: 250 247 240;
 
   /* Team colors: vintage kit colors, assigned by Time index. Not semantic. */
-  --team-1: 30 67 96;
+  --team-1: 20 33 61;
   --team-2: 168 58 42;
   --team-3: 70 120 40;
   --team-4: 140 94 12;
@@ -72,63 +77,67 @@
 }
 
 .dark {
-  --background: 12 22 32;
-  --foreground: 242 238 230;
-  --divider: 34 50 66;
-  --focus: 143 178 209;
+  --background: 9 14 28;
+  --foreground: 244 237 224;
+  --divider: 30 42 68;
+  --focus: 150 172 224;
+  --overlay: 5 8 18;
 
-  --brand: 242 238 230;
-  --brand-foreground: 30 67 96;
+  --brand: 244 237 224;
+  --brand-foreground: 20 33 61;
 
-  --panel: 20 40 60;
-  --panel-foreground: 242 238 230;
+  --panel: 22 35 66;
+  --panel-foreground: 244 237 224;
 
-  --content1: 19 32 45;
-  --content1-foreground: 242 238 230;
-  --content2: 28 44 60;
-  --content2-foreground: 235 234 230;
-  --content3: 40 58 77;
-  --content3-foreground: 220 224 226;
-  --content4: 55 75 96;
-  --content4-foreground: 196 204 211;
+  --content1: 16 24 44;
+  --content1-foreground: 244 237 224;
+  --content2: 24 34 58;
+  --content2-foreground: 236 232 224;
+  --content3: 36 48 76;
+  --content3-foreground: 220 223 230;
+  --content4: 52 66 96;
+  --content4-foreground: 194 200 214;
 
-  --default-50: 19 32 45;
-  --default-100: 28 44 60;
-  --default-200: 40 58 77;
-  --default-300: 55 75 96;
-  --default-400: 100 118 136;
-  --default-500: 150 163 176;
-  --default-600: 196 204 211;
-  --default-700: 220 224 226;
-  --default-800: 235 234 230;
-  --default-900: 245 242 236;
-  --default: 40 58 77;
-  --default-foreground: 242 238 230;
+  --default-50: 16 24 44;
+  --default-100: 24 34 58;
+  --default-200: 36 48 76;
+  --default-300: 52 66 96;
+  --default-400: 98 110 138;
+  --default-500: 148 157 179;
+  --default-600: 194 200 214;
+  --default-700: 220 223 230;
+  --default-800: 235 233 228;
+  --default-900: 245 241 233;
+  --default: 36 48 76;
+  --default-foreground: 244 237 224;
 
-  --primary-50: 14 26 38;
-  --primary-100: 20 38 55;
-  --primary-200: 33 60 86;
-  --primary-300: 62 98 132;
-  --primary-400: 103 140 174;
-  --primary-500: 143 178 209;
-  --primary-600: 172 199 223;
-  --primary-700: 199 218 235;
-  --primary-800: 222 233 243;
-  --primary-900: 238 244 249;
-  --primary: 143 178 209;
-  --primary-foreground: 12 22 32;
+  --primary-50: 13 20 38;
+  --primary-100: 20 30 56;
+  --primary-200: 33 48 88;
+  --primary-300: 62 82 136;
+  --primary-400: 104 126 184;
+  --primary-500: 150 172 224;
+  --primary-600: 178 195 234;
+  --primary-700: 203 215 242;
+  --primary-800: 225 232 248;
+  --primary-900: 240 244 252;
+  --primary: 150 172 224;
+  --primary-foreground: 9 14 28;
+
+  --accent: 255 122 107;
+  --accent-foreground: 9 14 28;
 
   --secondary: 129 179 77;
-  --secondary-foreground: 12 22 32;
+  --secondary-foreground: 9 14 28;
   --success: 86 190 150;
-  --success-foreground: 12 22 32;
+  --success-foreground: 9 14 28;
   --warning: 232 170 70;
   --warning-600: 240 192 112;
-  --warning-foreground: 12 22 32;
+  --warning-foreground: 9 14 28;
   --danger: 236 112 98;
-  --danger-foreground: 12 22 32;
+  --danger-foreground: 9 14 28;
 
-  --team-1: 143 178 209;
+  --team-1: 150 172 224;
   --team-2: 232 128 108;
   --team-3: 129 179 77;
   --team-4: 232 178 84;

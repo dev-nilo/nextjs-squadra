@@ -8,9 +8,9 @@ Stack: Tailwind CSS 3, tokens as RGB channels in `app/globals.css`, mapped in `t
 
 ## Brand
 
-The mark is **Meio-campo**: the pitch's center circle seen from above, split by an S into two equal halves, with the halfway line above and below and the center spot. One drawing says S for Squadra, two Times and a balanced split. Navy (`#1E4360`) and cream (`#F2EEE6`); the whole palette derives from those two colors: cream paper canvas, navy ink and actions.
+The mark is **Meio-campo**: the pitch's center circle seen from above, split by an S into two equal halves, with the halfway line above and below and the center spot. One drawing says S for Squadra, two Times and a balanced split. Navy (`#14213D`) and cream (`#F4EDE0`), with the center spot in coral (`#FF6B5B`). The whole palette derives from those: cream paper canvas, navy ink and actions, and coral for a few highlights.
 
-- **Component**: `Logo` (`components/ui/logo.tsx`), inline geometric SVG on a 100×100 grid: circle r34 with a 5-unit ring, S halves of r17, halfway stubs, center spot. `BrandLockup` is mark + "Squadra" wordmark (`font-black tracking-tight text-brand`); `size`: `sm` (header) · `lg` + `stacked`. The auth panel builds its own larger lockup.
+- **Component**: `Logo` (`components/ui/logo.tsx`), inline geometric SVG on a 100×100 grid: circle r34 with a 5-unit ring, S halves of r17, halfway stubs, center spot. The spot is the one literal color in a component (`fill="#FF6B5B"`): an SVG attribute survives the PNG export, a class wouldn't (see the export notes below). `BrandLockup` is mark + "Squadra" wordmark (`font-black tracking-tight text-brand`); `size`: `sm` (header) · `lg` + `stacked`. The auth panel builds its own larger lockup.
 - **Small variant** for 16/32px (`public/icon.svg`, `icon-*-32x32.png`): no stubs and no spot, circle r44 with a 9-unit ring, so the S survives at tab size. Don't use the full mark below ~24px.
 - **Where it appears**: home header (lockup left of the search), the auth panel (inverted via `.on-panel`), the exported Times Sorteados PNG, the loader (`LoadingState` flips the mark like a coin toss, `animate-coin-toss`, still under `prefers-reduced-motion`), and the empty Elenco state.
 - **Not** used as a decorative motif elsewhere. The Jogador card and the OVR stay as they are.
@@ -20,7 +20,7 @@ The mark is **Meio-campo**: the pitch's center circle seen from above, split by 
 ## Theme
 
 - Light and dark follow the OS (`next-themes`, `defaultTheme="system"`, class strategy). There is no toggle.
-- Light is cream paper with navy ink; dark is deep navy (`#0C1620`) with cream text.
+- Light is cream paper with navy ink; dark is deep navy (`#090E1C`) with cream text.
 - Every token has a light value under `:root` and a dark value under `.dark`. Only use tokens, so both themes stay correct for free.
 - Any change must be checked in **both** themes.
 
@@ -35,7 +35,8 @@ The mark is **Meio-campo**: the pitch's center circle seen from above, split by 
 | `content2`–`content4` | Nested / raised fills |
 | `default-50…900`, `default` | Neutrals (warm paper tones in light, navy-grays in dark): input fills (`default-100`), borders (`default-200/300`), muted text (`default-400/500/600`) |
 | `divider` | Hairlines and borders between regions |
-| `primary` (+ `50…900`) | Navy `#1E4360` in light; light steel blue `#8FB2D1` in dark (navy would vanish on the navy canvas). Main action, selection, focus. `primary-600` is the solid hover. |
+| `primary` (+ `50…900`) | Navy `#14213D` in light; periwinkle `#96ACE0` in dark (navy would vanish on the navy canvas). Main action, selection, focus. `primary-600` is the solid hover. |
+| `accent` / `accent-foreground` | Coral `#FF6B5B` (`#FF7A6B` in dark). **A few highlights only**: the active tab's underline, the "Você" badge, the "Ao vivo" dot, the "Qual desses é você?" banner (`bg-accent/10`), the emphasis on the navy auth panel, and the logo's center spot. Use it as a fill under navy text (`accent-foreground`, 5.7:1) or as a non-text mark. **Never as text on cream** (2.4:1); coral text only on navy (panel, dark canvas). Never for actions (`primary`) or errors (`danger`). |
 | `secondary` | Pitch green. **Reserved for Sorteio actions** (Sortear Times, Sortear, Sortear Novamente). `#81B34D` in dark, deepened to `#467828` in light for AA with cream text. |
 | `danger` | Brick red. Destructive actions and errors |
 | `warning` / `warning-600` | Ochre. Warnings (`warning-600` for text on `warning/10`) |

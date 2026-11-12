@@ -309,7 +309,7 @@ export function PartidaView({
 function AoVivo({ ativo }: { ativo: boolean }) {
   return (
     <span className="flex items-center gap-1.5 text-xs font-semibold text-default-500" title={ativo ? "A lista atualiza sozinha" : "Conectando..."}>
-      <span aria-hidden="true" className={`h-2 w-2 rounded-full ${ativo ? "bg-success animate-pulse" : "bg-default-300"}`} />
+      <span aria-hidden="true" className={`h-2 w-2 rounded-full ${ativo ? "bg-accent animate-pulse" : "bg-default-300"}`} />
       {ativo ? "Ao vivo" : "Conectando"}
     </span>
   );

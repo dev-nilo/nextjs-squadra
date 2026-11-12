@@ -82,6 +82,11 @@ const config = {
           DEFAULT: "rgb(var(--primary) / <alpha-value>)",
           foreground: "rgb(var(--primary-foreground) / <alpha-value>)",
         },
+        /** Coral highlights (see DESIGN.md): a fill under navy text, or non-text marks. */
+        accent: {
+          DEFAULT: "rgb(var(--accent) / <alpha-value>)",
+          foreground: "rgb(var(--accent-foreground) / <alpha-value>)",
+        },
         secondary: {
           DEFAULT: "rgb(var(--secondary) / <alpha-value>)",
           foreground: "rgb(var(--secondary-foreground) / <alpha-value>)",
