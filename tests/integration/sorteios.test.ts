@@ -136,3 +136,83 @@ describe("publishing", () => {
     expect((await salvar(dono, partidaId, [[ids[0], ids[1], novato!.id], [ids[2], ids[3]]], true)).error).toBeNull();
   });
 });
+
+describe("moving a Jogador (mover_no_sorteio)", () => {
+  const mover = (quem: TestUser, partida: string, jogador: string, paraTime: number, sorteadoEm: string) =>
+    quem.client.rpc("mover_no_sorteio", { partida, jogador, para_time: paraTime, sorteado_em: sorteadoEm });
+  const lido = async (partidaId: string) =>
+    ((await service().from("sorteios").select("times").eq("partida_id", partidaId).single()).data!.times as Snapshot);
+  const idsPorTime = (times: Snapshot) => times.map((t) => t.jogadores.map((j) => j.id));
+
+  it("moves the Jogador's snapshot to the other Time, rating as drawn", async () => {
+    const { dono, partidaId, ids } = await partidaComConfirmados(4, 10);
+    const { data: sorteio } = await salvar(dono, partidaId, [[ids[0], ids[1]], [ids[2], ids[3]]]);
+    await dono.client.from("players").update({ ovr: 99 }).eq("id", ids[0]).throwOnError();
+
+    const { error } = await mover(dono, partidaId, ids[0], 1, sorteio.sorteado_em);
+    expect(error).toBeNull();
+    const times = await lido(partidaId);
+    expect(idsPorTime(times)).toEqual([[ids[1]], [ids[2], ids[3], ids[0]]]);
+    expect(times[1].jogadores.find((j) => j.id === ids[0])).toMatchObject({ name: "J0", rating: 60 });
+  });
+
+  it("simultaneous moves by different admins all land: none is lost", async () => {
+    const { dono, grupoId, partidaId, ids } = await partidaComConfirmados(8, 10);
+    const admins = [dono];
+    for (const label of ["admin-1", "admin-2"]) {
+      const a = await user(label);
+      await addMembro(grupoId, a, "admin");
+      admins.push(a);
+    }
+    const { data: sorteio } = await salvar(dono, partidaId, [ids.slice(0, 4), ids.slice(4)]);
+
+    // Each admin moves a different Jogador out of Time 1, from their own
+    // client, so the calls reach Postgres as overlapping transactions.
+    const movimentos = await Promise.all(admins.map((a, i) => mover(a, partidaId, ids[i], 1, sorteio.sorteado_em)));
+    for (const m of movimentos) expect(m.error).toBeNull();
+
+    const [time1, time2] = idsPorTime(await lido(partidaId));
+    expect(time1).toEqual([ids[3]]);
+    expect([...time2].sort()).toEqual([...ids.slice(4), ids[0], ids[1], ids[2]].sort());
+  });
+
+  it("refuses a move made on a draw that was redone since", async () => {
+    const { dono, partidaId, ids } = await partidaComConfirmados(4, 10);
+    const { data: antigo } = await salvar(dono, partidaId, [[ids[0], ids[1]], [ids[2], ids[3]]]);
+    const { data: novo } = await salvar(dono, partidaId, [[ids[0], ids[2]], [ids[1], ids[3]]]);
+    expect(novo.sorteado_em).not.toBe(antigo.sorteado_em);
+
+    expect((await mover(dono, partidaId, ids[0], 1, antigo.sorteado_em)).error?.hint).toBe("sorteio-mudou");
+    expect(idsPorTime(await lido(partidaId))).toEqual([[ids[0], ids[2]], [ids[1], ids[3]]]);
+    expect((await mover(dono, partidaId, ids[0], 1, novo.sorteado_em)).error).toBeNull();
+  });
+
+  it("never leaves a Time empty, and a move to the same Time changes nothing", async () => {
+    const { dono, partidaId, ids } = await partidaComConfirmados(4, 10);
+    const { data: sorteio } = await salvar(dono, partidaId, [[ids[0]], [ids[1], ids[2], ids[3]]]);
+
+    expect((await mover(dono, partidaId, ids[0], 1, sorteio.sorteado_em)).error?.hint).toBe("time-vazio");
+    expect((await mover(dono, partidaId, ids[1], 1, sorteio.sorteado_em)).error).toBeNull();
+    expect(idsPorTime(await lido(partidaId))).toEqual([[ids[0]], [ids[1], ids[2], ids[3]]]);
+  });
+
+  it("refuses an unknown Jogador or Time, a membro, a changed list and published Times", async () => {
+    const { dono, grupoId, partidaId, ids } = await partidaComConfirmados(5, 10);
+    const membro = await user("membro");
+    await addMembro(grupoId, membro, "membro");
+    const { data: sorteio } = await salvar(dono, partidaId, [[ids[0], ids[1]], [ids[2], ids[3], ids[4]]]);
+    const em = sorteio.sorteado_em as string;
+
+    expect((await mover(dono, partidaId, ids[0], 2, em)).error?.hint).toBe("times-invalidos");
+    expect((await mover(dono, partidaId, ids[0], -1, em)).error?.hint).toBe("times-invalidos");
+    expect((await mover(dono, partidaId, crypto.randomUUID(), 1, em)).error?.hint).toBe("fora-do-sorteio");
+    expect((await mover(membro, partidaId, ids[0], 1, em)).error?.hint).toBe("sem-permissao");
+
+    await dono.client.rpc("responder_presenca", { partida: partidaId, jogador: ids[4], vou: false }).throwOnError();
+    expect((await mover(dono, partidaId, ids[0], 1, em)).error?.hint).toBe("lista-mudou");
+    await dono.client.rpc("responder_presenca", { partida: partidaId, jogador: ids[4], vou: true }).throwOnError();
+
+    expect((await dono.client.rpc("publicar_sorteio", { partida: partidaId })).error).toBeNull();
+    expect((await mover(dono, partidaId, ids[0], 1, em)).error?.hint).toBe("publicado");
+  });
+});
