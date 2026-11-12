@@ -91,7 +91,7 @@ export function ConvidarModal({
         <h2 className="text-title">Chamar a galera</h2>
         <p className="text-muted">
           Quem abrir o link entra no <span className="font-semibold text-foreground">{grupo.nome}</span> como
-          membro: vê o Elenco e os sorteios, mas não edita. Cada link vale 7 dias.
+          membro: vê o elenco e os sorteios, mas não edita. Cada link vale 7 dias.
         </p>
       </ModalHeader>
 

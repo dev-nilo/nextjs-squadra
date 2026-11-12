@@ -65,7 +65,7 @@ test("the dono draws and publishes the Times; a membro sees them appear, read-on
     await expect(sorteio.getByRole("list", { name: `Jogadores do Time ${Number(destino) + 1}` }).getByText("Paredão")).toBeVisible();
 
     page.once("dialog", (d) => d.accept());
-    await sorteio.getByRole("button", { name: "Publicar Times" }).click();
+    await sorteio.getByRole("button", { name: "Publicar times" }).click();
     await expect(sorteio.getByText("Publicados")).toBeVisible();
     await expect(sorteio.getByLabel("Mover Paredão")).toHaveCount(0);
 

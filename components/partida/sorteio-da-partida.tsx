@@ -113,7 +113,7 @@ export function SorteioDaPartida({
                 executar(() => publicarSorteio(slug, partidaId), "Times publicados");
               }}
             >
-              Publicar Times
+              Publicar times
             </Button>
           )}
         </div>

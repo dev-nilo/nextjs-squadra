@@ -63,7 +63,7 @@ export function QuemSouEu({
             <div>
               <p className="font-bold text-foreground">Qual desses é você?</p>
               <p className="text-sm text-default-500">
-                Vincule sua conta ao seu Jogador. É assim que o fut vai saber quem confirmou presença.
+                Vincule sua conta ao seu jogador. É assim que o fut vai saber quem confirmou presença.
               </p>
             </div>
           </div>
@@ -72,7 +72,7 @@ export function QuemSouEu({
               Agora não
             </Button>
             <Button size="sm" color="primary" onClick={() => setAberto(true)}>
-              Escolher meu Jogador
+              Escolher meu jogador
             </Button>
           </div>
         </div>
@@ -187,7 +187,7 @@ function EscolherJogador({
           </div>
           <p className="text-xs text-default-500">Entra com os atributos padrão. Quem organiza o fut ajusta depois.</p>
           <Button type="submit" color="primary" isLoading={pendente} className="self-start">
-            Criar meu Jogador
+            Criar meu jogador
           </Button>
         </form>
       </ModalBody>

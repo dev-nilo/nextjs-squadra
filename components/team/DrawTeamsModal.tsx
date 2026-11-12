@@ -154,7 +154,7 @@ export const DrawTeamsModal = ({
                             size="sm"
                             className="w-full sm:w-auto"
                         >
-                            Sortear Novamente
+                            Sortear de novo
                         </Button>
                     </div>
                 </div>

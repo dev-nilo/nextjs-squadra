@@ -229,7 +229,7 @@ export function PartidaView({
             <p className="text-sm text-default-600">
               Pra responder, diga qual jogador é você no{" "}
               <Link href={`/g/${grupo.slug}`} className="font-semibold text-foreground underline underline-offset-4">
-                Elenco
+                elenco
               </Link>
               .
             </p>

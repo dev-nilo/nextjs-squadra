@@ -142,7 +142,7 @@ export const PlayerModal = ({
 
                         <div className="flex flex-col gap-2">
                             <label className="text-sm font-medium text-foreground">
-                                Foto do Jogador
+                                Foto do jogador
                             </label>
                             <div className="flex flex-wrap gap-2">
                                 <Button
