@@ -42,7 +42,7 @@ export async function criarPartida(slug: string, grupoId: string, dados: DadosDa
     .insert({ grupo_id: grupoId, ...validos.valor })
     .select("id")
     .single();
-  if (error || !data) return falha(error, "criarPartida", "Não deu pra criar a Partida agora. Tenta de novo.");
+  if (error || !data) return falha(error, "criarPartida", "Não deu pra criar a partida agora. Tenta de novo.");
 
   revalidatePath(`/g/${slug}/partidas`);
   return { ok: true, valor: { id: data.id } };
@@ -56,8 +56,8 @@ export async function editarPartida(slug: string, partidaId: string, dados: Dado
 
   const supabase = await createClient();
   const { data, error } = await supabase.from("partidas").update(validos.valor).eq("id", partidaId).select("id");
-  if (error) return falha(error, "editarPartida", "Não deu pra salvar a Partida agora. Tenta de novo.");
-  if (!data?.length) return { ok: false, message: "Só quem organiza o fut pode editar a Partida." };
+  if (error) return falha(error, "editarPartida", "Não deu pra salvar a partida agora. Tenta de novo.");
+  if (!data?.length) return { ok: false, message: "Só quem organiza o fut pode editar a partida." };
 
   revalidatePath(`/g/${slug}/partidas`);
   revalidatePath(`/g/${slug}/partidas/${partidaId}`);
@@ -76,7 +76,7 @@ export async function cancelarPartida(slug: string, partidaId: string): Promise<
     .is("cancelada_em", null)
     .select("id");
   if (error) return falha(error, "cancelarPartida", "Não deu pra cancelar agora. Tenta de novo.");
-  if (!data?.length) return { ok: false, message: "Só quem organiza o fut pode cancelar a Partida." };
+  if (!data?.length) return { ok: false, message: "Só quem organiza o fut pode cancelar a partida." };
 
   revalidatePath(`/g/${slug}/partidas`);
   revalidatePath(`/g/${slug}/partidas/${partidaId}`);
@@ -90,7 +90,7 @@ export async function responderPresenca(
   vou: boolean,
 ): Promise<Resultado<{ situacao: SituacaoPresenca }>> {
   if (!idSchema.safeParse(partidaId).success || !idSchema.safeParse(jogadorId).success) {
-    return { ok: false, message: "Partida ou Jogador inválido." };
+    return { ok: false, message: "Partida ou jogador inválido." };
   }
   if (typeof vou !== "boolean") return { ok: false, message: "Resposta inválida." };
 

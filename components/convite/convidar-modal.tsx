@@ -108,7 +108,7 @@ export function ConvidarModal({
               <li key={convite.id} className="flex flex-col gap-2 rounded-xl border border-divider bg-default-50 p-3">
                 <label className="flex flex-col gap-1">
                   <span className="text-xs font-medium text-default-500">
-                    Link de convite · vale até {dataCurta.format(new Date(convite.expira_em))}
+                    Link de convite, vale até {dataCurta.format(new Date(convite.expira_em))}
                   </span>
                   <input
                     readOnly

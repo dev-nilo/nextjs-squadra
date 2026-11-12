@@ -23,7 +23,7 @@ export default function GlobalError({
       <body className="flex min-h-screen items-center justify-center bg-background p-4 font-sans text-foreground">
         <main className="flex max-w-sm flex-col items-center gap-4 text-center">
           <Logo className="h-12 w-12" />
-          <h1 className="text-xl font-black">Algo deu errado</h1>
+          <h1 className="text-2xl font-bold">Algo deu errado</h1>
           <p className="text-sm text-default-500">
             O erro já foi registrado. Tente de novo; se continuar, recarregue a página.
           </p>

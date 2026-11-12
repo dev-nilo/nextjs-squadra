@@ -69,10 +69,10 @@ export function cabeNoSorteio(confirmados: number, numTimes: number): boolean {
 /** Why the database refused a Sorteio, from the functions' HINT. */
 export const MOTIVO_DO_SORTEIO: Record<string, string> = {
   "nao-encontrada": "Partida não encontrada.",
-  cancelada: "Essa Partida foi cancelada.",
-  "sem-permissao": "Só quem organiza o fut sorteia e publica os Times.",
-  publicado: "Os Times já foram publicados.",
-  "times-invalidos": "Os Times vieram inválidos. Sorteie de novo.",
+  cancelada: "Essa partida foi cancelada.",
+  "sem-permissao": "Só quem organiza o fut sorteia e publica os times.",
+  publicado: "Os times já foram publicados.",
+  "times-invalidos": "Os times vieram inválidos. Sorteie de novo.",
   "lista-mudou": "A lista de confirmados mudou desde o sorteio. Sorteie de novo.",
-  "sem-sorteio": "Sorteie os Times antes de publicar.",
+  "sem-sorteio": "Sorteie os times antes de publicar.",
 };

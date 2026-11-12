@@ -70,7 +70,7 @@ test("someone new signs up through an invite, confirms the email and joins as me
     await convidado.getByRole("button", { name: "Criar conta" }).click();
     await convidado.getByLabel("Email").fill(email);
     await convidado.getByLabel("Senha", { exact: true }).fill(SEED_PASSWORD);
-    await convidado.getByLabel("Confirmar Senha").fill(SEED_PASSWORD);
+    await convidado.getByLabel("Confirmar senha").fill(SEED_PASSWORD);
     await convidado.getByRole("button", { name: "Criar conta", exact: true }).last().click();
 
     // The email link carries the invite back (next=…/convite/<token>).
@@ -85,7 +85,7 @@ test("someone new signs up through an invite, confirms the email and joins as me
     await expect(convidado).toHaveURL(/\/g\/fut-do-dev$/);
     await expect(card(convidado, "Paredão")).toBeVisible();
     // A membro reads the Elenco but doesn't get the editing actions.
-    await expect(convidado.getByRole("button", { name: /^Nova( Carta)?$/ })).toHaveCount(0);
+    await expect(convidado.getByRole("button", { name: /^Nova( carta)?$/ })).toHaveCount(0);
     await expect(convidado.getByRole("button", { name: "Convidar" })).toHaveCount(0);
 
     // Not in the Elenco yet: they add themselves, already linked to their account.

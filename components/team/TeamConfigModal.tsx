@@ -24,7 +24,7 @@ const RangeSlider = ({ label, min, max, value, onChange }: RangeSliderProps) => 
                 <label htmlFor={inputId} className="font-medium text-foreground">
                     {label}
                 </label>
-                <output htmlFor={inputId} className="font-black tabular-nums text-foreground">
+                <output htmlFor={inputId} className="text-numeral text-lg text-foreground">
                     {value}
                 </output>
             </div>
@@ -75,7 +75,7 @@ export const TeamConfigModal = ({
     return (
         <Modal isOpen={isOpen} onClose={onClose} className="max-w-md">
             <ModalHeader className="flex flex-col gap-1">
-                <h2 className="text-title">Configurar Times</h2>
+                <h2 className="text-title">Configurar times</h2>
                 <p className="text-muted">
                     Defina quantos times e jogadores por time
                 </p>
@@ -83,7 +83,7 @@ export const TeamConfigModal = ({
 
             <ModalBody className="flex flex-col gap-5">
                 <RangeSlider
-                    label="Número de Times"
+                    label="Número de times"
                     min={2}
                     max={8}
                     value={numTeams}
@@ -91,7 +91,7 @@ export const TeamConfigModal = ({
                 />
 
                 <RangeSlider
-                    label="Jogadores por Time"
+                    label="Jogadores por time"
                     min={1}
                     max={20}
                     value={minPlayersPerTeam}
@@ -101,11 +101,11 @@ export const TeamConfigModal = ({
                 <div className="rounded-xl border border-divider bg-default-50 p-4 space-y-2.5">
                     <div className="flex items-center justify-between text-sm">
                         <span className="text-default-600 font-medium">Necessários</span>
-                        <span className="font-black text-foreground tabular-nums">{required}</span>
+                        <span className="font-semibold text-foreground tabular-nums">{required}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                         <span className="text-default-600 font-medium">Selecionados</span>
-                        <span className="font-black text-foreground tabular-nums">{selectedCount}</span>
+                        <span className="font-semibold text-foreground tabular-nums">{selectedCount}</span>
                     </div>
                     <Alert tone={hasEnough ? "success" : "danger"} className="mt-1">
                         {hasEnough

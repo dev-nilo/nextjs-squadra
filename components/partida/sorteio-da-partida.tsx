@@ -55,8 +55,8 @@ export function SorteioDaPartida({
   if (!podeGerir && !sorteio) {
     return (
       <section aria-label="Sorteio" className="flex flex-col gap-2">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-default-500">Times</h2>
-        <p className="text-sm text-default-500">Os Times aparecem aqui quando quem organiza publicar o sorteio.</p>
+        <h2 className="text-label">Times</h2>
+        <p className="text-sm text-default-500">Os times aparecem aqui quando quem organiza publicar o sorteio.</p>
       </section>
     );
   }
@@ -64,7 +64,7 @@ export function SorteioDaPartida({
   return (
     <section aria-label="Sorteio" className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-default-500">Times</h2>
+        <h2 className="text-label">Times</h2>
         {sorteio && (
           <span className="flex items-center gap-1 rounded-full bg-default-100 px-2 py-0.5 text-xs font-semibold text-default-600">
             {publicado ? (
@@ -81,7 +81,7 @@ export function SorteioDaPartida({
       {podeGerir && aberta && !publicado && (
         <div className="flex flex-wrap items-end gap-2">
           <Select
-            label="Quantos Times"
+            label="Quantos times"
             size="sm"
             value={numTimes}
             onChange={(e) => setNumTimes(e.target.value)}
@@ -101,7 +101,7 @@ export function SorteioDaPartida({
             isDisabled={!cabeNoSorteio(confirmados.length, Number(numTimes))}
             onClick={() => executar(() => sortearDaPartida(slug, partidaId, Number(numTimes)), "Times sorteados")}
           >
-            {sorteio ? "Sortear de novo" : "Sortear Times"}
+            {sorteio ? "Sortear de novo" : "Sortear times"}
           </Button>
           {sorteio && (
             <Button
@@ -109,7 +109,7 @@ export function SorteioDaPartida({
               size="sm"
               isDisabled={pendente || !emDia}
               onClick={() => {
-                if (!window.confirm("Publicar os Times? Depois disso todo mundo vê e não dá mais pra mudar.")) return;
+                if (!window.confirm("Publicar os times? Depois disso todo mundo vê e não dá mais pra mudar.")) return;
                 executar(() => publicarSorteio(slug, partidaId), "Times publicados");
               }}
             >

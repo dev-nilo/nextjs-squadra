@@ -10,9 +10,6 @@ const config = {
       fontFamily: {
         sans: ["var(--font-sans)"],
       },
-      fontSize: {
-        "2xs": ["0.6875rem", { lineHeight: "1rem" }],
-      },
       borderRadius: {
         card: "2rem",
       },
@@ -29,6 +26,10 @@ const config = {
           4: "rgb(var(--team-4) / <alpha-value>)",
           5: "rgb(var(--team-5) / <alpha-value>)",
           6: "rgb(var(--team-6) / <alpha-value>)",
+        },
+        paper: {
+          DEFAULT: "rgb(var(--paper) / <alpha-value>)",
+          foreground: "rgb(var(--paper-foreground) / <alpha-value>)",
         },
         panel: {
           DEFAULT: "rgb(var(--panel) / <alpha-value>)",

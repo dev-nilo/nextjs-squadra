@@ -387,12 +387,11 @@ export function sessaoToast(
     switch (result.code) {
       case "logged_in":
         if (result.via === "implicit") {
-          return { variant: "success", title: "Login realizado!" };
+          return { variant: "success", title: "Você entrou." };
         }
         return {
           variant: "success",
-          title: "Login realizado com sucesso!",
-          description: "Bem-vindo de volta!",
+          title: "Você entrou.",
         };
       case "signed_up":
         return {

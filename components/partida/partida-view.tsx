@@ -134,7 +134,7 @@ export function PartidaView({
   };
 
   const cancelar = async () => {
-    if (!window.confirm("Cancelar essa Partida? Ninguém mais consegue responder.")) return;
+    if (!window.confirm("Cancelar essa partida? Ninguém mais consegue responder.")) return;
     const resultado = await cancelarPartida(grupo.slug, id);
     if (!resultado.ok) {
       toast.error("Não deu pra cancelar", { description: resultado.message });
@@ -168,14 +168,14 @@ export function PartidaView({
           </div>
 
           {estado === "cancelada" && <p className="font-semibold text-danger">Partida cancelada.</p>}
-          {estado === "encerrada" && <p className="font-semibold text-default-500">Essa Partida já começou.</p>}
+          {estado === "encerrada" && <p className="font-semibold text-default-500">Essa partida já começou.</p>}
 
           <p className="text-sm text-default-600" aria-live="polite">
             <span className="font-bold tabular-nums text-foreground">
               {lista.confirmados.length} de {partida.vagas}
             </span>{" "}
             vagas confirmadas
-            {lista.espera.length > 0 && <> · {lista.espera.length} na lista de espera</>}
+            {lista.espera.length > 0 && <>, {lista.espera.length} na lista de espera</>}
           </p>
 
           {podeGerir && estado !== "cancelada" && (
@@ -184,7 +184,7 @@ export function PartidaView({
                 Editar
               </Button>
               <Button size="sm" variant="flat" color="danger" onClick={cancelar}>
-                Cancelar Partida
+                Cancelar partida
               </Button>
             </div>
           )}
@@ -227,7 +227,7 @@ export function PartidaView({
             </>
           ) : (
             <p className="text-sm text-default-600">
-              Pra responder, diga qual Jogador é você no{" "}
+              Pra responder, diga qual jogador é você no{" "}
               <Link href={`/g/${grupo.slug}`} className="font-semibold text-foreground underline underline-offset-4">
                 Elenco
               </Link>
@@ -285,7 +285,7 @@ export function PartidaView({
 
       {editando && (
         <PartidaForm
-          titulo="Editar Partida"
+          titulo="Editar partida"
           acao="Salvar"
           inicial={partida}
           onClose={() => setEditando(false)}
@@ -331,7 +331,7 @@ function ListaDeJogadores({
   const Lista = ordenada ? "ol" : "ul";
   return (
     <section aria-label={titulo} className="flex flex-col gap-2">
-      <h2 className="text-sm font-bold uppercase tracking-wide text-default-500">{titulo}</h2>
+      <h2 className="text-label">{titulo}</h2>
       {itens.length === 0 ? (
         <p className="text-sm text-default-500">{vazio}</p>
       ) : (

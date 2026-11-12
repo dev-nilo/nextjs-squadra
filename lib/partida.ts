@@ -76,9 +76,9 @@ export const partidaSchema = z.object({
 /** Why the database refused an answer, from responder_presenca's HINT. */
 export const MOTIVO_DA_PRESENCA: Record<string, string> = {
   "nao-encontrada": "Partida não encontrada.",
-  cancelada: "Essa Partida foi cancelada.",
-  "jogador-de-fora": "Esse Jogador não é desse fut.",
-  "sem-permissao": "Você só responde pelo seu Jogador.",
+  cancelada: "Essa partida foi cancelada.",
+  "jogador-de-fora": "Esse jogador não é desse fut.",
+  "sem-permissao": "Você só responde pelo seu jogador.",
   "vagas-abaixo-dos-confirmados": "Já tem mais confirmados do que essas vagas.",
 };
 

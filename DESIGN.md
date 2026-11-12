@@ -8,19 +8,20 @@ Stack: Tailwind CSS 3, tokens as RGB channels in `app/globals.css`, mapped in `t
 
 ## Brand
 
-The mark is **Meio-campo**: the pitch's center circle seen from above, split by an S into two equal halves, with the halfway line above and below and the center spot. One drawing says S for Squadra, two Times and a balanced split. Navy (`#14213D`) and cream (`#F4EDE0`), with the center spot in coral (`#FF6B5B`). The whole palette derives from those: cream paper canvas, navy ink and actions, and coral for a few highlights.
+The mark is **Meio-campo**: the pitch's center circle seen from above, split by an S into two equal halves, with the halfway line above and below and the center spot. One drawing says S for Squadra, two Times and a balanced split. Navy (`#14213D`) and cream (`#F4EDE0`), with the center spot in Colete orange (`#FF5B14`). The mark keeps those exact colors; the app palette around it is "a quadra à noite" (see **Color tokens**).
 
-- **Component**: `Logo` (`components/ui/logo.tsx`), inline geometric SVG on a 100×100 grid: circle r34 with a 5-unit ring, S halves of r17, halfway stubs, center spot. The spot is the one literal color in a component (`fill="#FF6B5B"`): an SVG attribute survives the PNG export, a class wouldn't (see the export notes below). `BrandLockup` is mark + "Squadra" wordmark (`font-black tracking-tight text-brand`); `size`: `sm` (header) · `lg` + `stacked`. The auth panel builds its own larger lockup.
+- **Component**: `Logo` (`components/ui/logo.tsx`), inline geometric SVG on a 100×100 grid: circle r34 with a 5-unit ring, S halves of r17, halfway stubs, center spot. The spot is the one literal color in a component (`fill="#FF5B14"`): an SVG attribute survives the PNG export, a class wouldn't (see the export notes below). `BrandLockup` is mark + "Squadra" wordmark (`font-black tracking-tight text-brand`); `size`: `sm` (header) · `lg` + `stacked`. The auth panel builds its own larger lockup.
 - **Small variant** for 16/32px (`public/icon.svg`, `icon-*-32x32.png`): no stubs and no spot, circle r44 with a 9-unit ring, so the S survives at tab size. Don't use the full mark below ~24px.
 - **Where it appears**: home header (lockup left of the search), the auth panel (inverted via `.on-panel`), the exported Times Sorteados PNG, the loader (`LoadingState` flips the mark like a coin toss, `animate-coin-toss`, still under `prefers-reduced-motion`), and the empty Elenco state.
 - **Not** used as a decorative motif elsewhere. The Jogador card and the OVR stay as they are.
 - **Static assets** (`public/icon.svg`, `icon-*-32x32.png`, `apple-icon.png`, `icon-192/512.png`, `icon-maskable-512.png`, `app/opengraph-image.png`) follow the same geometry. The SVG favicon inverts under `prefers-color-scheme: dark`.
-- No paper texture: the canvas is flat cream.
+- No paper texture: the canvas is flat.
 
 ## Theme
 
 - Light and dark follow the OS (`next-themes`, `defaultTheme="system"`, class strategy). There is no toggle.
-- Light is cream paper with navy ink; dark is deep navy (`#090E1C`) with cream text.
+- The idea is **a quadra à noite**: light is Giz (chalk-white court lines, `#F2F4F7`) with navy ink; dark is the brand navy itself (`#14213D`) with Giz text, never a tinted near-black.
+- The Jogador card is the **one warm, printed object** in the app (Papel, `#FBF6EA`, same in both themes). Everything around it stays quiet.
 - Every token has a light value under `:root` and a dark value under `.dark`. Only use tokens, so both themes stay correct for free.
 - Any change must be checked in **both** themes.
 
@@ -28,19 +29,20 @@ The mark is **Meio-campo**: the pitch's center circle seen from above, split by 
 
 | Token | Use |
 |-------|-----|
-| `background` / `foreground` | Page canvas (cream / deep navy) and default text (navy ink / cream) |
-| `panel` / `panel-foreground` | The auth "pitch" panel: navy with cream in light, a lifted navy in dark. Wrap it in `.on-panel` so the mark inverts on it. |
+| `background` / `foreground` | Page canvas (Giz `#F2F4F7` / navy `#14213D`) and default text (navy ink / Giz) |
+| `panel` / `panel-foreground` | The auth "pitch" panel: navy with cream in light, a deeper navy than the canvas in dark (so the auth card still floats). Wrap it in `.on-panel` so the mark inverts on it. |
+| `paper` / `paper-foreground` | Papel `#FBF6EA` with navy ink. **Only** the Jogador card (figurinha card stock). Same in both themes. |
 | `brand` / `brand-foreground` | **Logo only**: the mark's navy half and ring, and its cream half. Navy/cream in light, swapped in dark. Never use for UI actions (that's `primary`). |
-| `content1` | Surfaces: modals, cards, header, menus |
+| `content1` | Surfaces: modals, header, menus (white in light, a lifted navy in dark) |
 | `content2`–`content4` | Nested / raised fills |
-| `default-50…900`, `default` | Neutrals (warm paper tones in light, navy-grays in dark): input fills (`default-100`), borders (`default-200/300`), muted text (`default-400/500/600`) |
+| `default-50…900`, `default` | Neutrals (cool, navy-biased grays):  input fills (`default-100`), borders (`default-200/300`), muted text (`default-400/500/600`) |
 | `divider` | Hairlines and borders between regions |
 | `primary` (+ `50…900`) | Navy `#14213D` in light; periwinkle `#96ACE0` in dark (navy would vanish on the navy canvas). Main action, selection, focus. `primary-600` is the solid hover. |
-| `accent` / `accent-foreground` | Coral `#FF6B5B` (`#FF7A6B` in dark). **A few highlights only**: the active tab's underline, the "Você" badge, the "Ao vivo" dot, the "Qual desses é você?" banner (`bg-accent/10`), the emphasis on the navy auth panel, and the logo's center spot. Use it as a fill under navy text (`accent-foreground`, 5.7:1) or as a non-text mark. **Never as text on cream** (2.4:1); coral text only on navy (panel, dark canvas). Never for actions (`primary`) or errors (`danger`). |
-| `secondary` | Pitch green. **Reserved for Sorteio actions** (Sortear Times, Sortear, Sortear Novamente). `#81B34D` in dark, deepened to `#467828` in light for AA with cream text. |
+| `accent` / `accent-foreground` | Colete `#FF5B14` (`#FF7A40` in dark), the fluorescent bib that splits teams in a pelada. **"You / live / active" only**: the active tab's underline, the "Você" badge, the "Ao vivo" dot, the "Qual desses é você?" banner (`bg-accent/10`) and the logo's center spot. A fill under navy text (`accent-foreground`, 5.1:1) or a non-text mark. **Never as text on Giz** (2.8:1); Colete text only on navy. Never for actions (`primary`) or errors (`danger`). |
+| `secondary` | Gramado `#43AA54` (artificial turf; `#5FC46E` in dark) with navy text (5.4:1). **Reserved for Sorteio actions** ("Sortear times", "Sortear", "Sortear de novo"). |
 | `danger` | Brick red. Destructive actions and errors |
 | `warning` / `warning-600` | Ochre. Warnings (`warning-600` for text on `warning/10`) |
-| `success` | Cool teal-green, kept distinct from the Sorteio green. Positive confirmation |
+| `success` | Deep teal-green, kept distinct from the bright Gramado. Positive confirmation |
 | `overlay` | Modal backdrop scrim (near-black navy in both themes), used as `backdrop:bg-overlay/50` |
 | `team-1…6` | Vintage kit colors for Times, by index: navy, brick, pitch green, ochre, petrol, wine. Lighter in dark. **Only** for team identity (the crest), never semantic. |
 
@@ -52,18 +54,31 @@ Rules:
 
 ## Typography
 
-Three named levels, defined in `@layer components` in `app/globals.css`. Use the class, not the raw utilities.
+One family, **Bricolage Grotesque**, loaded with its variable `wdth` and `opsz` axes. Its personality comes from using the axes, not from bolding everything.
+
+Scale (Bringhurst): **12 · 14 · 16 · 18 · 24 · 36 · 48** (`text-xs`, `sm`, `base`, `lg`, `2xl`, `4xl`, `5xl`). Don't use `text-xl` (20) or `text-3xl` (30). Arbitrary sizes (`text-[10px]`) are banned by ESLint.
+
+Named classes, defined in `@layer components` in `app/globals.css`. Use the class, not the raw utilities.
 
 | Class | Equals | Use |
 |-------|--------|-----|
-| `.text-title` | `text-xl sm:text-2xl font-black text-foreground` | Page and modal titles (one per screen) |
-| `.text-section` | `text-base sm:text-lg font-bold text-foreground` | Section headings inside a page/modal |
+| `.text-title` | `text-2xl font-bold tracking-tight text-foreground` | Page and modal titles (one per screen) |
+| `.text-section` | `text-lg font-semibold text-foreground` | Section headings inside a page/modal |
+| `.text-label` | `text-sm font-medium text-default-500` | A heading over a list or group ("Próximas", "Times", "Não vão"), in sentence case |
 | `.text-muted` | `text-sm text-default-500` | Subtitles, helper text, empty states |
-| `.text-display` | `text-2xl sm:text-3xl lg:text-4xl font-normal leading-tight tracking-tight` | **Only** the auth picture caption (one word in `font-black`) |
+| `.text-numeral` | Bricolage at `wdth 75`, `opsz 96`, weight 800, tabular, tight | **Printed numerals**: OVR, "8 de 14", Time averages, the Sorteio spread. Combine with a size from the scale. |
+| `.text-display` | `text-2xl sm:text-4xl font-normal leading-tight tracking-tight` | **Only** the auth picture caption, in a single weight |
 
-Other sizes come from the Tailwind scale plus one token: `text-2xs` (11px) for tiny uppercase labels. Arbitrary sizes (`text-[10px]`) are banned by ESLint.
+Weights: body 400, labels and names in lists 500, section headings 600, titles 700, numerals 800. `font-black` is left only for the "Squadra" wordmark (and the Jogador card until its redesign).
 
-`font-black` is the brand's "sporty" weight: titles, ratings, OVR numbers. Body copy stays regular; labels are `font-medium`.
+## Copy
+
+- **Sentence case** everywhere a person reads: buttons, titles, labels ("Sortear times", "Nome do jogador", "Nova partida"). Acronyms stay as they are (VEL, ATA, CSV, OVR).
+- **Domain terms are lowercase in UI copy** ("Essa partida já começou", "Seu jogador entrou no elenco"). They're capitalized in code, docs and CONTEXT.md only. A tab or page name at the start of a line is just sentence case ("Elenco", "Partidas").
+- **No all-caps labels** and no tracked-out eyebrows above headings: use `.text-label`.
+- **No middle-dot meta strings** ("A · B · C"). Write it as a phrase: "ATA, OVR 75", "18%, 3 de 10", "Link de convite, vale até 19/11". Browser `<title>`s ("Elenco · Squadra") are the one exception.
+- **Numbering only where order is real**: the presence list (confirmation order and slots), never an alphabetical list.
+- Voice is the group's: plain verbs, short, no exclamation marks in system feedback ("Você entrou.", not "Login realizado com sucesso!").
 
 ## Radius scale
 
@@ -100,7 +115,7 @@ The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card round
 
 - **App shell**: `app/layout.tsx` renders the single `<Toaster position="top-center" richColors theme="system" />`. Pages never render their own Toaster. Toast colors are remapped to the tokens in `app/globals.css` (sonner's `--normal-*`, `--success-*`, `--error-*`… variables), so they follow the palette.
 - **Home**: sticky header with `BrandLockup` left of the search (`bg-content1/95 backdrop-blur-sm border-b border-divider shadow-lg`), content in `max-w-7xl mx-auto px-3 sm:px-6`.
-- **Auth screen**: `AuthShell` (`components/auth/auth-shell.tsx`) is the one sign-in layout, used by `/` when there's no Sessão and by every `/auth` route (via `app/auth/layout.tsx`). A `bg-background` card (`sm:rounded-3xl`, `shadow-2xl`) floats over a full-bleed night pitch that shows in the margins. Inside: the content column (`max-w-sm`, centered) and an inset pitch picture (`rounded-2xl`, `.on-panel`) on the right, a band on top on mobile. The picture is drawn, not photographed (`NightPitch`: SVG grass grain, mowing stripes, blurred bands of floodlight and shadow, faint markings) and `KickableBall` on top: drag and release to flick it, tap to kick it away from the touched side, Enter/Space to kick from the keyboard; it rolls with grass friction, spins as it rolls and bounces off the picture edges, and under `prefers-reduced-motion` the friction is high enough that it barely rolls, with pill tags top-right ("Futsal", "Society") and a caption bottom-left: mark + `.text-display` line with one `font-black` word. `AuthPanel` centers mark, title ("Bora pro jogo!") and the inline switch link ("Primeira vez aqui? Criar conta"); fields are `size="lg"` with placeholder + `aria-label`, passwords use `PasswordInput`, the submit is `size="lg" radius="full"`. No links to flows that don't exist (password reset, social login).
+- **Auth screen**: `AuthShell` (`components/auth/auth-shell.tsx`) is the one sign-in layout, used by `/` when there's no Sessão and by every `/auth` route (via `app/auth/layout.tsx`). A `bg-background` card (`sm:rounded-3xl`, `shadow-2xl`) floats over a full-bleed night pitch that shows in the margins. Inside: the content column (`max-w-sm`, centered) and an inset pitch picture (`rounded-2xl`, `.on-panel`) on the right, a band on top on mobile. The picture is drawn, not photographed (`NightPitch`: SVG grass grain, mowing stripes, blurred bands of floodlight and shadow, faint markings) and `KickableBall` on top: drag and release to flick it, tap to kick it away from the touched side, Enter/Space to kick from the keyboard; it rolls with grass friction, spins as it rolls and bounces off the picture edges, and under `prefers-reduced-motion` the friction is high enough that it barely rolls, with pill tags top-right ("Futsal", "Society") and a caption bottom-left: mark + `.text-display` line in a single weight (no highlighted word). `AuthPanel` centers mark, title ("Bora pro jogo!") and the inline switch link ("Primeira vez aqui? Criar conta"); fields are `size="lg"` with placeholder + `aria-label`, passwords use `PasswordInput`, the submit is `size="lg" radius="full"`. No links to flows that don't exist (password reset, social login).
 - Mobile first: everything must work at 375px with no horizontal scroll.
 
 ## Interaction
@@ -114,8 +129,8 @@ The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card round
 
 The exported image follows the active theme: its background is read from the `--background` token at export time, never a hardcoded color.
 
-- **Layout is a team sheet (súmula)**: header with the lockup, date, player count and the **difference between the highest and lowest average** (the point of a balanced Sorteio). Each Time is one `bg-content1` surface: crest (`team-N` circle with the letter) + name + count, the average as a big `font-black` number, then a hairline-divided numbered list (`divide-divider`), no card per row. Avatars without a photo show initials.
-- Individual ratings are on screen only (`data-export-ignore`); the PNG shows names, positions and team averages. Players are listed **alphabetically**, never in Sorteio order (strongest first), so the numbered list never ranks people.
+- **Layout is a team sheet (súmula)**: header with the lockup, date, player count and the **difference between the highest and lowest average** (the point of a balanced Sorteio). Each Time is one `bg-content1` surface: crest (`team-N` circle with the letter) + name + count, the average as a big `.text-numeral`, then a hairline-divided list (`divide-divider`), no card per row and no numbering (the order is alphabetical, not a sequence). Avatars without a photo show initials.
+- Individual ratings are on screen only (`data-export-ignore`); the PNG shows names, positions and team averages. Players are listed **alphabetically**, never in Sorteio order (strongest first), so the list never ranks people.
 - `html-to-image` copies the computed style of an `<svg>` root but not of its children, so SVGs inside the export area keep their colors on the root (`color` + inherited `fill`) and children use `currentColor`/inheritance. `Logo` follows this.
 
 ## Checklist for a UI change

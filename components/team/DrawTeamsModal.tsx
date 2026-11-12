@@ -17,6 +17,9 @@ import { PlayerAvatar } from "@/components/ui/player-avatar";
  * which hides ratings) would rank people. Display alphabetically instead; membership is untouched.
  */
 const byName = new Intl.Collator("pt-BR", { sensitivity: "base", numeric: true });
+/** The local Sorteio names Times "TIME A"; show them in sentence case. */
+const displayTeamName = (name: string) => name.replace(/^TIME\b/, "Time");
+
 const sortByName = (members: Player[]) => [...members].sort((a, b) => byName.compare(a.name, b.name));
 
 interface DrawTeamsModalProps {
@@ -123,7 +126,7 @@ export const DrawTeamsModal = ({
             <ModalHeader className="flex flex-col gap-3 bg-content1">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 w-full">
                     <div className="min-w-0">
-                        <h2 className="text-title">Times Sorteados</h2>
+                        <h2 className="text-title">Times sorteados</h2>
                         <p className="text-muted mt-1">
                             <span className="hidden sm:inline">
                                 Arraste jogadores entre os times para reorganizar
@@ -174,17 +177,17 @@ export const DrawTeamsModal = ({
                                         Squadra
                                     </p>
                                     <p className="text-xs text-default-500 font-medium">
-                                        <span className="whitespace-nowrap">{drawDate}</span> ·{" "}
+                                        <span className="whitespace-nowrap">{drawDate}</span>,{" "}
                                         <span className="whitespace-nowrap">{totalPlayers} jogadores</span>
                                     </p>
                                 </div>
                             </div>
                             {generatedTeams.length > 1 && (
                                 <div className="text-right shrink-0">
-                                    <p className="text-2xs font-bold uppercase tracking-wide text-default-500">
+                                    <p className="text-xs font-medium text-default-500">
                                         Diferença<span className="hidden sm:inline"> de média</span>
                                     </p>
-                                    <p className="text-xl sm:text-2xl font-black tabular-nums text-foreground leading-tight">
+                                    <p className="text-numeral text-2xl text-foreground">
                                         {spread} {spread === 1 ? "ponto" : "pontos"}
                                     </p>
                                 </div>
@@ -198,7 +201,7 @@ export const DrawTeamsModal = ({
                                 return (
                                 <section
                                     key={idx}
-                                    aria-label={team.name}
+                                    aria-label={displayTeamName(team.name)}
                                     onDragOver={(e) => handleDragOver(e, idx)}
                                     onDragLeave={handleDragLeave}
                                     onDrop={() => handleDrop(idx)}
@@ -211,25 +214,25 @@ export const DrawTeamsModal = ({
                                     <header className="flex items-center gap-3 px-3 py-3 border-b border-divider">
                                         <span
                                             aria-hidden="true"
-                                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-black text-background ${presentation.crest}`}
+                                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-bold text-background ${presentation.crest}`}
                                         >
                                             {letter}
                                         </span>
                                         <div className="min-w-0 flex-1">
-                                            <h3 className="text-base font-black tracking-tight text-foreground leading-tight truncate">
-                                                {team.name}
+                                            <h3 className="text-base font-semibold text-foreground leading-tight truncate">
+                                                {displayTeamName(team.name)}
                                             </h3>
-                                            <p className="text-2xs font-bold uppercase tracking-wide text-default-500">
+                                            <p className="text-xs text-default-500">
                                                 {team.members.length}{" "}
                                                 {team.members.length === 1 ? "jogador" : "jogadores"}
                                             </p>
                                         </div>
                                         <div className="text-right shrink-0">
-                                            <p className="text-2xl font-black tabular-nums text-foreground leading-none">
+                                            <p className="text-numeral text-4xl text-foreground">
                                                 {team.avg}
                                             </p>
-                                            <p className="text-2xs font-bold uppercase tracking-wide text-default-500 mt-0.5">
-                                                Média
+                                            <p className="text-xs text-default-500 mt-1">
+                                                média
                                             </p>
                                         </div>
                                     </header>
@@ -239,8 +242,8 @@ export const DrawTeamsModal = ({
                                             Arraste jogadores para cá
                                         </p>
                                     ) : (
-                                        <ol className="divide-y divide-divider">
-                                            {sortByName(team.members).map((player, i) => (
+                                        <ul className="divide-y divide-divider">
+                                            {sortByName(team.members).map((player) => (
                                                 <li
                                                     key={player.id}
                                                     draggable
@@ -251,32 +254,29 @@ export const DrawTeamsModal = ({
                                                         setDraggedPlayer(null);
                                                         setDragOverTeam(null);
                                                     }}
-                                                    aria-label={`${player.name}, ${player.position}, arraste para mover de ${team.name}`}
+                                                    aria-label={`${player.name}, ${player.position}, arraste para mover de ${displayTeamName(team.name)}`}
                                                     className="flex items-center gap-2.5 px-3 py-2 cursor-grab active:cursor-grabbing hover:bg-default-50 transition-colors touch-manipulation"
                                                 >
-                                                    <span className="w-5 shrink-0 text-right text-xs font-bold tabular-nums text-default-400">
-                                                        {i + 1}
-                                                    </span>
                                                     <PlayerAvatar
                                                         src={player.image}
                                                         name={player.name}
                                                         size="sm"
                                                     />
-                                                    <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">
+                                                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
                                                         {player.name}
                                                     </span>
-                                                    <span className="shrink-0 rounded-full bg-default-100 px-2 py-0.5 text-2xs font-bold uppercase tracking-wide text-default-600">
+                                                    <span className="shrink-0 rounded-full bg-default-100 px-2 py-0.5 text-xs font-medium text-default-600">
                                                         {player.position}
                                                     </span>
                                                     <span
                                                         data-export-ignore="true"
-                                                        className="w-7 shrink-0 text-right text-sm font-black tabular-nums text-default-600"
+                                                        className="w-7 shrink-0 text-right text-sm font-semibold tabular-nums text-default-600"
                                                     >
                                                         {player.rating}
                                                     </span>
                                                 </li>
                                             ))}
-                                        </ol>
+                                        </ul>
                                     )}
                                 </section>
                                 );

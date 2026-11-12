@@ -36,7 +36,7 @@ function falha(error: { code?: string; hint?: string | null } | null, acao: stri
 export async function sortearDaPartida(slug: string, partidaId: string, numTimes: number): Promise<Resultado> {
   if (!idSchema.safeParse(partidaId).success) return { ok: false, message: "Partida inválida." };
   const quantos = numeroDeTimesSchema.safeParse(numTimes);
-  if (!quantos.success) return { ok: false, message: quantos.error.issues[0]?.message ?? "Número de Times inválido." };
+  if (!quantos.success) return { ok: false, message: quantos.error.issues[0]?.message ?? "Número de times inválido." };
 
   const supabase = await createClient();
   const { data: confirmados, error: erroLeitura } = await supabase
@@ -71,7 +71,7 @@ export async function moverNoSorteio(
   paraTime: number,
 ): Promise<Resultado> {
   if (!idSchema.safeParse(partidaId).success || !idSchema.safeParse(jogadorId).success) {
-    return { ok: false, message: "Partida ou Jogador inválido." };
+    return { ok: false, message: "Partida ou jogador inválido." };
   }
   if (![deTime, paraTime].every((n) => Number.isInteger(n) && n >= 0 && n < 6)) {
     return { ok: false, message: "Time inválido." };
@@ -82,7 +82,7 @@ export async function moverNoSorteio(
   if (!atual) return { ok: false, message: MOTIVO_DO_SORTEIO["sem-sorteio"] };
 
   const movido = moveMember(timesDoSorteio(atual.times as TimeSalvo[]), jogadorId, deTime, paraTime);
-  if (movido.some((t) => t.members.length === 0)) return { ok: false, message: "Um Time não pode ficar vazio." };
+  if (movido.some((t) => t.members.length === 0)) return { ok: false, message: "Um time não pode ficar vazio." };
 
   const { data, error } = await supabase.rpc("salvar_sorteio", { partida: partidaId, times: atribuicao(movido), novo: false });
   if (error || !data) return falha(error, "moverNoSorteio", "Não deu pra mover agora. Tenta de novo.");

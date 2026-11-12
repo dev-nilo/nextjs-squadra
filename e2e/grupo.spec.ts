@@ -46,11 +46,11 @@ test("a user with no Grupo names it on first access", async ({ page }) => {
 
     // The first Jogador lands in the new Grupo, and the naming screen doesn't come back.
     const jogador = `Primeiro ${Date.now()}`;
-    await page.getByRole("button", { name: /^Nova( Carta)?$/ }).click();
+    await page.getByRole("button", { name: /^Nova( carta)?$/ }).click();
     const modal = page.getByRole("dialog");
-    await modal.getByLabel("Nome do Jogador").fill(jogador);
+    await modal.getByLabel("Nome do jogador").fill(jogador);
     await modal.getByLabel("Posição").selectOption("ALA");
-    await modal.getByRole("button", { name: "Criar Carta" }).click();
+    await modal.getByRole("button", { name: "Criar carta" }).click();
     await expect(card(page, jogador)).toBeVisible();
     const { data: player } = await service.from("players").select("grupo_id").eq("user_id", userId).single().throwOnError();
     expect(player?.grupo_id).toBe(grupo?.id);

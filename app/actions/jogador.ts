@@ -11,11 +11,11 @@ const idSchema = z.string().uuid();
 const slugSchema = z.string().max(80).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/);
 const importacaoSchema = z
   .array(jogadorSchema.extend({ image: z.null() }))
-  .min(1, "Nenhum Jogador pra importar.")
+  .min(1, "Nenhum jogador pra importar.")
   .max(200, "Importe até 200 Jogadores por vez.");
 
 const SESSAO_EXPIRADA = "Sua sessão expirou. Entre de novo.";
-const SO_GESTOR = "Só quem organiza o fut mexe no Elenco.";
+const SO_GESTOR = "Só quem organiza o fut mexe no elenco.";
 
 type Resultado<T = null> = { ok: true; valor: T } | { ok: false; message: string };
 type Erro = { code?: string; message?: string } | null;
@@ -40,7 +40,7 @@ function grupoValido(slug: string, grupoId: string) {
 export async function salvarJogador(slug: string, grupoId: string, dados: unknown): Promise<Resultado<{ criado: boolean }>> {
   if (!grupoValido(slug, grupoId)) return { ok: false, message: "Fut inválido." };
   const parsed = jogadorSchema.safeParse(dados);
-  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Confira os dados do Jogador." };
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Confira os dados do jogador." };
   const jogador = parsed.data;
 
   const supabase = await createClient();

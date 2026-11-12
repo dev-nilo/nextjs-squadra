@@ -131,7 +131,7 @@ export const PlayerCard = ({
                             onDesvincular(player);
                         }}
                         aria-label={`Desvincular conta de ${player.name}`}
-                        title="Desvincular a conta deste Jogador"
+                        title="Desvincular a conta deste jogador"
                     >
                         <Unlink size={16} />
                     </Button>

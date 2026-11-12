@@ -38,7 +38,7 @@ function PitchPicture() {
       <p className="text-display flex max-w-xl items-start gap-3 text-balance">
         <Logo className="mt-0.5 h-7 w-7 sm:h-9 sm:w-9" />
         <span>
-          Pelada boa começa com time <strong className="font-black text-accent">equilibrado</strong>.
+          Pelada boa começa com time equilibrado.
         </span>
       </p>
     </aside>
