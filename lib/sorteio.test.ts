@@ -35,7 +35,7 @@ const alwaysZero = () => 0;
 const preserveOrder = () => 0.999999;
 
 describe("sortearTimes (Sorteio seam)", () => {
-  it("returns the requested number of Times with TIME A/B names", () => {
+  it("returns the requested number of Times, named Time 1, Time 2… like a saved Sorteio", () => {
     const players = [
       player("p1", 80, 80),
       player("p2", 70, 70),
@@ -46,8 +46,8 @@ describe("sortearTimes (Sorteio seam)", () => {
     const times = sortearTimes(players, 2, { random: alwaysZero });
 
     expect(times).toHaveLength(2);
-    expect(times[0].name).toBe("TIME A");
-    expect(times[1].name).toBe("TIME B");
+    expect(times[0].name).toBe("Time 1");
+    expect(times[1].name).toBe("Time 2");
   });
 
   it("partitions every Jogador across Times exactly once", () => {

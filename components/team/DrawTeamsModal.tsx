@@ -17,8 +17,6 @@ import { PlayerAvatar } from "@/components/ui/player-avatar";
  * which hides ratings) would rank people. Display alphabetically instead; membership is untouched.
  */
 const byName = new Intl.Collator("pt-BR", { sensitivity: "base", numeric: true });
-/** The local Sorteio names Times "TIME A"; show them in sentence case. */
-const displayTeamName = (name: string) => name.replace(/^TIME\b/, "Time");
 
 const sortByName = (members: Player[]) => [...members].sort((a, b) => byName.compare(a.name, b.name));
 
@@ -197,11 +195,11 @@ export const DrawTeamsModal = ({
                         <div className={`grid gap-3 sm:gap-4 items-start ${gridCols}`}>
                             {generatedTeams.map((team, idx) => {
                                 const presentation = getTeamPresentation(idx);
-                                const letter = team.name.split(" ").pop();
+                                const numero = team.name.split(" ").pop();
                                 return (
                                 <section
                                     key={idx}
-                                    aria-label={displayTeamName(team.name)}
+                                    aria-label={team.name}
                                     onDragOver={(e) => handleDragOver(e, idx)}
                                     onDragLeave={handleDragLeave}
                                     onDrop={() => handleDrop(idx)}
@@ -216,11 +214,11 @@ export const DrawTeamsModal = ({
                                             aria-hidden="true"
                                             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-bold text-background ${presentation.crest}`}
                                         >
-                                            {letter}
+                                            {numero}
                                         </span>
                                         <div className="min-w-0 flex-1">
                                             <h3 className="text-base font-semibold text-foreground leading-tight truncate">
-                                                {displayTeamName(team.name)}
+                                                {team.name}
                                             </h3>
                                             <p className="text-xs text-default-500">
                                                 {team.members.length}{" "}
@@ -254,7 +252,7 @@ export const DrawTeamsModal = ({
                                                         setDraggedPlayer(null);
                                                         setDragOverTeam(null);
                                                     }}
-                                                    aria-label={`${player.name}, ${player.position}, arraste para mover de ${displayTeamName(team.name)}`}
+                                                    aria-label={`${player.name}, ${player.position}, arraste para mover de ${team.name}`}
                                                     className="flex items-center gap-2.5 px-3 py-2 cursor-grab active:cursor-grabbing hover:bg-default-50 transition-colors touch-manipulation"
                                                 >
                                                     <PlayerAvatar

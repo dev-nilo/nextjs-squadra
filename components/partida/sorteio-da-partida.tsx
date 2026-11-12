@@ -8,7 +8,15 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { getTeamPresentation } from "@/lib/constants";
-import { cabeNoSorteio, sorteioEstaEmDia, timesDoSorteio, type SorteioSalvo } from "@/lib/sorteio-partida";
+import {
+  cabeNoSorteio,
+  MIN_TIMES,
+  minimoDeConfirmados,
+  OPCOES_DE_TIMES,
+  sorteioEstaEmDia,
+  timesDoSorteio,
+  type SorteioSalvo,
+} from "@/lib/sorteio-partida";
 
 /** Listed by name, not by strength: the draw order would rank people. */
 const porNome = new Intl.Collator("pt-BR", { sensitivity: "base", numeric: true });
@@ -33,7 +41,7 @@ export function SorteioDaPartida({
   aberta: boolean;
   onMudou: () => Promise<void>;
 }) {
-  const [numTimes, setNumTimes] = useState(String(sorteio?.times.length ?? 2));
+  const [numTimes, setNumTimes] = useState(String(sorteio?.times.length ?? MIN_TIMES));
   const [pendente, startTransition] = useTransition();
 
   const publicado = !!sorteio?.publicado_em;
@@ -87,7 +95,7 @@ export function SorteioDaPartida({
             onChange={(e) => setNumTimes(e.target.value)}
             className="w-36"
           >
-            {[2, 3, 4, 5, 6].map((n) => (
+            {OPCOES_DE_TIMES.map((n) => (
               <option key={n} value={n} disabled={!cabeNoSorteio(confirmados.length, n)}>
                 {n} Times
               </option>
@@ -119,8 +127,10 @@ export function SorteioDaPartida({
         </div>
       )}
 
-      {podeGerir && !sorteio && !cabeNoSorteio(confirmados.length, 2) && (
-        <p className="text-sm text-default-500">O sorteio precisa de pelo menos 4 confirmados.</p>
+      {podeGerir && !sorteio && !cabeNoSorteio(confirmados.length, MIN_TIMES) && (
+        <p className="text-sm text-default-500">
+          O sorteio precisa de pelo menos {minimoDeConfirmados(MIN_TIMES)} confirmados.
+        </p>
       )}
 
       {sorteio && !emDia && !publicado && (
@@ -146,13 +156,15 @@ export function SorteioDaPartida({
                       <span className="min-w-0 truncate text-foreground">
                         {jogador.name} <span className="text-default-500">{jogador.position}</span>
                       </span>
-                      {editavel && emDia && (
+                      {editavel && emDia && sorteio && (
                         <select
                           aria-label={`Mover ${jogador.name}`}
                           value={indice}
                           disabled={pendente}
                           onChange={(e) =>
-                            executar(() => moverNoSorteio(slug, partidaId, jogador.id, indice, Number(e.target.value)))
+                            executar(() =>
+                              moverNoSorteio(slug, partidaId, jogador.id, Number(e.target.value), sorteio.sorteado_em),
+                            )
                           }
                           className="shrink-0 rounded-lg border border-default-200 bg-default-100 px-1 py-0.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                         >

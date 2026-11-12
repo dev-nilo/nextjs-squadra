@@ -4,19 +4,19 @@ import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { normalizePlayer } from "@/lib/jogador";
-import { moveMember, sortearTimes } from "@/lib/sorteio";
+import { sortearTimes } from "@/lib/sorteio";
 import {
   atribuicao,
   cabeNoSorteio,
-  MINIMO_POR_TIME,
+  MAX_TIMES,
+  minimoDeConfirmados,
   MOTIVO_DO_SORTEIO,
   numeroDeTimesSchema,
-  timesDoSorteio,
-  type TimeSalvo,
 } from "@/lib/sorteio-partida";
 import { createClient } from "@/lib/supabase/server";
 
 const idSchema = z.string().uuid();
+const sorteadoEmSchema = z.string().datetime({ offset: true });
 const SESSAO_EXPIRADA = "Sua sessão expirou. Entre de novo.";
 
 type Resultado = { ok: true } | { ok: false; message: string };
@@ -50,7 +50,7 @@ export async function sortearDaPartida(slug: string, partidaId: string, numTimes
   if (!cabeNoSorteio(jogadores.length, quantos.data)) {
     return {
       ok: false,
-      message: `Pra ${quantos.data} Times precisa de pelo menos ${quantos.data * MINIMO_POR_TIME} confirmados (tem ${jogadores.length}).`,
+      message: `Pra ${quantos.data} Times precisa de pelo menos ${minimoDeConfirmados(quantos.data)} confirmados (tem ${jogadores.length}).`,
     };
   }
 
@@ -62,29 +62,34 @@ export async function sortearDaPartida(slug: string, partidaId: string, numTimes
   return { ok: true };
 }
 
-/** Moves a Jogador to another Time (before publishing). Ratings stay as drawn. */
+/**
+ * Moves a Jogador to another Time (before publishing). Ratings stay as drawn.
+ * The move happens inside mover_no_sorteio, under the Partida's lock, so two
+ * admins moving at once both get their move. `sorteadoEm` is the draw the
+ * admin is looking at: if the Times were drawn again since, it's refused.
+ */
 export async function moverNoSorteio(
   slug: string,
   partidaId: string,
   jogadorId: string,
-  deTime: number,
   paraTime: number,
+  sorteadoEm: string,
 ): Promise<Resultado> {
   if (!idSchema.safeParse(partidaId).success || !idSchema.safeParse(jogadorId).success) {
     return { ok: false, message: "Partida ou jogador inválido." };
   }
-  if (![deTime, paraTime].every((n) => Number.isInteger(n) && n >= 0 && n < 6)) {
+  if (!Number.isInteger(paraTime) || paraTime < 0 || paraTime >= MAX_TIMES) {
     return { ok: false, message: "Time inválido." };
   }
+  if (!sorteadoEmSchema.safeParse(sorteadoEm).success) return { ok: false, message: MOTIVO_DO_SORTEIO["sorteio-mudou"] };
 
   const supabase = await createClient();
-  const { data: atual } = await supabase.from("sorteios").select("times").eq("partida_id", partidaId).maybeSingle();
-  if (!atual) return { ok: false, message: MOTIVO_DO_SORTEIO["sem-sorteio"] };
-
-  const movido = moveMember(timesDoSorteio(atual.times as TimeSalvo[]), jogadorId, deTime, paraTime);
-  if (movido.some((t) => t.members.length === 0)) return { ok: false, message: "Um time não pode ficar vazio." };
-
-  const { data, error } = await supabase.rpc("salvar_sorteio", { partida: partidaId, times: atribuicao(movido), novo: false });
+  const { data, error } = await supabase.rpc("mover_no_sorteio", {
+    partida: partidaId,
+    jogador: jogadorId,
+    para_time: paraTime,
+    sorteado_em: sorteadoEm,
+  });
   if (error || !data) return falha(error, "moverNoSorteio", "Não deu pra mover agora. Tenta de novo.");
 
   revalidatePath(`/g/${slug}/partidas/${partidaId}`);

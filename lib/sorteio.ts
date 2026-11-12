@@ -119,7 +119,7 @@ export const sortearTimes = (
   });
 
   return teams.map((members, idx) => ({
-    name: `TIME ${String.fromCharCode(65 + idx)}`,
+    name: `Time ${idx + 1}`,
     members,
     avg: teamAverage(members),
   }));

@@ -17,7 +17,7 @@ test("the Sorteio puts every selected Jogador in exactly one Time", async ({ pag
   await expect(result).toBeVisible();
 
   // Defaults: 3 Times.
-  const times = result.getByRole("region", { name: /^Time [A-Z]$/ });
+  const times = result.getByRole("region", { name: /^Time \d$/ });
   await expect(times).toHaveCount(3);
 
   const members = await times.getByRole("listitem").evaluateAll((items) =>
