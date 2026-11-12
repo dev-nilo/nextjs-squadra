@@ -90,7 +90,7 @@ export function PartidasView({
           acao="Criar partida"
           onClose={() => setCriando(false)}
           onSalvo={async (dados) => {
-            const resultado = await criarPartida(grupo.slug, grupo.id, dados);
+            const resultado = await criarPartida(grupo.slug, dados);
             if (resultado.ok) router.push(`/g/${grupo.slug}/partidas/${resultado.valor.id}`);
             return resultado;
           }}

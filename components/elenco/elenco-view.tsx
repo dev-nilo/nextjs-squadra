@@ -138,7 +138,7 @@ export function ElencoView({
           return false;
         }
       }
-      const resultado = await salvarJogador(grupo.slug, grupo.id, paraSalvar({ ...dados, image }));
+      const resultado = await salvarJogador(grupo.slug, paraSalvar({ ...dados, image }));
       if (!resultado.ok) {
         toast.error("Não deu pra salvar a carta", { description: resultado.message });
         return false;
@@ -163,17 +163,15 @@ export function ElencoView({
 
   const importar = useCallback(
     async (lista: Player[]) => {
-      const resultado = await importarJogadores(grupo.slug, grupo.id, lista.map(paraSalvar));
+      const resultado = await importarJogadores(grupo.slug, lista.map(paraSalvar));
       if (!resultado.ok) {
         toast.error("Não deu pra importar", { description: resultado.message });
         throw new Error(resultado.message);
       }
       toast.success("Importação concluída", { description: `${resultado.valor.total} carta(s)` });
     },
-    [grupo.id, grupo.slug],
+    [grupo.slug],
   );
-
-  const recarregar = useCallback(() => router.refresh(), [router]);
 
   const handleEdit = useCallback((player: Player) => {
     setEditingPlayer(player);
@@ -183,15 +181,14 @@ export function ElencoView({
   const handleDesvincular = useCallback(
     async (player: Player) => {
       if (!window.confirm(`Desvincular a conta de ${player.name}? O jogador continua no elenco.`)) return;
-      const resultado = await desvincularJogador(player.id);
+      const resultado = await desvincularJogador(grupo.slug, player.id);
       if (!resultado.ok) {
         toast.error("Não deu pra desvincular", { description: resultado.message });
         return;
       }
       toast.success("Conta desvinculada", { description: `${player.name} continua no elenco.` });
-      recarregar();
     },
-    [recarregar],
+    [grupo.slug],
   );
 
   const handleOpenNew = () => {
@@ -347,7 +344,7 @@ export function ElencoView({
 
         <main className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
           {!meuJogador(players, userId) && (
-            <QuemSouEu grupoId={grupo.id} players={players} onVinculado={recarregar} />
+            <QuemSouEu grupo={grupo} players={players} />
           )}
           {filteredPlayers.length === 0 ? (
             <div className="text-center py-12 sm:py-16 px-2">

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Modal, ModalBody, ModalHeader } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
 import { POSITIONS } from "@/lib/constants";
+import type { Participacao } from "@/lib/grupo";
 import { semConta } from "@/lib/vinculo";
 import type { Player } from "@/types";
 
@@ -27,23 +28,15 @@ function foiDispensado(grupoId: string) {
  * For a Membro with no Jogador in this Grupo yet: pick "sou esse aqui" from
  * the Jogadores nobody claimed, or add themselves. Dismissable per Grupo.
  */
-export function QuemSouEu({
-  grupoId,
-  players,
-  onVinculado,
-}: {
-  grupoId: string;
-  players: readonly Player[];
-  onVinculado: () => Promise<void> | void;
-}) {
-  const [dispensado, setDispensado] = useState(() => foiDispensado(grupoId));
+export function QuemSouEu({ grupo, players }: { grupo: Participacao; players: readonly Player[] }) {
+  const [dispensado, setDispensado] = useState(() => foiDispensado(grupo.id));
   const [aberto, setAberto] = useState(false);
 
   if (dispensado && !aberto) return null;
 
   const dispensar = () => {
     try {
-      localStorage.setItem(chaveDispensado(grupoId), "1");
+      localStorage.setItem(chaveDispensado(grupo.id), "1");
     } catch {
       /* storage unavailable: hide for this visit only */
     }
@@ -79,31 +72,14 @@ export function QuemSouEu({
       )}
 
       {aberto && (
-        <EscolherJogador
-          grupoId={grupoId}
-          players={players}
-          onClose={() => setAberto(false)}
-          onVinculado={async () => {
-            setAberto(false);
-            await onVinculado();
-          }}
-        />
+        <EscolherJogador slug={grupo.slug} players={players} onClose={() => setAberto(false)} />
       )}
     </>
   );
 }
 
-function EscolherJogador({
-  grupoId,
-  players,
-  onClose,
-  onVinculado,
-}: {
-  grupoId: string;
-  players: readonly Player[];
-  onClose: () => void;
-  onVinculado: () => Promise<void>;
-}) {
+/** The action revalidates the Elenco page, which brings the linked Jogador back. */
+function EscolherJogador({ slug, players, onClose }: { slug: string; players: readonly Player[]; onClose: () => void }) {
   const [busca, setBusca] = useState("");
   const [nome, setNome] = useState("");
   const [posicao, setPosicao] = useState("ALA");
@@ -124,7 +100,7 @@ function EscolherJogador({
         return;
       }
       toast.success(aviso);
-      await onVinculado();
+      onClose();
     });
   };
 
@@ -158,7 +134,7 @@ function EscolherJogador({
                   variant="flat"
                   isDisabled={pendente}
                   aria-label={`Sou ${p.name}`}
-                  onClick={() => concluir(() => vincularJogador(p.id), `Pronto, você é o ${p.name}`)}
+                  onClick={() => concluir(() => vincularJogador(slug, p.id), `Pronto, você é o ${p.name}`)}
                 >
                   Sou esse aqui
                 </Button>
@@ -171,7 +147,7 @@ function EscolherJogador({
           className="flex flex-col gap-3 border-t border-divider pt-4"
           onSubmit={(e) => {
             e.preventDefault();
-            concluir(() => criarMeuJogador(grupoId, nome, posicao), "Seu jogador entrou no elenco");
+            concluir(() => criarMeuJogador(slug, nome, posicao), "Seu jogador entrou no elenco");
           }}
         >
           <p className="text-sm font-bold text-foreground">Não estou na lista</p>

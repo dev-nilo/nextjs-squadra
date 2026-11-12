@@ -121,7 +121,7 @@ export function PartidaView({
   const responder = async (jogadorId: string, vou: boolean) => {
     setRespondendo(jogadorId);
     try {
-      const resultado = await responderPresenca(id, jogadorId, vou);
+      const resultado = await responderPresenca(grupo.slug, id, jogadorId, vou);
       if (!resultado.ok) {
         toast.error("Não deu pra responder", { description: resultado.message });
         return;

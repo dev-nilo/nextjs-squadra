@@ -37,8 +37,7 @@ async function partidaComConfirmados(n: number, vagas: number) {
   return { dono, grupoId: grupo.id as string, partidaId: partida!.id as string, ids };
 }
 
-const salvar = (quem: TestUser, partida: string, times: unknown, novo = true) =>
-  quem.client.rpc("salvar_sorteio", { partida, times, novo });
+const salvar = (quem: TestUser, partida: string, times: unknown) => quem.client.rpc("salvar_sorteio", { partida, times });
 
 describe("saving a draw", () => {
   it("snapshots every confirmed Jogador into the Times", async () => {
@@ -81,7 +80,7 @@ describe("saving a draw", () => {
 });
 
 describe("the snapshot", () => {
-  it("doesn't change when a Jogador is edited after the draw, nor when the draft is adjusted", async () => {
+  it("doesn't change when a Jogador is edited after the draw; a new draw takes them as they are now", async () => {
     const { dono, partidaId, ids } = await partidaComConfirmados(4, 10);
     await salvar(dono, partidaId, [[ids[0], ids[1]], [ids[2], ids[3]]]);
 
@@ -91,11 +90,14 @@ describe("the snapshot", () => {
     const jogadorZero = (times: Snapshot) => times.flatMap((t) => t.jogadores).find((j) => j.id === ids[0]);
     expect(jogadorZero(await lido())).toMatchObject({ name: "J0", rating: 60 });
 
-    // Moving J0 to the other Time keeps the rating taken at draw time.
-    expect((await salvar(dono, partidaId, [[ids[1]], [ids[2], ids[3], ids[0]]], false)).error).toBeNull();
-    const ajustado = await lido();
-    expect(ajustado[1].jogadores.map((j) => j.id)).toContain(ids[0]);
-    expect(jogadorZero(ajustado)).toMatchObject({ name: "J0", rating: 60 });
+    await salvar(dono, partidaId, [[ids[0], ids[1]], [ids[2], ids[3]]]);
+    expect(jogadorZero(await lido())).toMatchObject({ name: "Renomeado", rating: 99 });
+  });
+
+  it("still accepts the previous deploy's call with novo => true", async () => {
+    const { dono, partidaId, ids } = await partidaComConfirmados(4, 10);
+    const { error } = await dono.client.rpc("salvar_sorteio", { partida: partidaId, times: [[ids[0], ids[1]], [ids[2], ids[3]]], novo: true });
+    expect(error).toBeNull();
   });
 });
 
@@ -121,19 +123,20 @@ describe("publishing", () => {
 
     expect((await dono.client.rpc("publicar_sorteio", { partida: partidaId })).error?.hint).toBe("lista-mudou");
 
-    // Leaving out who dropped is a valid adjustment (the others keep their snapshot)…
-    expect((await salvar(dono, partidaId, [[ids[0], ids[1]], [ids[2]]], false)).error).toBeNull();
+    // Drawn again without who dropped, it publishes.
+    expect((await salvar(dono, partidaId, [[ids[0], ids[1]], [ids[2]]])).error).toBeNull();
     expect((await dono.client.rpc("publicar_sorteio", { partida: partidaId })).error).toBeNull();
   });
 
-  it("an adjustment can't bring in someone confirmed after the draw: that needs a new draw", async () => {
+  it("someone confirmed after the draw can't be moved in: that needs a new draw", async () => {
     const { dono, partidaId, ids } = await partidaComConfirmados(4, 10);
-    await salvar(dono, partidaId, [[ids[0], ids[1]], [ids[2], ids[3]]]);
+    const { data: sorteio } = await salvar(dono, partidaId, [[ids[0], ids[1]], [ids[2], ids[3]]]);
     const { data: novato } = await addJogador(dono, (await service().from("partidas").select("grupo_id").eq("id", partidaId).single()).data!.grupo_id, "Novato");
     await dono.client.rpc("responder_presenca", { partida: partidaId, jogador: novato!.id, vou: true }).throwOnError();
 
-    expect((await salvar(dono, partidaId, [[ids[0], ids[1], novato!.id], [ids[2], ids[3]]], false)).error?.hint).toBe("lista-mudou");
-    expect((await salvar(dono, partidaId, [[ids[0], ids[1], novato!.id], [ids[2], ids[3]]], true)).error).toBeNull();
+    const movido = await dono.client.rpc("mover_no_sorteio", { partida: partidaId, jogador: ids[0], para_time: 1, sorteado_em: sorteio.sorteado_em });
+    expect(movido.error?.hint).toBe("lista-mudou");
+    expect((await salvar(dono, partidaId, [[ids[0], ids[1], novato!.id], [ids[2], ids[3]]])).error).toBeNull();
   });
 });
 

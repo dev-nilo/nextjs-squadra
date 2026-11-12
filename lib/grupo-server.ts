@@ -1,5 +1,5 @@
 import "server-only";
-import type { User } from "@supabase/supabase-js";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import type { Papel, Participacao, ParticipacaoDesde } from "@/lib/grupo";
 
@@ -27,16 +27,27 @@ export async function carregarGrupo(slug: string): Promise<ContextoDoGrupo> {
   } = await supabase.auth.getUser();
   if (!user) return { status: "sem-sessao" };
 
+  const grupo = await resolverGrupo(supabase, user.id, slug);
+  if (!grupo) return { status: "nao-encontrado", user };
+  return { status: "pronto", user, grupo, supabase, agora: Date.now() };
+}
+
+/**
+ * The Grupo at `slug` with the user's papel, or null when they aren't a
+ * Membro of it (or it doesn't exist: RLS makes the two look the same). Pages
+ * and Server Actions resolve the Grupo here, so neither trusts a Grupo id
+ * from the browser.
+ */
+export async function resolverGrupo(supabase: SupabaseClient, userId: string, slug: string): Promise<Participacao | null> {
   const { data } = await supabase
     .from("grupo_membros")
     .select("papel, grupos!inner(id, slug, nome)")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("grupos.slug", slug)
     .maybeSingle();
 
   const linha = data as { papel: Papel; grupos: { id: string; slug: string; nome: string } } | null;
-  if (!linha?.grupos) return { status: "nao-encontrado", user };
-  return { status: "pronto", user, grupo: { ...linha.grupos, papel: linha.papel }, supabase, agora: Date.now() };
+  return linha?.grupos ? { ...linha.grupos, papel: linha.papel } : null;
 }
 
 type ClienteDoServidor = Awaited<ReturnType<typeof createClient>>;

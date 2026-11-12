@@ -72,7 +72,6 @@ export function cabeNoSorteio(confirmados: number, numTimes: number): boolean {
 export const MOTIVO_DO_SORTEIO: Record<string, string> = {
   "nao-encontrada": "Partida não encontrada.",
   cancelada: "Essa partida foi cancelada.",
-  "sem-permissao": "Só quem organiza o fut sorteia e publica os times.",
   publicado: "Os times já foram publicados.",
   "times-invalidos": "Os times vieram inválidos. Sorteie de novo.",
   "lista-mudou": "A lista de confirmados mudou desde o sorteio. Sorteie de novo.",
