@@ -118,6 +118,41 @@ create trigger conta_demo_fixa
 
 revoke execute on function public.conta_demo_fixa() from public, anon, authenticated;
 
+-- The demo's Elenco. presenca: one letter per past Partida, oldest first
+-- (C vou, N não vou, - no answer); agora: the open Partida. The past ones
+-- never go over the 12 vagas (11 or 12 say vou).
+create function public.demo_elenco()
+returns table (
+  ordem int, nome text, posicao text, pais text,
+  vel int, res int, chu int, pos int, def int, dri int, pas int, fis int,
+  presenca text, agora text
+)
+language sql
+immutable
+set search_path = ''
+as $$
+  select * from (values
+    (1,  'Gatão',       'GOL', 'BR', 48, 72, 42, 86, 78, 38, 62, 80, 'CCCC', 'C'),
+    (2,  'Mão de Onça', 'GOL', 'BR', 52, 66, 46, 80, 74, 40, 60, 72, 'N-CN', '-'),
+    (3,  'Capitão',     'FIX', 'BR', 58, 78, 52, 82, 88, 46, 70, 86, 'CCCC', 'C'),
+    (4,  'Xerifão',     'FIX', 'BR', 54, 74, 48, 78, 85, 42, 64, 84, 'CCNC', 'C'),
+    (5,  'Zaga Seca',   'FIX', 'PT', 60, 70, 50, 72, 80, 44, 62, 78, 'C-CC', '-'),
+    (6,  'Raçudo',      'FIX', 'BR', 56, 88, 46, 70, 76, 40, 58, 82, 'NCCC', 'C'),
+    (7,  'Flecha',      'ALA', 'BR', 93, 84, 68, 70, 52, 84, 72, 64, 'CCCC', 'C'),
+    (8,  'Motorzinho',  'ALA', 'BR', 82, 94, 62, 74, 60, 74, 78, 68, 'CNCC', 'C'),
+    (9,  'Ligeirinho',  'ALA', 'AR', 90, 76, 66, 64, 48, 88, 70, 58, '-CC-', 'N'),
+    (10, 'Professor',   'ALA', 'BR', 68, 72, 78, 86, 58, 84, 93, 62, 'CCCC', 'C'),
+    (11, 'Canhotinha',  'ALA', 'UY', 74, 70, 86, 72, 54, 82, 84, 62, 'CCN-', '-'),
+    (12, 'Garçom',      'ALA', 'BR', 70, 74, 66, 80, 56, 78, 90, 64, 'NCCC', 'C'),
+    (13, 'Artilheiro',  'ATA', 'BR', 80, 70, 92, 86, 40, 84, 70, 78, 'CCCC', 'C'),
+    (14, 'Tanque',      'ATA', 'BR', 64, 78, 84, 80, 50, 62, 66, 92, 'C-NC', '-'),
+    (15, 'Fominha',     'ATA', 'IT', 78, 66, 76, 60, 36, 84, 52, 62, 'CCCN', '-'),
+    (16, 'Pé Torto',    'ATA', 'BR', 54, 58, 60, 52, 40, 48, 50, 60, '-N-C', 'N')
+  ) as v(ordem, nome, posicao, pais, vel, res, chu, pos, def, dri, pas, fis, presenca, agora)
+$$;
+
+revoke execute on function public.demo_elenco() from public, anon, authenticated;
+
 -- ---------------------------------------------------------------------------
 -- The reset: the demo Grupo goes back to a known Elenco, four past Partidas
 -- with published Times, and one open Partida half answered. Only the server
@@ -156,31 +191,8 @@ begin
 
   insert into public.grupo_membros (grupo_id, user_id, papel) values (grupo, conta, 'dono');
 
-  -- The Elenco. OVR = rounded mean of the 8 attributes, as in lib/jogador.ts.
-  -- presenca: one letter per past Partida, oldest first (C vou, N não vou,
-  -- - no answer). agora: the open Partida.
-  drop table if exists pg_temp.demo_elenco;
-  create temporary table demo_elenco on commit drop as
-  select v.*
-  from (values
-    (1,  'Gatão',       'GOL', 'BR', 48, 72, 42, 86, 78, 38, 62, 80, 'CCCC', 'C'),
-    (2,  'Mão de Onça', 'GOL', 'BR', 52, 66, 46, 80, 74, 40, 60, 72, 'N-CN', '-'),
-    (3,  'Capitão',     'FIX', 'BR', 58, 78, 52, 82, 88, 46, 70, 86, 'CCCC', 'C'),
-    (4,  'Xerifão',     'FIX', 'BR', 54, 74, 48, 78, 85, 42, 64, 84, 'CCNC', 'C'),
-    (5,  'Zaga Seca',   'FIX', 'PT', 60, 70, 50, 72, 80, 44, 62, 78, 'C-CC', '-'),
-    (6,  'Raçudo',      'FIX', 'BR', 56, 88, 46, 70, 76, 40, 58, 82, 'NCCC', 'C'),
-    (7,  'Flecha',      'ALA', 'BR', 93, 84, 68, 70, 52, 84, 72, 64, 'CCCC', 'C'),
-    (8,  'Motorzinho',  'ALA', 'BR', 82, 94, 62, 74, 60, 74, 78, 68, 'CNCC', 'C'),
-    (9,  'Ligeirinho',  'ALA', 'AR', 90, 76, 66, 64, 48, 88, 70, 58, '-CC-', 'N'),
-    (10, 'Professor',   'ALA', 'BR', 68, 72, 78, 86, 58, 84, 93, 62, 'CCCC', 'C'),
-    (11, 'Canhotinha',  'ALA', 'UY', 74, 70, 86, 72, 54, 82, 84, 62, 'CCN-', '-'),
-    (12, 'Garçom',      'ALA', 'BR', 70, 74, 66, 80, 56, 78, 90, 64, 'NCCC', 'C'),
-    (13, 'Artilheiro',  'ATA', 'BR', 80, 70, 92, 86, 40, 84, 70, 78, 'CCCC', 'C'),
-    (14, 'Tanque',      'ATA', 'BR', 64, 78, 84, 80, 50, 62, 66, 92, 'C-NC', '-'),
-    (15, 'Fominha',     'ATA', 'IT', 78, 66, 76, 60, 36, 84, 52, 62, 'CCCN', '-'),
-    (16, 'Pé Torto',    'ATA', 'BR', 54, 58, 60, 52, 40, 48, 50, 60, '-N-C', 'N')
-  ) as v(ordem, nome, posicao, pais, vel, res, chu, pos, def, dri, pas, fis, presenca, agora);
-
+  -- The Elenco, as in demo_elenco(). OVR = rounded mean of the 8 attributes,
+  -- as in lib/jogador.ts.
   insert into public.players (
     user_id, grupo_id, created_at, name, position, nationality, ovr,
     velocidade, resistencia, chute, posicionamento, defesa, drible, passe, fisico
@@ -189,7 +201,7 @@ begin
     conta, grupo, now() - interval '120 days', e.nome, e.posicao, e.pais,
     round((e.vel + e.res + e.chu + e.pos + e.def + e.dri + e.pas + e.fis) / 8.0),
     e.vel, e.res, e.chu, e.pos, e.def, e.dri, e.pas, e.fis
-  from pg_temp.demo_elenco e;
+  from public.demo_elenco() e;
 
   -- Four past Partidas, one a week, and the open one in three days.
   insert into public.partidas (id, grupo_id, inicio, local, vagas, criado_por)
@@ -199,15 +211,16 @@ begin
     'Arena do Bairro', 12, conta
   from generate_series(0, 4) s;
 
-  -- Presence. The past ones never go over the 12 vagas (11 or 12 said vou).
+  -- Presence.
   insert into public.presencas (partida_id, jogador_id, situacao, pediu_vaga_em, respondido_por)
   select
     p.id,
     j.id,
     (case r.letra when 'C' then 'confirmado' else 'nao_vou' end)::public.situacao_presenca,
-    case when r.letra = 'C' then p.inicio - interval '3 days' + e.ordem * interval '7 minutes' end,
+    -- Asked for a vaga a few days before (the open one: yesterday), in Elenco order.
+    case when r.letra = 'C' then least(p.inicio - interval '3 days', now() - interval '1 day') + e.ordem * interval '7 minutes' end,
     conta
-  from pg_temp.demo_elenco e
+  from public.demo_elenco() e
   join public.players j on j.grupo_id = grupo and j.name = e.nome
   cross join generate_series(0, 4) s
   join public.partidas p on p.id = (prefixo || s)::uuid
