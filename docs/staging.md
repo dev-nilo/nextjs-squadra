@@ -55,7 +55,18 @@ Vercel → Project → Settings → **Environment Variables**. For the **Preview
 - `NEXT_PUBLIC_SUPABASE_URL` = `https://<staging ref>.supabase.co`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = staging's **publishable** key, `sb_publishable_…` (Project Settings → API Keys). supabase-js 2.95 accepts it in place of the legacy anon JWT
 
+- `SUPABASE_SERVICE_ROLE_KEY` = staging's **secret** key, `sb_secret_…` (or the legacy service_role JWT). Server-only: the demo sign-in and its reset use it (ADR 0005). Never give it a `NEXT_PUBLIC_` prefix
+
 Keep the Production values as they are. Then Settings → **Deployment Protection** → turn off Vercel Authentication for previews, so the pelada can open a preview link.
+
+### 5b. The demo in production
+
+For the **Production** environment:
+
+- `SUPABASE_SERVICE_ROLE_KEY` = production's secret key, as above.
+- `CRON_SECRET` = a long random string (`openssl rand -hex 32`). Vercel Cron sends it to `/api/cron/resetar-demo` (scheduled in `vercel.json`), and the route refuses every call without it.
+
+The first "Entrar como demo" creates the account and fills its Grupo. After that, the cron puts it back every night at 03:00 in Brasília.
 
 ### 6. Adopt the baseline in production
 

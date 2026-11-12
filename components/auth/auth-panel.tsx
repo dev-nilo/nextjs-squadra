@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Logo } from "@/components/ui/logo";
 import { LoginForm, SignUpForm } from "./auth-form";
+import { EntrarComoDemo } from "./entrar-como-demo";
 
 /** Login / sign-up switcher that sits in the AuthShell content column. */
 export function AuthPanel({
@@ -38,6 +39,9 @@ export function AuthPanel({
       </div>
 
       {isLogin ? <LoginForm onSuccess={onSuccess} /> : <SignUpForm onSuccess={onSuccess} redirectPath={redirectPath} />}
+
+      {/* Not on an invite: whoever holds one came to join a real Grupo. */}
+      {!redirectPath && <EntrarComoDemo />}
     </div>
   );
 }

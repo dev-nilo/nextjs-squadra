@@ -56,6 +56,10 @@ _Avoid_: Jogadores por time (as a hard roster size), playersPerTeam (as a slice 
 The Jogador's rating: the rounded mean of their attributes. The single source for that number.
 _Avoid_: Inline averages at call sites, rating recomputed ad hoc
 
+**Demo**:
+The shared account behind "Entrar como demo" and its Grupo, `/g/demo`. Anyone can use it, and it's put back every night by `resetar_demo()`. It's a regular dono, but it stays in its own Grupo, nobody else joins it, and it has no password (ADR 0005).
+_Avoid_: Guest mode, sandbox, test account
+
 **Sessão**:
 The authenticated user's signed-in state with Supabase Auth. Email confirmation (PKCE, OTP, expired-link handling) completes a Sessão; UI entry points are adapters over that flow.
 _Avoid_: Multiple divergent OTP/error policies per page

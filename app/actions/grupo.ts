@@ -3,6 +3,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { createClient } from "@/lib/supabase/server";
 import { validarNomeDoGrupo, type Participacao } from "@/lib/grupo";
+import { RECUSA_DA_DEMO } from "@/lib/demo";
 
 export type CriarGrupoState =
   | { status: "idle" }
@@ -44,6 +45,7 @@ export async function criarGrupo(_prev: CriarGrupoState, formData: FormData): Pr
   const { data, error } = await supabase.rpc("criar_grupo", { nome_do_grupo: validacao.nome });
   if (error || !data) {
     if (error?.code === "28000") return { status: "error", message: SESSAO_EXPIRADA, nome };
+    if (error?.hint === "demo") return { status: "error", message: RECUSA_DA_DEMO, nome };
     Sentry.captureException(error ?? new Error("criar_grupo returned no row"), { tags: { action: "criarGrupo" } });
     return { status: "error", message: "Não deu pra criar o fut agora. Tenta de novo.", nome };
   }

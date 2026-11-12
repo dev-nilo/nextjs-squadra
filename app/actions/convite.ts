@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { PROBLEMA_DO_CONVITE, situacaoDoConvite, tokenDoConviteSchema } from "@/lib/convite";
+import { DEMO_GRUPO_ID, RECUSA_DA_DEMO } from "@/lib/demo";
 
 const SESSAO_EXPIRADA = "Sua sessão expirou. Entre de novo.";
 const idSchema = z.string().uuid();
@@ -15,6 +16,8 @@ type Resultado<T> = { ok: true; valor: T } | { ok: false; message: string };
 /** A new invite link for the Grupo. RLS only lets its dono and admins create one. */
 export async function criarConvite(grupoId: string): Promise<Resultado<Convite>> {
   if (!idSchema.safeParse(grupoId).success) return { ok: false, message: "Fut inválido." };
+  // The database refuses it too (convites_sem_demo); this just says why.
+  if (grupoId === DEMO_GRUPO_ID) return { ok: false, message: RECUSA_DA_DEMO };
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -66,6 +69,7 @@ export async function aceitarConvite(token: string): Promise<Resultado<{ slug: s
   const { data, error } = await supabase.rpc("aceitar_convite", { token_do_convite: token });
   if (error || !data) {
     if (error?.code === "28000") return { ok: false, message: SESSAO_EXPIRADA };
+    if (error?.hint === "demo") return { ok: false, message: RECUSA_DA_DEMO };
     const motivo = situacaoDoConvite(error?.hint);
     if (error?.hint && motivo !== "valido") return { ok: false, message: PROBLEMA_DO_CONVITE[motivo].titulo };
     Sentry.captureException(error ?? new Error("aceitar_convite returned no row"), { tags: { action: "aceitarConvite" } });
