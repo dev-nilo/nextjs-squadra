@@ -18,7 +18,13 @@ export type ResumoDaPartida = {
   vagas: number;
   cancelada_em: string | null;
   confirmados: number;
+  /** Confirmed Jogadores, by name: who played, once the Partida is over. */
+  quemFoi: string[];
+  /** Published Times, by name; null when none were published. */
+  times: { nome: string; jogadores: string[] }[] | null;
 };
+
+export type FrequenciaDoJogador = { nome: string; partidas: number; presencas: number; frequencia: number };
 
 const ROTULO: Record<EstadoDaPartida, string | null> = { aberta: null, encerrada: "Encerrada", cancelada: "Cancelada" };
 
@@ -26,11 +32,14 @@ const ROTULO: Record<EstadoDaPartida, string | null> = { aberta: null, encerrada
 export function PartidasView({
   grupo,
   partidas,
+  frequencia,
   podeCriar,
   agora,
 }: {
   grupo: Participacao;
   partidas: ResumoDaPartida[];
+  /** From the frequencia_jogadores view, highest first. */
+  frequencia: FrequenciaDoJogador[];
   podeCriar: boolean;
   /** From the server render, so both sides agree on what's upcoming. */
   agora: number;
@@ -67,10 +76,12 @@ export function PartidasView({
         {anteriores.length > 0 && (
           <Secao titulo="Anteriores">
             {anteriores.map((p) => (
-              <ItemDaPartida key={p.id} slug={grupo.slug} partida={p} estado={estadoDaPartida(p, momento)} />
+              <ItemDaPartida key={p.id} slug={grupo.slug} partida={p} estado={estadoDaPartida(p, momento)} detalhes />
             ))}
           </Secao>
         )}
+
+        {frequencia.length > 0 && <Frequencia linhas={frequencia} />}
       </main>
 
       {criando && (
@@ -102,10 +113,21 @@ function Secao({ titulo, vazio, children }: { titulo: string; vazio?: string; ch
   );
 }
 
-function ItemDaPartida({ slug, partida, estado }: { slug: string; partida: ResumoDaPartida; estado: EstadoDaPartida }) {
+function ItemDaPartida({
+  slug,
+  partida,
+  estado,
+  detalhes = false,
+}: {
+  slug: string;
+  partida: ResumoDaPartida;
+  estado: EstadoDaPartida;
+  /** Past Partidas: show who played and the published Times. */
+  detalhes?: boolean;
+}) {
   const rotulo = ROTULO[estado];
   return (
-    <li>
+    <li aria-label={`Partida de ${formatarInicio(partida.inicio)}`} className="flex flex-col gap-2">
       <Link
         href={`/g/${slug}/partidas/${partida.id}`}
         className={`flex items-center justify-between gap-3 rounded-2xl border border-divider bg-content1 p-4 transition-colors hover:border-primary/50 ${
@@ -130,6 +152,50 @@ function ItemDaPartida({ slug, partida, estado }: { slug: string; partida: Resum
           <ChevronRight size={16} aria-hidden="true" className="text-default-400" />
         </span>
       </Link>
+      {detalhes && estado === "encerrada" && (
+        <div className="flex flex-col gap-2 px-4 text-sm">
+          {partida.times ? (
+            <ul className="flex flex-col gap-1" aria-label="Times publicados">
+              {partida.times.map((t) => (
+                <li key={t.nome} className="text-default-600">
+                  <span className="font-semibold text-foreground">{t.nome}:</span> {t.jogadores.join(", ")}
+                </li>
+              ))}
+            </ul>
+          ) : partida.quemFoi.length > 0 ? (
+            <p className="text-default-600">
+              <span className="font-semibold text-foreground">Foram ({partida.quemFoi.length}):</span> {partida.quemFoi.join(", ")}
+            </p>
+          ) : (
+            <p className="text-default-500">Ninguém confirmou.</p>
+          )}
+        </div>
+      )}
     </li>
+  );
+}
+
+/** Frequência over the last 10 Partidas (the frequencia_jogadores view). */
+function Frequencia({ linhas }: { linhas: FrequenciaDoJogador[] }) {
+  return (
+    <section aria-label="Frequência" className="flex flex-col gap-3">
+      <div className="flex flex-col gap-0.5">
+        <h2 className="text-sm font-bold uppercase tracking-wide text-default-500">Frequência</h2>
+        <p className="text-xs text-default-500">Nas últimas 10 Partidas, desde que cada um entrou no Elenco. Lista de espera conta como falta.</p>
+      </div>
+      <ul className="flex flex-col divide-y divide-divider rounded-2xl border border-divider bg-content1">
+        {linhas.map((l) => (
+          <li key={l.nome} aria-label={`${l.nome}: ${l.frequencia}%`} className="flex items-center gap-3 px-4 py-2.5">
+            <span className="w-32 shrink-0 truncate font-semibold text-foreground sm:w-40">{l.nome}</span>
+            <span aria-hidden="true" className="h-2 flex-1 overflow-hidden rounded-full bg-default-100">
+              <span className="block h-full rounded-full bg-primary" style={{ width: `${l.frequencia}%` }} />
+            </span>
+            <span className="w-24 shrink-0 text-right text-sm tabular-nums text-default-600">
+              <span className="font-bold text-foreground">{l.frequencia}%</span> · {l.presencas}/{l.partidas}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
