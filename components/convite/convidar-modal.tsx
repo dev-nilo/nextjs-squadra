@@ -53,7 +53,7 @@ export function ConvidarModal({
   const gerar = () => {
     setErro(null);
     startTransition(async () => {
-      const resultado = await criarConvite(grupo.id);
+      const resultado = await criarConvite(grupo.slug);
       if (!resultado.ok) {
         setErro(resultado.message);
         return;
@@ -65,7 +65,7 @@ export function ConvidarModal({
   const cancelar = (id: string) => {
     setErro(null);
     startTransition(async () => {
-      const resultado = await revogarConvite(id);
+      const resultado = await revogarConvite(grupo.slug, id);
       if (!resultado.ok) {
         setErro(resultado.message);
         return;

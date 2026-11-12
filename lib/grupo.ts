@@ -49,6 +49,7 @@ export const COOKIE_FUTS_RECENTES = "squadra-futs";
 const MAX_FUTS_RECENTES = 5;
 /** Same check as `grupos.slug` in the database. */
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+export const slugSchema = z.string().max(80).regex(SLUG);
 
 /** The recent slugs in the cookie's value, ignoring anything that isn't a slug. */
 export function lerFutsRecentes(valor: string | null | undefined): string[] {
