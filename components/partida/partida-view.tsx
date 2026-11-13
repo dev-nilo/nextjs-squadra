@@ -1,19 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowLeft, Check, MapPin, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { cancelarPartida, editarPartida, responderPresenca } from "@/app/actions/partida";
 import { GrupoNav } from "@/components/partida/grupo-nav";
 import { PartidaForm } from "@/components/partida/partida-form";
 import { SorteioDaPartida } from "@/components/partida/sorteio-da-partida";
-import type { SorteioSalvo } from "@/lib/sorteio-partida";
 import { Button } from "@/components/ui/button";
 import type { Participacao } from "@/lib/grupo";
+import { usePartidaAoVivo } from "@/hooks/use-partida-ao-vivo";
+import type { JogadorDaLista, PartidaAoVivo } from "@/lib/leitura-da-partida";
 import {
-  estadoDaPartida,
   formatarInicio,
   oQueVouFaz,
   organizarPresencas,
@@ -21,95 +20,30 @@ import {
   type Partida,
   type Presenca,
 } from "@/lib/partida";
-import { createClient } from "@/lib/supabase/client";
-
-export type JogadorDaLista = { id: string; name: string; position: string; ovr: number; conta_id: string | null };
 
 /** `/g/<slug>/partidas/<id>`: the Partida, your answer, and the presence list, live. */
 export function PartidaView({
   grupo,
   userId,
   podeGerir,
-  partidaInicial,
-  presencasIniciais,
+  inicial,
   jogadores,
-  sorteioInicial,
   agora,
 }: {
   grupo: Participacao;
   userId: string;
   podeGerir: boolean;
-  partidaInicial: Partida;
-  presencasIniciais: Presenca[];
+  inicial: PartidaAoVivo;
   jogadores: JogadorDaLista[];
-  sorteioInicial: SorteioSalvo | null;
   agora: number;
 }) {
-  const router = useRouter();
-  const [partida, setPartida] = useState(partidaInicial);
-  const [presencas, setPresencas] = useState(presencasIniciais);
-  const [sorteio, setSorteio] = useState(sorteioInicial);
-  const [aoVivo, setAoVivo] = useState(false);
+  const { partida, presencas, sorteio, aoVivo, recarregar, estado } = usePartidaAoVivo(grupo.id, inicial, agora);
   const [respondendo, setRespondendo] = useState<string | null>(null);
   const [editando, setEditando] = useState(false);
 
   const id = partida.id;
 
-  const recarregar = useCallback(async () => {
-    const { data } = await createClient().from("presencas").select("jogador_id, situacao, pediu_vaga_em").eq("partida_id", id);
-    if (data) setPresencas(data as Presenca[]);
-  }, [id]);
-
-  const recarregarSorteio = useCallback(async () => {
-    const { data } = await createClient()
-      .from("sorteios")
-      .select("times, publicado_em, sorteado_em")
-      .eq("partida_id", id)
-      .maybeSingle();
-    setSorteio((data ?? null) as SorteioSalvo | null);
-  }, [id]);
-
-  // Supabase Realtime, filtered by this Partida and by the subscriber's RLS:
-  // any change to its presence list or to the Partida itself re-renders it.
-  useEffect(() => {
-    const supabase = createClient();
-    let canal: ReturnType<typeof supabase.channel> | null = null;
-    let ativo = true;
-
-    (async () => {
-      // Join with the user's token, so RLS lets the changes through.
-      const { data } = await supabase.auth.getSession();
-      if (data.session) supabase.realtime.setAuth(data.session.access_token);
-      if (!ativo) return;
-      canal = supabase
-        .channel(`partida:${id}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "presencas", filter: `partida_id=eq.${id}` }, () => {
-          void recarregar();
-        })
-        .on("postgres_changes", { event: "*", schema: "public", table: "sorteios", filter: `partida_id=eq.${id}` }, () => {
-          void recarregarSorteio();
-        })
-        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "partidas", filter: `id=eq.${id}` }, (payload) => {
-          setPartida((atual) => ({ ...atual, ...(payload.new as Partial<Partida>) }));
-        })
-        .subscribe((status) => {
-          setAoVivo(status === "SUBSCRIBED");
-          // Catch up on anything that changed between the server render and the subscription.
-          if (status === "SUBSCRIBED") {
-            void recarregar();
-            void recarregarSorteio();
-          }
-        });
-    })();
-
-    return () => {
-      ativo = false;
-      if (canal) void supabase.removeChannel(canal);
-    };
-  }, [id, recarregar, recarregarSorteio]);
-
   const lista = useMemo(() => organizarPresencas(presencas, partida.vagas), [presencas, partida.vagas]);
-  const estado = estadoDaPartida(partida, new Date(agora));
   const porId = useMemo(() => new Map(jogadores.map((j) => [j.id, j])), [jogadores]);
   const meu = jogadores.find((j) => j.conta_id === userId) ?? null;
   const respondidos = new Set(presencas.map((p) => p.jogador_id));
@@ -140,8 +74,8 @@ export function PartidaView({
       toast.error("Não deu pra cancelar", { description: resultado.message });
       return;
     }
-    setPartida((atual) => ({ ...atual, cancelada_em: new Date().toISOString() }));
     toast.success("Partida cancelada");
+    await recarregar();
   };
 
   const nome = (jogadorId: string) => porId.get(jogadorId)?.name ?? "Jogador";
@@ -243,7 +177,7 @@ export function PartidaView({
           confirmados={lista.confirmados.map((p) => p.jogador_id)}
           podeGerir={podeGerir}
           aberta={estado !== "cancelada"}
-          onMudou={recarregarSorteio}
+          onMudou={recarregar}
         />
 
         <ListaDeJogadores
@@ -292,10 +226,8 @@ export function PartidaView({
           onSalvo={async (dados) => {
             const resultado = await editarPartida(grupo.slug, id, dados);
             if (resultado.ok) {
-              setPartida((atual) => ({ ...atual, ...dados }));
               setEditando(false);
               toast.success("Partida salva");
-              router.refresh();
               await recarregar();
             }
             return resultado;

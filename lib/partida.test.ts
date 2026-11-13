@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   doCampoDeData,
+  esperaAteComecar,
   estadoDaPartida,
   formatarInicio,
   oQueVouFaz,
@@ -75,6 +76,32 @@ describe("estadoDaPartida", () => {
     expect(estadoDaPartida({ inicio: "2026-11-12T20:00:00Z", cancelada_em: "2026-11-10T10:00:00Z" }, agora)).toBe("cancelada");
     expect(estadoDaPartida({ inicio: "2026-11-10T19:00:00Z", cancelada_em: null }, agora)).toBe("encerrada");
     expect(estadoDaPartida({ inicio: "2026-11-12T20:00:00Z", cancelada_em: null }, agora)).toBe("aberta");
+  });
+});
+
+describe("esperaAteComecar", () => {
+  const agora = new Date("2026-11-10T20:00:00Z");
+  it("waits until an open Partida starts, and not at all once it can't change by itself", () => {
+    expect(esperaAteComecar({ inicio: "2026-11-10T20:30:00Z", cancelada_em: null }, agora)).toBe(30 * 60_000);
+    expect(esperaAteComecar({ inicio: "2026-11-10T19:00:00Z", cancelada_em: null }, agora)).toBeNull();
+    expect(esperaAteComecar({ inicio: "2026-11-10T20:30:00Z", cancelada_em: "2026-11-10T10:00:00Z" }, agora)).toBeNull();
+  });
+
+  it("caps a far-off start at what setTimeout can wait, so the screen checks again later", () => {
+    expect(esperaAteComecar({ inicio: "2027-02-01T20:00:00Z", cancelada_em: null }, agora)).toBe(2 ** 31 - 1);
+  });
+
+  it("flips the state when the wait is over (fake clock)", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(agora);
+    const partida = { inicio: "2026-11-10T20:30:00Z", cancelada_em: null };
+    let estado = estadoDaPartida(partida, new Date());
+    setTimeout(() => (estado = estadoDaPartida(partida, new Date())), esperaAteComecar(partida, new Date())!);
+    vi.advanceTimersByTime(30 * 60_000 - 1);
+    expect(estado).toBe("aberta");
+    vi.advanceTimersByTime(1);
+    expect(estado).toBe("encerrada");
+    vi.useRealTimers();
   });
 });
 
