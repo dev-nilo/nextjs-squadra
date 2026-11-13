@@ -2,15 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, KeyRound, LogOut, Unlink, UserCheck } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, DoorOpen, Download, KeyRound, LogOut, Unlink, UserCheck, Users } from "lucide-react";
 import { toast } from "sonner";
+import { sairDoFut } from "@/app/actions/pessoas";
 import { desvincularJogador } from "@/app/actions/vinculo";
 import { ChangePasswordModal } from "@/components/auth/change-password-modal";
 import { EscolherJogador } from "@/components/jogador/quem-sou-eu";
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { capacidades } from "@/lib/capacidades";
 import type { Participacao } from "@/lib/grupo";
+import { caminhoDasPessoas } from "@/lib/navegacao";
+import { O_QUE_O_PAPEL_FAZ } from "@/lib/pessoas";
 import { useSemConexao } from "@/lib/pwa/conexao";
 import { instalar, INSTRUCOES_IOS, useComoInstalar } from "@/lib/pwa/instalar";
 import type { Player } from "@/types";
@@ -25,6 +30,7 @@ export function VoceView({
   meu,
   email,
   frequencia,
+  pessoas,
 }: {
   grupo: Participacao;
   jogadores: Player[];
@@ -32,6 +38,8 @@ export function VoceView({
   email: string;
   /** From frequencia_jogadores; null before your first counted Partida. */
   frequencia: { partidas: number; presencas: number; frequencia: number } | null;
+  /** How many people are in the fut. */
+  pessoas: number;
 }) {
   const router = useRouter();
   const { logout } = useAuth();
@@ -100,6 +108,8 @@ export function VoceView({
         </section>
       )}
 
+      <EsteFut grupo={grupo} pessoas={pessoas} semConexao={semConexao} />
+
       <InstalarApp />
 
       <section aria-label="Conta" className="flex flex-col gap-3">
@@ -149,6 +159,60 @@ function InstalarApp() {
         ) : (
           <p className="text-sm font-semibold text-foreground">{INSTRUCOES_IOS}</p>
         )}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * This fut: your papel and what it lets you do, its people, and leaving it.
+ * The dono can't leave before handing the fut to an admin (in Pessoas).
+ */
+function EsteFut({ grupo, pessoas, semConexao }: { grupo: Participacao; pessoas: number; semConexao: boolean }) {
+  const router = useRouter();
+  const papel = O_QUE_O_PAPEL_FAZ[grupo.papel];
+  const podeSair = capacidades(grupo.papel, null).saiDoFut;
+
+  const sair = async () => {
+    if (!window.confirm(`Sair do ${grupo.nome}? Seu jogador continua no elenco, sem a sua conta. Pra voltar, só com um link de convite novo.`)) return;
+    const resultado = await sairDoFut(grupo.slug);
+    if (!resultado.ok) {
+      toast.error("Não deu pra sair", { description: resultado.message });
+      return;
+    }
+    toast.success(`Você saiu do ${resultado.valor.nome}`);
+    // "/" opens the next fut you're in, or "Dê um nome pro seu fut".
+    router.replace("/");
+  };
+
+  return (
+    <section aria-label="Este fut" className="flex flex-col gap-3">
+      <h2 className="text-label">Este fut</h2>
+      <div className="flex flex-col divide-y divide-divider rounded-2xl border border-divider bg-content1">
+        <div className="flex flex-col gap-1 p-4">
+          <p className="font-semibold text-foreground">
+            Você é {grupo.papel} do {grupo.nome}
+          </p>
+          <p className="text-sm text-default-500">{papel.descricao}</p>
+        </div>
+        <Link
+          href={caminhoDasPessoas(grupo.slug)}
+          className="flex items-center gap-3 px-4 py-3 text-foreground transition-colors hover:bg-default-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+        >
+          <Users size={18} aria-hidden="true" className="text-default-500" />
+          <span className="flex-1 font-medium">Pessoas</span>
+          <span className="text-sm tabular-nums text-default-500">{pessoas}</span>
+          <ChevronRight size={18} aria-hidden="true" className="text-default-400" />
+        </Link>
+        <div className="px-4 py-3">
+          {podeSair ? (
+            <Button variant="light" color="danger" size="sm" startContent={<DoorOpen size={16} />} onClick={sair} isDisabled={semConexao}>
+              Sair do fut
+            </Button>
+          ) : (
+            <p className="text-sm text-default-500">Pra sair do fut, passe ele pra um admin em Pessoas.</p>
+          )}
+        </div>
       </div>
     </section>
   );

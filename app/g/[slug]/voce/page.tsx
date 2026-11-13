@@ -6,7 +6,8 @@ import { COLUNAS_DO_JOGADOR, jogadorDaLinha, type LinhaDoJogador } from "@/lib/j
 export const metadata: Metadata = { title: "Você · Squadra" };
 
 /**
- * You in this fut: your Jogador (or picking it), your Frequência, your account.
+ * You in this fut: your Jogador (or picking it), your Frequência, this fut
+ * (your papel, its people, leaving), your account.
  * The whole Elenco is read too, so "Qual desses é você?" can list who's unclaimed.
  */
 export default async function VocePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -25,8 +26,11 @@ export default async function VocePage({ params }: { params: Promise<{ slug: str
     ? await supabase.from("frequencia_jogadores").select("partidas, presencas, frequencia").eq("jogador_id", meu.id).maybeSingle()
     : { data: null };
 
+  const { count: pessoas } = await supabase.from("grupo_membros").select("user_id", { count: "exact", head: true }).eq("grupo_id", grupo.id);
+
   return (
     <VoceView
+      pessoas={pessoas ?? 0}
       grupo={grupo}
       jogadores={jogadores}
       meu={meu}

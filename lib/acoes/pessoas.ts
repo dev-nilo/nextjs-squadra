@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { validarNomeDoGrupo } from "@/lib/grupo";
-import { MOTIVO_DAS_PESSOAS, papelDadoSchema, type Pessoa } from "@/lib/pessoas";
+import { MOTIVO_DAS_PESSOAS, papelDadoSchema } from "@/lib/pessoas";
 import { PLAYER_IMAGES_BUCKET } from "@/lib/player-image";
 import { exigir, idSchema, noGrupo, recusar, validar } from "./executar";
 
@@ -13,12 +13,6 @@ import { exigir, idSchema, noGrupo, recusar, validar } from "./executar";
  */
 
 const opcoes = (acao: string, generica: string) => ({ acao, generica, motivos: MOTIVO_DAS_PESSOAS });
-
-/** Who's in the fut, dono first. Emails only come back for the dono and admins. */
-export const lerPessoas = (supabase: SupabaseClient, slug: unknown) =>
-  noGrupo(supabase, slug, opcoes("lerPessoas", "Não deu pra carregar as pessoas agora."), async ({ grupo }) =>
-    exigir(await supabase.rpc("pessoas_do_grupo", { grupo: grupo.id })) as Pessoa[],
-  );
 
 /** The dono makes someone admin or membro. */
 export const mudarPapel = (supabase: SupabaseClient, slug: unknown, pessoaId: unknown, papel: unknown) =>

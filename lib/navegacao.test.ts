@@ -14,6 +14,11 @@ describe("abaDoCaminho", () => {
     expect(abaDoCaminho("/g/fut-de-quinta/voce")).toBe("voce");
   });
 
+  it("lights Você on Pessoas, which hangs off it", () => {
+    expect(abaDoCaminho("/g/fut-do-dev/pessoas")).toBe("voce");
+    expect(caminhoNoOutroFut("/g/fut-do-dev/pessoas", "outro")).toBe("/g/outro/voce");
+  });
+
   it("doesn't mistake a fut whose slug starts like a tab for that tab", () => {
     expect(abaDoCaminho("/g/elenco")).toBe("partidas");
     expect(abaDoCaminho("/g/fut/elencos")).toBe("partidas");

@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { FileUp, Plus, Search, Shuffle, User, UserPlus } from "lucide-react";
+import { FileUp, Plus, Search, Shuffle, User } from "lucide-react";
 import { toast } from "sonner";
 import { excluirJogador, importarJogadores, salvarJogador } from "@/app/actions/jogador";
 import { desvincularJogador, vincularJogador } from "@/app/actions/vinculo";
-import { ConvidarModal } from "@/components/convite/convidar-modal";
 import { CartaAberta } from "@/components/elenco/carta-aberta";
 import { capacidades, SO_LEITURA } from "@/lib/capacidades";
 import { useSemConexao } from "@/lib/pwa/conexao";
@@ -77,7 +76,6 @@ export function ElencoView({
   const [isDrawModalOpen, setIsDrawModalOpen] = useState(false);
   const [isTeamConfigOpen, setIsTeamConfigOpen] = useState(false);
   const [isImportCsvOpen, setIsImportCsvOpen] = useState(false);
-  const [isConvidarOpen, setIsConvidarOpen] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "rating" | "position">("rating");
@@ -237,7 +235,6 @@ export function ElencoView({
               acoes={[
                 { rotulo: "Sortear rápido", icone: <Shuffle size={16} />, onSelect: () => setSelecionando(true) },
                 ...(pode.editaElenco ? [{ rotulo: "Importar CSV", icone: <FileUp size={16} />, onSelect: () => setIsImportCsvOpen(true) }] : []),
-                ...(pode.convida ? [{ rotulo: "Convidar", icone: <UserPlus size={16} />, onSelect: () => setIsConvidarOpen(true) }] : []),
               ]}
             />
           </div>
@@ -342,7 +339,6 @@ export function ElencoView({
       <PlayerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={salvar} initialData={editingPlayer} />
 
       {/* Mounted only while open, so its copy of the Grupo's name isn't on the page otherwise. */}
-      {pode.convida && isConvidarOpen && <ConvidarModal isOpen onClose={() => setIsConvidarOpen(false)} grupo={grupo} />}
 
       <ImportCsvModal isOpen={isImportCsvOpen} onClose={() => setIsImportCsvOpen(false)} onImport={importar} />
 
