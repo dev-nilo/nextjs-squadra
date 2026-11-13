@@ -1,7 +1,7 @@
 import type { CSSProperties, KeyboardEvent } from "react";
 import { Check } from "lucide-react";
 import { GK_LABELS, OUTFIELD_LABELS } from "@/lib/constants";
-import { DEFAULT_COUNTRY_CODE, getCountryCode, getCountryName, getFlagUrl } from "@/lib/countries";
+import { getCountryCode, getCountryName, getFlagUrl } from "@/lib/countries";
 import { OVR_BRILHANTE } from "@/lib/stat-color";
 import type { Player, PlayerPosition } from "@/types";
 
@@ -42,7 +42,7 @@ export function pontosFortes(atributos: Record<Atributo, number>): Set<Atributo>
  *   pictures of every kind sit together in one album.
  * - The attributes are one ink: the Jogador's two best in full weight, the
  *   rest lighter. It says what they're good at, not a traffic light.
- * - The flag only for a nationality other than Brazil's.
+ * - The flag, small, next to the position.
  * - From OVR 85 it's a brilhante: the OVR, the rule and a double frame in
  *   gold ink. Flat, like a printed foil, never animated.
  *
@@ -98,15 +98,13 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, onPress
             <div className="flex items-start justify-between gap-[3cqw]">
               <span className={`text-numeral leading-[0.82] ${tinta} ${comFoto ? "text-[20cqw]" : "text-[54cqw] -ml-[1cqw]"}`}>{player.rating}</span>
               <span className="flex items-center gap-[2cqw] pt-[1.5cqw] text-[6cqw] font-semibold text-paper-foreground/60">
-                {countryCode !== DEFAULT_COUNTRY_CODE && (
-                  <img
-                    src={getFlagUrl(countryCode)}
-                    alt={getCountryName(countryCode)}
-                    width={24}
-                    height={16}
-                    className="h-[4.5cqw] w-[6.75cqw] rounded-[0.6cqw] object-cover"
-                  />
-                )}
+                <img
+                  src={getFlagUrl(countryCode)}
+                  alt={getCountryName(countryCode)}
+                  width={24}
+                  height={16}
+                  className="h-[4.5cqw] w-[6.75cqw] rounded-[0.6cqw] object-cover"
+                />
                 {POSICAO_POR_EXTENSO[player.position]}
               </span>
             </div>

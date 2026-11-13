@@ -27,7 +27,7 @@ The mark is **Meio-campo**: the pitch's center circle seen from above, split by 
   - **With a photo**: the photo on top, printed in the same ink (a navy/Papel duotone: grayscale multiplied onto Papel, navy lightened in), so phone photos of every kind sit together. The OVR shrinks to 20cqw.
   - The name in sentence case, bold, left-aligned, then one navy rule.
   - The attributes in one ink, lowercase labels: the Jogador's **two best** (`pontosFortes`) in full weight, the rest at 55%. It says what they're good at. No traffic-light colors.
-  - The flag only when the nationality isn't Brazil's.
+  - The flag, small, next to the position (every nationality, Brazil's too).
   - From OVR 85 (`OVR_BRILHANTE`) it's a **brilhante**: the OVR, the rule and a double frame printed in gold ink (`paper-ouro`). Flat, never animated.
   - "você" is a Colete pill after the name; selected is a Colete ring plus a check.
   - Every size is in `cqw` (the card is its own inline-size container), so the same card works in the 2-column album, opened, and in Você. No hover scale.
