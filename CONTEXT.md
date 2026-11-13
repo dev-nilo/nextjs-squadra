@@ -19,7 +19,12 @@ The people who play together and share one Elenco, like a weekly pelada. Named b
 _Avoid_: Team (that's a Time), league, club, "fut" in code (it's only the UI word on the naming screen)
 
 **Membro** _(en: member)_:
-A user's membership in a Grupo, with a papel: `dono` (exactly one per Grupo; renames or deletes it, promotes admins), `admin` (edits Jogadores, and later runs Partidas and the Sorteio), or `membro` (sees the Elenco).
+A user's membership in a Grupo, with a papel:
+- `dono`: exactly one per Grupo. Everything an admin does, plus the people and the Grupo itself: makes others admin or membro, removes them, renames or deletes the Grupo, and hands it to an admin (becoming an admin). The dono can't leave before handing it over.
+- `admin`: organizes: edits Jogadores, runs Partidas and the Sorteio, creates Convites.
+- `membro`: answers for their own Jogador and sees everything.
+
+A Membro is known on screen by their linked Jogador's name; only the dono and admins see emails. Leaving, or being removed, unlinks their Jogador, which stays in the Elenco with its presences. A removed person can come back through a Convite that's still valid. Every one of these changes goes through a database function (ADR 0008).
 _Avoid_: Member of the Elenco, player (a Jogador may have no account at all)
 
 **Convite** _(en: invite)_:

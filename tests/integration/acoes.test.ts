@@ -6,6 +6,7 @@ import { FUT_NAO_ENCONTRADO, SEM_PERMISSAO, SESSAO_EXPIRADA, type Resultado } fr
 import { criarGrupo } from "@/lib/acoes/grupo";
 import { excluirJogador, importarJogadores, salvarJogador } from "@/lib/acoes/jogador";
 import { cancelarPartida, criarPartida, editarPartida, responderPresenca } from "@/lib/acoes/partida";
+import { excluirFut, lerPessoas, mudarPapel, passarPosse, removerDoFut, renomearFut, sairDoFut } from "@/lib/acoes/pessoas";
 import { moverNoSorteio, publicarSorteio, sortearDaPartida } from "@/lib/acoes/sorteio";
 import { criarMeuJogador, desvincularJogador, vincularJogador } from "@/lib/acoes/vinculo";
 import { addMembro, admin as service, anon, newUser, removeUsers, type TestUser } from "./support";
@@ -176,5 +177,54 @@ describe("creating a Grupo", () => {
     const primeiro = await grupoDe(dono, "Fut Único");
     expect(await grupoDe(dono, "Outro nome")).toEqual(primeiro);
     expect(mensagem(await criarGrupo(anon(), "Sem sessão"))).toBe(SESSAO_EXPIRADA);
+  });
+});
+
+describe("people and the fut", () => {
+  it("runs the dono's whole round, and says why when the database refuses", async () => {
+    const dono = await user("dono");
+    const amigo = await user("amigo");
+    const grupo = await grupoDe(dono, "Fut das Pessoas");
+    await addMembro(grupo.id, amigo, "membro");
+
+    // A membro can't, and hears why in plain words.
+    expect(mensagem(await mudarPapel(amigo.client, grupo.slug, dono.id, "membro"))).toBe("Só o dono do fut pode fazer isso.");
+    expect(mensagem(await mudarPapel(dono.client, grupo.slug, amigo.id, "dono"))).toBe("Papel inválido.");
+    expect(mensagem(await passarPosse(dono.client, grupo.slug, amigo.id))).toBe("O fut só pode passar pra um admin. Torne a pessoa admin primeiro.");
+    expect(mensagem(await sairDoFut(dono.client, grupo.slug))).toBe("Passe o fut pra um admin antes de sair.");
+
+    valor(await mudarPapel(dono.client, grupo.slug, amigo.id, "admin"));
+    const pessoas = valor(await lerPessoas(dono.client, grupo.slug));
+    expect(pessoas.map((p) => [p.user_id, p.papel])).toEqual([
+      [dono.id, "dono"],
+      [amigo.id, "admin"],
+    ]);
+    expect(pessoas[1].email).toBe(amigo.email);
+
+    expect(valor(await renomearFut(dono.client, grupo.slug, "Fut Renomeado"))).toEqual({ nome: "Fut Renomeado" });
+    valor(await passarPosse(dono.client, grupo.slug, amigo.id));
+    valor(await removerDoFut(amigo.client, grupo.slug, dono.id));
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it("deletes the fut only for the dono and with the name typed, before touching anything", async () => {
+    const dono = await user("dono");
+    const admin = await user("admin");
+    const grupo = await grupoDe(dono, "Fut Que Some");
+    await addMembro(grupo.id, admin, "admin");
+
+    expect(mensagem(await excluirFut(admin.client, grupo.slug, "Fut Que Some"))).toBe("Só o dono do fut pode fazer isso.");
+    expect(mensagem(await excluirFut(dono.client, grupo.slug, "Outro"))).toBe("O nome digitado não confere com o do fut.");
+    expect(valor(await excluirFut(dono.client, grupo.slug, "fut que some"))).toEqual({ nome: "Fut Que Some" });
+    expect(mensagem(await renomearFut(dono.client, grupo.slug, "Fantasma"))).toBe(FUT_NAO_ENCONTRADO);
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it("lets a membro leave, telling the screen which fut it was", async () => {
+    const dono = await user("dono");
+    const amigo = await user("amigo");
+    const grupo = await grupoDe(dono, "Fut de Saída");
+    await addMembro(grupo.id, amigo, "membro");
+    expect(valor(await sairDoFut(amigo.client, grupo.slug))).toEqual({ nome: "Fut de Saída" });
   });
 });
