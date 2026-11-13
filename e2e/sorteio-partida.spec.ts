@@ -44,8 +44,9 @@ test("the dono draws and publishes the Times; a membro sees them appear, read-on
     const membro = await (await browser.newContext()).newPage();
     await signIn(membro, email);
     await membro.goto(caminho);
-    await expect(membro.getByText("Ao vivo")).toBeVisible();
-    await expect(membro.getByText("Os times aparecem aqui quando quem organiza publicar o sorteio.")).toBeVisible();
+    await expect(membro.locator('[data-ao-vivo="true"]')).toBeVisible();
+    // No Times yet: the membro sees no Times section at all.
+    await expect(membro.getByRole("region", { name: "Sorteio" })).toHaveCount(0);
 
     await signIn(page, DEV_USER);
     await page.goto(caminho);

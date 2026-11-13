@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback, useId } from "react";
-import { Ellipsis, FileUp, Plus, Search, Shuffle, User, UserPlus } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { FileUp, Plus, Search, Shuffle, User, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { excluirJogador, importarJogadores, salvarJogador } from "@/app/actions/jogador";
 import { desvincularJogador, vincularJogador } from "@/app/actions/vinculo";
@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/client";
 import { meuJogador } from "@/lib/vinculo";
 import type { Player } from "@/types";
 import { Button } from "@/components/ui/button";
+import { MenuDeAcoes } from "@/components/ui/menu-de-acoes";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Logo } from "@/components/ui/logo";
@@ -228,10 +229,13 @@ export function ElencoView({
                 Nova carta
               </Button>
             )}
-            <MaisAcoes
-              onSortearRapido={() => setSelecionando(true)}
-              onImportar={pode.editaElenco ? () => setIsImportCsvOpen(true) : undefined}
-              onConvidar={pode.convida ? () => setIsConvidarOpen(true) : undefined}
+            <MenuDeAcoes
+              nome="Mais ações do elenco"
+              acoes={[
+                { rotulo: "Sortear rápido", icone: <Shuffle size={16} />, onSelect: () => setSelecionando(true) },
+                ...(pode.editaElenco ? [{ rotulo: "Importar CSV", icone: <FileUp size={16} />, onSelect: () => setIsImportCsvOpen(true) }] : []),
+                ...(pode.convida ? [{ rotulo: "Convidar", icone: <UserPlus size={16} />, onSelect: () => setIsConvidarOpen(true) }] : []),
+              ]}
             />
           </div>
         </div>
@@ -358,55 +362,6 @@ export function ElencoView({
         onMover={sorteio.mover}
         onRedraw={handleDrawTeams}
       />
-    </>
-  );
-}
-
-/** The ⋯ menu next to "Nova carta": the Elenco's less frequent actions. */
-function MaisAcoes({
-  onSortearRapido,
-  onImportar,
-  onConvidar,
-}: {
-  onSortearRapido: () => void;
-  onImportar?: () => void;
-  onConvidar?: () => void;
-}) {
-  const menuId = useId();
-  const posicionar = (menu: HTMLElement) => {
-    const gatilho = document.querySelector<HTMLElement>(`[popovertarget="${CSS.escape(menuId)}"]`);
-    if (!gatilho) return;
-    const r = gatilho.getBoundingClientRect();
-    menu.style.top = `${r.bottom + 8}px`;
-    menu.style.right = `${window.innerWidth - r.right}px`;
-  };
-  const item = "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-default-100";
-  return (
-    <>
-      <Button isIconOnly variant="flat" size="sm" popoverTarget={menuId} aria-label="Mais ações">
-        <Ellipsis size={18} />
-      </Button>
-      <div
-        id={menuId}
-        popover="auto"
-        onBeforeToggle={(e) => posicionar(e.currentTarget)}
-        aria-label="Mais ações do elenco"
-        className="fixed m-0 min-w-[13rem] rounded-xl border border-divider bg-content1 p-1 text-foreground shadow-2xl"
-      >
-        <button type="button" popoverTarget={menuId} popoverTargetAction="hide" onClick={onSortearRapido} className={item}>
-          <Shuffle size={16} aria-hidden="true" /> Sortear rápido
-        </button>
-        {onImportar && (
-          <button type="button" popoverTarget={menuId} popoverTargetAction="hide" onClick={onImportar} className={item}>
-            <FileUp size={16} aria-hidden="true" /> Importar CSV
-          </button>
-        )}
-        {onConvidar && (
-          <button type="button" popoverTarget={menuId} popoverTargetAction="hide" onClick={onConvidar} className={item}>
-            <UserPlus size={16} aria-hidden="true" /> Convidar
-          </button>
-        )}
-      </div>
     </>
   );
 }
