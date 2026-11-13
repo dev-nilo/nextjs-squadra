@@ -36,7 +36,7 @@ export function CartaAberta({
       <ModalBody className="flex flex-col items-center gap-2 pt-6">
         <h2 className="sr-only">{player.name}</h2>
         <div className="w-full max-w-64">
-          <PlayerCard player={player} isMine={isMine} />
+          <PlayerCard player={player} isMine={isMine} completa />
         </div>
       </ModalBody>
       {algumaAcao && (

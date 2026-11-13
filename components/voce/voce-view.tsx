@@ -74,7 +74,7 @@ export function VoceView({
         {meu ? (
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-end">
             <div className="w-56 shrink-0">
-              <PlayerCard player={meu} isMine />
+              <PlayerCard player={meu} isMine completa />
             </div>
             <Button variant="flat" size="sm" startContent={<Unlink size={16} />} onClick={desvincular} isDisabled={semConexao}>
               Desvincular minha conta
