@@ -1,185 +1,153 @@
-import { Player } from "@/types";
+import type { CSSProperties, KeyboardEvent } from "react";
+import { Check } from "lucide-react";
 import { GK_LABELS, OUTFIELD_LABELS } from "@/lib/constants";
-import { getStatColor } from "@/lib/stat-color";
 import { getCountryCode, getCountryName, getFlagUrl } from "@/lib/countries";
-import { CheckCircle2, User } from "lucide-react";
+import { corNoPapel, OVR_BRILHANTE } from "@/lib/stat-color";
+import type { Player } from "@/types";
 
 interface PlayerCardProps {
-    player: Player;
-    /** The signed-in user's own Jogador ("você"). */
-    isMine?: boolean;
-    /** Ticked in the Elenco's "Sortear rápido" mode. */
-    isSelected?: boolean;
-    /** In the Elenco album: what a tap does (open the card, or tick it while selecting). Omitted: a static card. */
-    onPress?: () => void;
-    /** "Sortear rápido" mode: the card is a toggle. */
-    selecting?: boolean;
+  player: Player;
+  /** The signed-in user's own Jogador ("você"). */
+  isMine?: boolean;
+  /** Ticked in the Elenco's "Sortear rápido" mode. */
+  isSelected?: boolean;
+  /** In the Elenco album: what a tap does (open the card, or tick it while selecting). Omitted: a static card. */
+  onPress?: () => void;
+  /** "Sortear rápido" mode: the card is a toggle. */
+  selecting?: boolean;
+}
+
+const ORDEM = ["velocidade", "posicionamento", "resistencia", "defesa", "chute", "drible", "passe", "fisico"] as const;
+
+/** Up to two letters for a Jogador with no photo: "Café com Leite" → "CL", "Xerife" → "XE". */
+export function iniciais(nome: string) {
+  const palavras = nome.trim().split(/\s+/).filter((p) => p.length > 2);
+  if (palavras.length > 1) return (palavras[0][0] + palavras[palavras.length - 1][0]).toUpperCase();
+  return nome.trim().slice(0, 2).toUpperCase();
 }
 
 /**
- * The Jogador card. No hover-only actions: in the album a tap opens it (or
- * ticks it while selecting for the quick Sorteio); its actions live in the
- * opened card.
+ * The Jogador card, as a figurinha: a white die-cut border around paper card
+ * stock (Papel, the same in both themes), the photo in a night-navy window,
+ * the OVR as a printed numeral, a navy name band and the attributes as a
+ * small table. From OVR 85 it's a "brilhante": a static foil sheen.
+ *
+ * Every size is in `cqw` (the card is its own container), so one card reads
+ * the same in the 2-column album, opened full size and in Você. No hover-only
+ * actions: in the album a tap opens it (or ticks it while selecting).
  */
 export const PlayerCard = ({ player, isMine = false, isSelected = false, onPress, selecting = false }: PlayerCardProps) => {
-    const labels = player.position === "GOL" ? GK_LABELS : OUTFIELD_LABELS;
-    const attributes = player.attributes;
-    const countryCode = getCountryCode(player.nationality);
-    const countryName = getCountryName(countryCode);
+  const labels = player.position === "GOL" ? GK_LABELS : OUTFIELD_LABELS;
+  const countryCode = getCountryCode(player.nationality);
+  const brilhante = player.rating >= OVR_BRILHANTE;
 
-    const attributesList = [
-        {
-            key: "velocidade",
-            label: labels.velocidade,
-            value: attributes.velocidade,
-        },
-        {
-            key: "posicionamento",
-            label: labels.posicionamento,
-            value: attributes.posicionamento,
-        },
-        {
-            key: "resistencia",
-            label: labels.resistencia,
-            value: attributes.resistencia,
-        },
-        { key: "defesa", label: labels.defesa, value: attributes.defesa },
-        { key: "chute", label: labels.chute, value: attributes.chute },
-        { key: "drible", label: labels.drible, value: attributes.drible },
-        { key: "passe", label: labels.passe, value: attributes.passe },
-        { key: "fisico", label: labels.fisico, value: attributes.fisico },
-    ];
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (onPress && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onPress();
+    }
+  };
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (onPress && (e.key === "Enter" || e.key === " ")) {
-            e.preventDefault();
-            onPress();
-        }
-    };
+  const label = `Carta de ${player.name}, ${player.position}, rating ${player.rating}${isSelected ? ", selecionado" : ""}${isMine ? ", você" : player.conta_id ? ", com conta" : ""}`;
 
-    const label = `Carta de ${player.name}, ${player.position}, rating ${player.rating}${isSelected ? ", selecionado" : ""}${isMine ? ", você" : player.conta_id ? ", com conta" : ""}`;
-
-    return (
-        <div
-            role={onPress ? "button" : "img"}
-            tabIndex={onPress ? 0 : undefined}
-            aria-pressed={onPress && selecting ? isSelected : undefined}
-            aria-label={label}
-            onClick={onPress}
-            onKeyDown={onPress ? handleKeyDown : undefined}
-            className={`
-                relative w-full max-w-[17rem] sm:max-w-64 mx-auto aspect-[2/3]
-                focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background
-                ${onPress ? "cursor-pointer select-none" : ""}
-            `}
-        >
-            {/* Selection Indicator */}
-            {isSelected && (
-                <div
-                    className="absolute top-1 left-1 sm:-top-2 sm:-left-2 z-50 bg-primary text-primary-foreground p-1 rounded-full shadow-lg animate-scale-in"
-                    aria-hidden="true"
-                >
-                    <CheckCircle2 size={22} />
-                </div>
+  return (
+    <div
+      role={onPress ? "button" : "img"}
+      tabIndex={onPress ? 0 : undefined}
+      aria-pressed={onPress && selecting ? isSelected : undefined}
+      aria-label={label}
+      onClick={onPress}
+      onKeyDown={onPress ? handleKeyDown : undefined}
+      style={{ containerType: "inline-size" } as CSSProperties}
+      className={`relative mx-auto aspect-[2/3] w-full max-w-[17rem] select-none rounded-[7cqw] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:max-w-64 ${
+        onPress ? "cursor-pointer" : ""
+      }`}
+    >
+      {/* The die-cut border: white sticker paper, a little shadow under it. */}
+      <div
+        className={`absolute inset-0 rounded-[7cqw] bg-paper-borda p-[3cqw] shadow-[0_1px_2px_rgb(0_0_0/0.12),0_8px_24px_-8px_rgb(0_0_0/0.35)] transition-[box-shadow] ${
+          isSelected ? "ring-[1.5cqw] ring-accent" : ""
+        }`}
+      >
+        <div className="relative flex h-full flex-col overflow-hidden rounded-[4.5cqw] bg-paper text-paper-foreground">
+          {/* Photo window */}
+          <div className="relative mx-[4cqw] mt-[4cqw] h-[54%] overflow-hidden rounded-[3.5cqw] bg-paper-foreground">
+            {player.image ? (
+              <img src={player.image} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div
+                aria-hidden="true"
+                className="flex h-full w-full items-end justify-center bg-[radial-gradient(120%_80%_at_50%_0%,rgb(255_255_255/0.14),transparent_60%),repeating-linear-gradient(90deg,rgb(255_255_255/0.035)_0_12%,transparent_12%_24%)]"
+              >
+                <span className="text-numeral pb-[6cqw] text-[26cqw] text-paper/90">{iniciais(player.name)}</span>
+              </div>
             )}
+
+            {/* OVR and position, printed on a paper tab over the photo's corner */}
+            <div className="absolute -left-px -top-px flex flex-col items-center rounded-br-[3.5cqw] bg-paper px-[3cqw] pb-[2cqw] pt-[2.5cqw]">
+              <span className="text-numeral text-[17cqw] leading-none">{player.rating}</span>
+              <span className="text-[6.5cqw] font-bold leading-tight tracking-wide text-paper-foreground/70">{player.position}</span>
+            </div>
 
             {isMine && (
-                <span
-                    className="absolute -bottom-2 left-1/2 z-50 -translate-x-1/2 rounded-full bg-accent px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-accent-foreground shadow-lg"
-                    aria-hidden="true"
-                >
-                    Você
-                </span>
+              // On the photo, so it never covers the attributes.
+              <span
+                aria-hidden="true"
+                className="absolute bottom-[3cqw] left-[3cqw] rounded-full bg-accent px-[4cqw] py-[0.8cqw] text-[6.5cqw] font-bold text-accent-foreground shadow-lg"
+              >
+                você
+              </span>
             )}
 
-            {/* Card Container */}
+            <img
+              src={getFlagUrl(countryCode)}
+              alt={getCountryName(countryCode)}
+              width={24}
+              height={16}
+              className="absolute right-[3cqw] top-[3cqw] h-[7cqw] w-[10.5cqw] rounded-[1cqw] object-cover ring-[0.8cqw] ring-paper-borda"
+            />
+          </div>
+
+          {/* Name band */}
+          <div className="mt-[4cqw] bg-paper-foreground px-[5cqw] py-[2cqw]">
+            <p className="truncate text-center text-[9.5cqw] font-extrabold leading-tight text-paper [font-variation-settings:'wdth'_80]">
+              {player.name}
+            </p>
+          </div>
+
+          {/* Attributes */}
+          <dl className="grid flex-1 grid-cols-2 content-center gap-x-[6cqw] px-[6cqw] py-[2.5cqw]" aria-label="Atributos do jogador">
+            {ORDEM.map((chave) => (
+              <div key={chave} className="flex items-baseline justify-between border-b border-paper-foreground/10 py-[0.6cqw] last:border-0 [&:nth-last-child(2)]:border-0">
+                <dt className="text-[5.5cqw] font-semibold tracking-wide text-paper-foreground/60">{labels[chave]}</dt>
+                <dd className={`text-numeral text-[7.5cqw] ${corNoPapel(player.attributes[chave])}`}>{player.attributes[chave]}</dd>
+              </div>
+            ))}
+          </dl>
+
+          {brilhante && (
+            // Foil: a static sheen across the paper, printed, not animated.
             <div
-                className={`
-                    w-full h-full 
-                    bg-gradient-to-br from-content1 via-content1 to-default-200/20 
-                    border-2 ${isSelected ? "border-primary" : "border-divider/30"} 
-                    rounded-t-card rounded-b-xl 
-                    shadow-2xl overflow-hidden 
-                `}
-            >
-                {/* Background Textures */}
-                <div
-                    className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/40 via-transparent to-transparent pointer-events-none"
-                    aria-hidden="true"
-                />
-                
-                <div className="flex h-[50%] relative z-10 p-3 sm:p-4 items-start justify-between bg-transparent">
-                    {/* Stats Column */}
-                    <div className="flex flex-col items-center justify-start pt-1 sm:pt-2 w-1/4 gap-0.5 sm:gap-1">
-                        <span className="text-3xl sm:text-4xl font-black text-primary tracking-tighter leading-none">
-                            {player.rating}
-                        </span>
-                        <span className="text-base sm:text-lg font-bold text-foreground/80 tracking-wide">
-                            {player.position}
-                        </span>
-                        <div className="w-8 h-px bg-primary/50 my-1 sm:my-2" aria-hidden="true" />
-                        <img
-                            src={getFlagUrl(countryCode)}
-                            alt={countryName}
-                            width={24}
-                            height={16}
-                            className="w-6 h-4 object-cover shadow-sm opacity-80 rounded-sm"
-                        />
-                    </div>
-
-                    {/* Player Image */}
-                    <div className="w-3/4 h-full pl-2 sm:pl-4 flex items-center justify-center">
-                        {player.image ? (
-                            <img
-                                src={player.image}
-                                alt=""
-                                className="h-full w-full object-cover rounded-xl shadow-sm"
-                            />
-                        ) : (
-                            <User
-                                size={64}
-                                className="text-default-400"
-                                aria-hidden="true"
-                            />
-                        )}
-                    </div>
-                </div>
-
-                <div className="p-0 flex flex-col justify-between overflow-hidden bg-transparent z-10">
-                    {/* Player Name Section */}
-                    <div className="flex flex-col items-center px-3 sm:px-4">
-                        <div
-                            className="w-[90%] h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"
-                            aria-hidden="true"
-                        />
-                        <h2 className="text-lg sm:text-xl font-black text-foreground uppercase tracking-tight py-1.5 sm:py-2 truncate max-w-[90%] text-center">
-                            {player.name}
-                        </h2>
-                        <div
-                            className="w-[90%] h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"
-                            aria-hidden="true"
-                        />
-                    </div>
-
-                    {/* Attributes Grid */}
-                    <div
-                        className="grid grid-cols-2 gap-x-3 sm:gap-x-4 gap-y-0.5 sm:gap-y-1 px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-bold flex-1"
-                        role="list"
-                        aria-label="Atributos do jogador"
-                    >
-                        {attributesList.map(({ key, label, value }) => (
-                            <div
-                                key={key}
-                                className="flex justify-between items-center"
-                                role="listitem"
-                            >
-                                <span className="text-default-500 w-8">{label}</span>
-                                <span className={getStatColor(value)}>{value}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_18%,rgb(255_255_255/0.55)_30%,rgb(255_214_140/0.35)_40%,rgb(160_205_255/0.35)_52%,rgb(255_255_255/0.4)_60%,transparent_74%)] mix-blend-soft-light"
+            />
+          )}
         </div>
-    );
+
+        {brilhante && (
+          <div aria-hidden="true" className="pointer-events-none absolute inset-[1.5cqw] rounded-[5.5cqw] ring-[0.6cqw] ring-paper-ouro/70" />
+        )}
+      </div>
+
+      {isSelected && (
+        <span
+          aria-hidden="true"
+          className="absolute -left-[2cqw] -top-[2cqw] z-10 flex h-[13cqw] w-[13cqw] items-center justify-center rounded-full bg-accent text-accent-foreground shadow-lg"
+        >
+          <Check className="h-[8cqw] w-[8cqw]" strokeWidth={3} />
+        </span>
+      )}
+
+    </div>
+  );
 };
