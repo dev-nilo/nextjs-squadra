@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  coerceStat,
   importPlayersFromCsv,
   normalizeHeader,
   parseCsvRows,
@@ -107,5 +108,19 @@ B,10,30,40,20`;
     expect(players[0].position).toBe("GOL");
     expect(players[0].nationality).toBe("AR");
     expect(players[0].attributes.velocidade).toBe(88);
+  });
+});
+
+describe("coerceStat", () => {
+  it("keeps finite numbers, parses numeric strings and rounds them", () => {
+    expect(coerceStat(77)).toBe(77);
+    expect(coerceStat("82.6")).toBe(83);
+  });
+
+  it("rejects an empty cell and anything that isn't a number", () => {
+    expect(coerceStat("")).toBeUndefined();
+    expect(coerceStat("abc")).toBeUndefined();
+    expect(coerceStat(NaN)).toBeUndefined();
+    expect(coerceStat(null)).toBeUndefined();
   });
 });

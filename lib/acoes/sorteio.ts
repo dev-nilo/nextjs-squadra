@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { normalizePlayer } from "@/lib/jogador";
+import { COLUNAS_DO_JOGADOR, jogadorDaLinha, type LinhaDoJogador } from "@/lib/jogador";
 import { sortearTimes } from "@/lib/sorteio";
 import {
   atribuicao,
@@ -33,13 +33,13 @@ export const sortearDaPartida = (supabase: SupabaseClient, slug: unknown, partid
       const confirmados = exigir(
         await supabase
           .from("presencas")
-          .select(
-            "players(id, name, position, nationality, image_url, ovr, velocidade, resistencia, chute, posicionamento, defesa, drible, passe, fisico)",
-          )
+          .select(`players(${COLUNAS_DO_JOGADOR})`)
           .eq("partida_id", partida)
           .eq("situacao", "confirmado"),
       );
-      const jogadores = confirmados.flatMap((c) => (c.players ? [normalizePlayer(c.players)] : []));
+      const jogadores = (confirmados as unknown as { players: LinhaDoJogador | null }[]).flatMap((c) =>
+        c.players ? [jogadorDaLinha(c.players)] : [],
+      );
       if (!cabeNoSorteio(jogadores.length, quantos)) {
         recusar(`Pra ${quantos} Times precisa de pelo menos ${minimoDeConfirmados(quantos)} confirmados (tem ${jogadores.length}).`);
       }

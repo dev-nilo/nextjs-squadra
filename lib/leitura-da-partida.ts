@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { COLUNAS_DO_JOGADOR, jogadorDaLinha, type LinhaDoJogador } from "@/lib/jogador";
 import type { Partida, Presenca } from "@/lib/partida";
 import type { SorteioSalvo, TimeSalvo } from "@/lib/sorteio-partida";
+import type { Player } from "@/types";
 
 /**
  * How the screens read a Partida and the Grupo's history, with whichever
@@ -9,7 +11,8 @@ import type { SorteioSalvo, TimeSalvo } from "@/lib/sorteio-partida";
  * RLS, so a membro never gets a draft Sorteio and an outsider gets nothing.
  */
 
-export type JogadorDaLista = { id: string; name: string; position: string; ovr: number; conta_id: string | null };
+/** A live Jogador as the Partida page lists it (the Sorteio's snapshot is a separate copy, ADR 0004). */
+export type JogadorDaLista = Pick<Player, "id" | "name" | "position" | "rating" | "conta_id">;
 
 /** What changes while the page is open: the Partida itself, its presence list and its Sorteio. */
 export type PartidaAoVivo = { partida: Partida; presencas: Presenca[]; sorteio: SorteioSalvo | null };
@@ -67,10 +70,11 @@ export async function lerPartidaAoVivo(supabase: SupabaseClient, grupoId: string
 export async function lerPartida(supabase: SupabaseClient, grupoId: string, id: string): Promise<LeituraDaPartida | null> {
   const [aoVivo, jogadores] = await Promise.all([
     lerPartidaAoVivo(supabase, grupoId, id),
-    supabase.from("players").select("id, name, position, ovr, conta_id").eq("grupo_id", grupoId).order("name"),
+    supabase.from("players").select(COLUNAS_DO_JOGADOR).eq("grupo_id", grupoId).order("name"),
   ]);
   if (!aoVivo) return null;
-  return { ...aoVivo, jogadores: (semErro(jogadores, "jogadores") ?? []) as JogadorDaLista[] };
+  const linhas = (semErro(jogadores, "jogadores") ?? []) as unknown as LinhaDoJogador[];
+  return { ...aoVivo, jogadores: linhas.map(jogadorDaLinha) };
 }
 
 const porNome = (a: string, b: string) => a.localeCompare(b, "pt-BR");

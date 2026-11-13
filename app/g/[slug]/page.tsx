@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ElencoView } from "@/components/elenco/elenco-view";
 import { EntrarParaVer, FutNaoEncontrado } from "@/components/partida/entrar-para-ver";
 import { carregarGrupo, carregarParticipacoes } from "@/lib/grupo-server";
-import { normalizePlayer } from "@/lib/jogador";
+import { COLUNAS_DO_JOGADOR, jogadorDaLinha, type LinhaDoJogador } from "@/lib/jogador";
 
 export const metadata: Metadata = { title: "Elenco · Squadra" };
 
@@ -15,7 +15,7 @@ export default async function ElencoPage({ params }: { params: Promise<{ slug: s
 
   const { supabase, user, grupo } = ctx;
   const [{ data: linhas, error }, participacoes] = await Promise.all([
-    supabase.from("players").select("*").eq("grupo_id", grupo.id),
+    supabase.from("players").select(COLUNAS_DO_JOGADOR).eq("grupo_id", grupo.id),
     carregarParticipacoes(supabase, user.id),
   ]);
   // Caught by app/error.tsx, which offers to try again.
@@ -27,7 +27,7 @@ export default async function ElencoPage({ params }: { params: Promise<{ slug: s
       key={grupo.id}
       grupo={grupo}
       participacoes={participacoes ?? [grupo]}
-      jogadores={(linhas ?? []).map(normalizePlayer)}
+      jogadores={((linhas ?? []) as unknown as LinhaDoJogador[]).map(jogadorDaLinha)}
       userId={user.id}
     />
   );

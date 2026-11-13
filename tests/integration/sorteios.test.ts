@@ -15,6 +15,11 @@ afterEach(async () => {
 
 type Snapshot = { nome: string; jogadores: { id: string; rating: number; name: string }[] }[];
 
+/** All 8 attributes at `n`, so the database's Overall is `n` (trigger players_ovr). */
+const atributos = (n: number) => ({
+  velocidade: n, resistencia: n, chute: n, posicionamento: n, defesa: n, drible: n, passe: n, fisico: n,
+});
+
 /** A Grupo, a Partida with `vagas`, and `n` Jogadores the dono confirms in order (the overflow waits). */
 async function partidaComConfirmados(n: number, vagas: number) {
   const dono = await user("dono");
@@ -22,7 +27,7 @@ async function partidaComConfirmados(n: number, vagas: number) {
   if (error) throw error;
   const ids: string[] = [];
   for (let i = 0; i < n; i++) {
-    const { data } = await addJogador(dono, grupo.id, `J${i}`, { ovr: 60 + i });
+    const { data } = await addJogador(dono, grupo.id, `J${i}`, atributos(60 + i));
     ids.push(data!.id);
   }
   const { data: partida } = await dono.client
@@ -84,7 +89,7 @@ describe("the snapshot", () => {
     const { dono, partidaId, ids } = await partidaComConfirmados(4, 10);
     await salvar(dono, partidaId, [[ids[0], ids[1]], [ids[2], ids[3]]]);
 
-    await dono.client.from("players").update({ ovr: 99, name: "Renomeado" }).eq("id", ids[0]).throwOnError();
+    await dono.client.from("players").update({ ...atributos(99), name: "Renomeado" }).eq("id", ids[0]).throwOnError();
 
     const lido = async () => ((await service().from("sorteios").select("times").eq("partida_id", partidaId).single()).data!.times as Snapshot);
     const jogadorZero = (times: Snapshot) => times.flatMap((t) => t.jogadores).find((j) => j.id === ids[0]);
@@ -150,7 +155,7 @@ describe("moving a Jogador (mover_no_sorteio)", () => {
   it("moves the Jogador's snapshot to the other Time, rating as drawn", async () => {
     const { dono, partidaId, ids } = await partidaComConfirmados(4, 10);
     const { data: sorteio } = await salvar(dono, partidaId, [[ids[0], ids[1]], [ids[2], ids[3]]]);
-    await dono.client.from("players").update({ ovr: 99 }).eq("id", ids[0]).throwOnError();
+    await dono.client.from("players").update(atributos(99)).eq("id", ids[0]).throwOnError();
 
     const { error } = await mover(dono, partidaId, ids[0], 1, sorteio.sorteado_em);
     expect(error).toBeNull();

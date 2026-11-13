@@ -1,7 +1,6 @@
 import { Player } from "@/types";
 import { GK_LABELS, OUTFIELD_LABELS } from "@/lib/constants";
 import { getStatColor } from "@/lib/stat-color";
-import { normalizeAttributes } from "@/lib/jogador";
 import { getCountryCode, getCountryName, getFlagUrl } from "@/lib/countries";
 import { CheckCircle2, Pencil, Trash2, Unlink, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,7 @@ export const PlayerCard = ({
     onDesvincular,
 }: PlayerCardProps) => {
     const labels = player.position === "GOL" ? GK_LABELS : OUTFIELD_LABELS;
-    const attributes = normalizeAttributes(player.attributes);
+    const attributes = player.attributes;
     const countryCode = getCountryCode(player.nationality);
     const countryName = getCountryName(countryCode);
 
