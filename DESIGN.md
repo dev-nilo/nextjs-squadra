@@ -24,7 +24,7 @@ The mark is **Meio-campo**: the pitch's center circle seen from above, split by 
 - The Jogador card is the **one warm, printed object** in the app (Papel, `#FBF6EA`, same in both themes). Everything around it stays quiet.
 - **The figurinha** (`PlayerCard`), printed in **two inks**: navy on Papel, inside a white die-cut border (`paper-borda`, both themes). Nothing on it that a cheap sticker printer couldn't print: no gradients, no glow.
   - **No photo** (most of the pelada): no empty photo window. The OVR, printed huge (`.text-numeral`, 54cqw), is the card's face; the position in words top-right ("atacante", "ala", "fixo", "goleiro").
-  - **With a photo**: the photo on top, printed in the same ink (a navy/Papel duotone: grayscale multiplied onto Papel, navy lightened in), so phone photos of every kind sit together. The OVR shrinks to 20cqw.
+  - **With a photo**: the photo takes the paper the no-photo card leaves free, right of the OVR, in a **3:4 window** (44cqw wide, anchored at the top): the same 3:4 every upload is cropped to (600×800, `lib/player-image-processing.ts`, a tall photo keeps its top). It prints in the same ink (a navy/Papel duotone: grayscale multiplied onto Papel, navy lightened in), so phone photos of every kind sit together. The OVR shrinks to 30cqw with the flag and position under it; the name keeps one line.
   - The name in sentence case, bold, left-aligned, then one navy rule.
   - The attributes in one ink, lowercase labels: the Jogador's **two best** (`pontosFortes`) in full weight, the rest at 55%. It says what they're good at. No traffic-light colors.
   - The flag, small, next to the position (every nationality, Brazil's too).

@@ -4,8 +4,10 @@ export const processImage = (file: File): Promise<string> => {
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const targetWidth = 300;
-        const targetHeight = 400;
+        // 3:4, the figurinha's photo window. 600 px wide stays sharp on the
+        // opened card at 3x; a tall photo keeps its top (the face).
+        const targetWidth = 600;
+        const targetHeight = 800;
         const targetRatio = targetWidth / targetHeight;
 
         const canvas = document.createElement("canvas");

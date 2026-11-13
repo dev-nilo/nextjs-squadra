@@ -38,8 +38,9 @@ export function pontosFortes(atributos: Record<Atributo, number>): Set<Atributo>
  *
  * - No photo (most of the pelada): no empty photo window. The OVR, printed
  *   big, is the card's face.
- * - A photo is printed in the same ink (a navy/Papel duotone), so phone
- *   pictures of every kind sit together in one album.
+ * - A photo sits where the no-photo card leaves paper free, right of the
+ *   OVR, at 3:4 (what every upload is cropped to), printed in the same ink
+ *   (a navy/Papel duotone) so phone pictures of every kind sit together.
  * - The attributes are one ink: the Jogador's two best in full weight, the
  *   rest lighter. It says what they're good at, not a traffic light.
  * - The flag, small, next to the position.
@@ -56,6 +57,18 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, onPress
   const fortes = pontosFortes(player.attributes);
   const comFoto = !!player.image;
   const tinta = brilhante ? "text-paper-ouro" : "text-paper-foreground";
+  const posicao = (
+    <span className="flex flex-wrap items-center gap-x-[2cqw] gap-y-[1cqw] text-[6cqw] font-semibold text-paper-foreground/60">
+      <img
+        src={getFlagUrl(countryCode)}
+        alt={getCountryName(countryCode)}
+        width={24}
+        height={16}
+        className="h-[4.5cqw] w-[6.75cqw] rounded-[0.6cqw] object-cover"
+      />
+      {POSICAO_POR_EXTENSO[player.position]}
+    </span>
+  );
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (onPress && (e.key === "Enter" || e.key === " ")) {
@@ -86,28 +99,27 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, onPress
         }`}
       >
         <div className="relative flex h-full flex-col overflow-hidden rounded-[4cqw] bg-paper text-paper-foreground">
-          {comFoto && (
-            // Duotone: the photo in grey multiplied onto Papel, then the navy ink lightened in, so black prints navy.
-            <div className="relative isolate h-[36%] shrink-0 bg-paper">
-              <img src={player.image!} alt="" className="h-full w-full object-cover mix-blend-multiply grayscale contrast-125" />
-              <div aria-hidden="true" className="absolute inset-0 bg-paper-foreground mix-blend-lighten" />
-            </div>
-          )}
-
           <div className="flex flex-1 flex-col px-[6cqw] pb-[5cqw] pt-[4.5cqw]">
-            <div className="flex items-start justify-between gap-[3cqw]">
-              <span className={`text-numeral leading-[0.82] ${tinta} ${comFoto ? "text-[20cqw]" : "text-[54cqw] -ml-[1cqw]"}`}>{player.rating}</span>
-              <span className="flex items-center gap-[2cqw] pt-[1.5cqw] text-[6cqw] font-semibold text-paper-foreground/60">
-                <img
-                  src={getFlagUrl(countryCode)}
-                  alt={getCountryName(countryCode)}
-                  width={24}
-                  height={16}
-                  className="h-[4.5cqw] w-[6.75cqw] rounded-[0.6cqw] object-cover"
-                />
-                {POSICAO_POR_EXTENSO[player.position]}
-              </span>
-            </div>
+            {comFoto ? (
+              // With a photo it takes the paper the OVR leaves free, at the 3:4 every upload is cropped to
+              // (lib/player-image-processing), anchored at the top so the face stays in.
+              <div className="flex items-start justify-between gap-[3cqw]">
+                <div className="flex min-w-0 flex-col gap-[2cqw]">
+                  <span className={`text-numeral text-[30cqw] leading-[0.82] -ml-[0.5cqw] ${tinta}`}>{player.rating}</span>
+                  {posicao}
+                </div>
+                {/* Duotone: the photo in grey multiplied onto Papel, then the navy ink lightened in, so black prints navy. */}
+                <div className="relative isolate aspect-[3/4] w-[44cqw] shrink-0 overflow-hidden rounded-[2.5cqw] bg-paper">
+                  <img src={player.image!} alt="" className="h-full w-full object-cover object-top mix-blend-multiply grayscale contrast-125" />
+                  <div aria-hidden="true" className="absolute inset-0 bg-paper-foreground mix-blend-lighten" />
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-start justify-between gap-[3cqw]">
+                <span className={`text-numeral text-[54cqw] leading-[0.82] -ml-[1cqw] ${tinta}`}>{player.rating}</span>
+                <span className="pt-[1.5cqw]">{posicao}</span>
+              </div>
+            )}
 
             <div className="mt-auto flex items-end gap-[2.5cqw]">
               <p className={`${comFoto ? "line-clamp-1" : "line-clamp-2"} min-w-0 text-[9.5cqw] font-bold leading-[1.02] tracking-tight [overflow-wrap:anywhere]`}>{player.name}</p>
