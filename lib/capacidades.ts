@@ -25,6 +25,14 @@ export type Capacidades = {
   respondePor(jogador: JogadorComConta, estado: EstadoDaPartida): boolean;
   /** Unlink this Jogador from its account. desvincular_jogador. */
   desvincula(jogador: JogadorComConta): boolean;
+  /** Make someone admin or membro, or remove them. mudar_papel, remover_do_grupo. */
+  gerePessoas: boolean;
+  /** Rename, delete, or hand the fut to an admin. renomear_grupo, excluir_grupo, passar_posse. */
+  gereFut: boolean;
+  /** See the other people's emails. pessoas_do_grupo. */
+  veEmails: boolean;
+  /** Leave the fut (the dono hands it over first). sair_do_grupo. */
+  saiDoFut: boolean;
 };
 
 export function capacidades(papel: Papel, userId: string | null): Capacidades {
@@ -41,6 +49,10 @@ export function capacidades(papel: Papel, userId: string | null): Capacidades {
     respondePor: (jogador, estado) => estado !== "cancelada" && (organiza || (estado === "aberta" && ehDela(jogador))),
     // Whoever linked the wrong Jogador can undo it themselves.
     desvincula: (jogador) => jogador.conta_id != null && (organiza || ehDela(jogador)),
+    gerePessoas: papel === "dono",
+    gereFut: papel === "dono",
+    veEmails: organiza,
+    saiDoFut: papel !== "dono",
   };
 }
 
@@ -54,4 +66,8 @@ export const SO_LEITURA: Capacidades = {
   gerePartidas: false,
   respondePor: () => false,
   desvincula: () => false,
+  gerePessoas: false,
+  gereFut: false,
+  veEmails: false,
+  saiDoFut: false,
 };

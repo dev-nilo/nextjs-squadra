@@ -51,7 +51,7 @@ describe("who reads a Grupo's Elenco", () => {
     const { grupo, admin } = await fut();
     await addJogador(admin, grupo.id, "Craque do Admin");
 
-    await admin.client.from("grupo_membros").delete().eq("grupo_id", grupo.id).eq("user_id", admin.id);
+    await admin.client.rpc("sair_do_grupo", { grupo: grupo.id });
 
     const { data } = await elenco(admin, grupo.id);
     expect(data).toEqual([]);
@@ -88,7 +88,7 @@ describe("who writes a Grupo's Elenco", () => {
   it("an admin made membro loses write access to the Jogadores they created", async () => {
     const { grupo, dono, admin } = await fut();
     const { data: dele } = await addJogador(admin, grupo.id, "Do Ex-Admin");
-    await dono.client.from("grupo_membros").update({ papel: "membro" }).eq("grupo_id", grupo.id).eq("user_id", admin.id);
+    await dono.client.rpc("mudar_papel", { grupo: grupo.id, pessoa: admin.id, novo: "membro" });
 
     await admin.client.from("players").update({ name: "Ainda Mando" }).eq("id", dele!.id);
     await admin.client.from("players").delete().eq("id", dele!.id);

@@ -4,7 +4,8 @@ import type { EstadoDaPartida } from "@/lib/partida";
 import { capacidades, SO_LEITURA } from "./capacidades";
 
 // The same table the integration tests prove on the database side
-// (elenco-papeis, convites, partidas, sorteios, jogador-conta).
+// (elenco-papeis, convites, partidas, sorteios, jogador-conta, and pessoas,
+// which checks the people and fut rows against this very function).
 
 const EU = "user-eu";
 const meu = { conta_id: EU };
@@ -49,6 +50,15 @@ describe("capacidades", () => {
     }
   });
 
+  it.each([
+    ["dono", { gerePessoas: true, gereFut: true, veEmails: true, saiDoFut: false }],
+    ["admin", { gerePessoas: false, gereFut: false, veEmails: true, saiDoFut: true }],
+    ["membro", { gerePessoas: false, gereFut: false, veEmails: false, saiDoFut: true }],
+  ] as const)("%s, over people and the fut: %o", (papel, esperado) => {
+    const { gerePessoas, gereFut, veEmails, saiDoFut } = capacidades(papel, EU);
+    expect({ gerePessoas, gereFut, veEmails, saiDoFut }).toEqual(esperado);
+  });
+
   it("without a user, nothing of anyone's counts as theirs", () => {
     const pode = capacidades("membro", null);
     expect(pode.respondePor(semConta, "aberta")).toBe(false);
@@ -59,7 +69,9 @@ describe("capacidades", () => {
 describe("SO_LEITURA", () => {
   it("allows no write at all", () => {
     const jogador = { conta_id: "u1" };
-    expect(SO_LEITURA.editaElenco || SO_LEITURA.convida || SO_LEITURA.gerePartidas).toBe(false);
+    expect(
+      SO_LEITURA.editaElenco || SO_LEITURA.convida || SO_LEITURA.gerePartidas || SO_LEITURA.gerePessoas || SO_LEITURA.gereFut || SO_LEITURA.saiDoFut,
+    ).toBe(false);
     expect(SO_LEITURA.respondePor(jogador, "aberta")).toBe(false);
     expect(SO_LEITURA.desvincula(jogador)).toBe(false);
   });

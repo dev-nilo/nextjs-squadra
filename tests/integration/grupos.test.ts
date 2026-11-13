@@ -116,11 +116,11 @@ describe("renaming and deleting a Grupo", () => {
     const grupo = await criarGrupo(nilo, "Nome Antigo");
     await addMembro(grupo.id, admin, "admin");
 
-    const porAdmin = await admin.client.from("grupos").update({ nome: "Golpe" }).eq("id", grupo.id).select("id");
-    expect(porAdmin.data).toEqual([]);
+    const porAdmin = await admin.client.rpc("renomear_grupo", { grupo: grupo.id, nome: "Golpe" });
+    expect(porAdmin.error?.hint).toBe("sem-permissao");
 
-    const porDono = await nilo.client.from("grupos").update({ nome: "Nome Novo" }).eq("id", grupo.id).select("nome, slug");
-    expect(porDono.data).toEqual([{ nome: "Nome Novo", slug: grupo.slug }]);
+    const porDono = await nilo.client.rpc("renomear_grupo", { grupo: grupo.id, nome: "Nome Novo" });
+    expect(porDono.data).toMatchObject({ nome: "Nome Novo", slug: grupo.slug });
   });
 
   it("does not let anyone change the slug", async () => {
@@ -137,16 +137,17 @@ describe("renaming and deleting a Grupo", () => {
     await addMembro(grupo.id, admin, "admin");
     const jogador = await addJogador(nilo, grupo.id, "Some com o Grupo");
 
-    const porAdmin = await admin.client.from("grupos").delete().eq("id", grupo.id).select("id");
-    expect(porAdmin.data).toEqual([]);
+    const porAdmin = await admin.client.rpc("excluir_grupo", { grupo: grupo.id, confirmacao: "Fut do Nilo" });
+    expect(porAdmin.error?.hint).toBe("sem-permissao");
 
-    const porDono = await nilo.client.from("grupos").delete().eq("id", grupo.id).select("id");
-    expect(porDono.data).toEqual([{ id: grupo.id }]);
+    const porDono = await nilo.client.rpc("excluir_grupo", { grupo: grupo.id, confirmacao: "Fut do Nilo" });
+    expect(porDono.error).toBeNull();
     const { data } = await nilo.client.from("players").select("id").eq("id", jogador.data!.id);
     expect(data).toEqual([]);
   });
 });
 
+// Papéis, removing and leaving in depth: tests/integration/pessoas.test.ts.
 describe("papéis", () => {
   it("lets the dono promote a membro to admin and back", async () => {
     const nilo = await user("nilo");
@@ -154,51 +155,11 @@ describe("papéis", () => {
     const grupo = await criarGrupo(nilo, "Fut do Nilo");
     await addMembro(grupo.id, amigo, "membro");
 
-    const promove = await nilo.client
-      .from("grupo_membros").update({ papel: "admin" })
-      .eq("grupo_id", grupo.id).eq("user_id", amigo.id).select("papel");
-    expect(promove.data).toEqual([{ papel: "admin" }]);
+    const promove = await nilo.client.rpc("mudar_papel", { grupo: grupo.id, pessoa: amigo.id, novo: "admin" });
+    expect(promove.data?.papel).toBe("admin");
 
-    const rebaixa = await nilo.client
-      .from("grupo_membros").update({ papel: "membro" })
-      .eq("grupo_id", grupo.id).eq("user_id", amigo.id).select("papel");
-    expect(rebaixa.data).toEqual([{ papel: "membro" }]);
-  });
-
-  it("does not let an admin or a membro promote anyone", async () => {
-    const nilo = await user("nilo");
-    const admin = await user("admin");
-    const amigo = await user("amigo");
-    const grupo = await criarGrupo(nilo, "Fut do Nilo");
-    await addMembro(grupo.id, admin, "admin");
-    await addMembro(grupo.id, amigo, "membro");
-
-    for (const quem of [admin, amigo]) {
-      const { data } = await quem.client
-        .from("grupo_membros").update({ papel: "admin" })
-        .eq("grupo_id", grupo.id).eq("user_id", amigo.id).select("papel");
-      expect(data).toEqual([]);
-    }
-  });
-
-  it("never hands over or touches the dono row", async () => {
-    const nilo = await user("nilo");
-    const amigo = await user("amigo");
-    const grupo = await criarGrupo(nilo, "Fut do Nilo");
-    await addMembro(grupo.id, amigo, "membro");
-
-    const virarDono = await nilo.client
-      .from("grupo_membros").update({ papel: "dono" })
-      .eq("grupo_id", grupo.id).eq("user_id", amigo.id);
-    expect(virarDono.error).not.toBeNull();
-
-    const seRebaixar = await nilo.client
-      .from("grupo_membros").update({ papel: "membro" })
-      .eq("grupo_id", grupo.id).eq("user_id", nilo.id).select("papel");
-    expect(seRebaixar.data).toEqual([]);
-
-    const sair = await nilo.client.from("grupo_membros").delete().eq("grupo_id", grupo.id).eq("user_id", nilo.id).select("user_id");
-    expect(sair.data).toEqual([]);
+    const rebaixa = await nilo.client.rpc("mudar_papel", { grupo: grupo.id, pessoa: amigo.id, novo: "membro" });
+    expect(rebaixa.data?.papel).toBe("membro");
   });
 
   it("lets a membro leave, and the dono remove a membro", async () => {
@@ -209,14 +170,12 @@ describe("papéis", () => {
     await addMembro(grupo.id, amigo, "membro");
     await addMembro(grupo.id, outro, "membro");
 
-    const sai = await amigo.client.from("grupo_membros").delete().eq("grupo_id", grupo.id).eq("user_id", amigo.id).select("user_id");
-    expect(sai.data).toEqual([{ user_id: amigo.id }]);
+    expect((await amigo.client.rpc("sair_do_grupo", { grupo: grupo.id })).error).toBeNull();
+    expect((await outro.client.rpc("remover_do_grupo", { grupo: grupo.id, pessoa: nilo.id })).error).not.toBeNull();
+    expect((await nilo.client.rpc("remover_do_grupo", { grupo: grupo.id, pessoa: outro.id })).error).toBeNull();
 
-    const naoRemoveOutro = await outro.client.from("grupo_membros").delete().eq("grupo_id", grupo.id).eq("user_id", nilo.id).select("user_id");
-    expect(naoRemoveOutro.data).toEqual([]);
-
-    const remove = await nilo.client.from("grupo_membros").delete().eq("grupo_id", grupo.id).eq("user_id", outro.id).select("user_id");
-    expect(remove.data).toEqual([{ user_id: outro.id }]);
+    const { data } = await nilo.client.from("grupo_membros").select("user_id").eq("grupo_id", grupo.id);
+    expect(data).toEqual([{ user_id: nilo.id }]);
   });
 });
 
