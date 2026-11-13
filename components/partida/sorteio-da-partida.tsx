@@ -59,14 +59,8 @@ export function SorteioDaPartida({
       await onMudou();
     });
 
-  if (!podeGerir && !sorteio) {
-    return (
-      <section aria-label="Sorteio" className="flex flex-col gap-2">
-        <h2 className="text-label">Times</h2>
-        <p className="text-sm text-default-500">Os times aparecem aqui quando quem organiza publicar o sorteio.</p>
-      </section>
-    );
-  }
+  // Members see the Times once they're published, and nothing before.
+  if (!podeGerir && !sorteio) return null;
 
   return (
     <section aria-label="Sorteio" className="flex flex-col gap-3">

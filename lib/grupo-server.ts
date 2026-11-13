@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import type { Papel, Participacao, ParticipacaoDesde } from "@/lib/grupo";
@@ -19,8 +20,11 @@ export type ContextoDoGrupo =
  * For Server Components under /g/<slug>: who is signed in and their papel in
  * that Grupo. RLS only returns Grupos the user is a Membro of, so a slug of
  * someone else's Grupo reads the same as one that doesn't exist.
+ *
+ * Cached per request: the fut's layout and its page both call it, and they
+ * render in parallel, so they share one read.
  */
-export async function carregarGrupo(slug: string): Promise<ContextoDoGrupo> {
+export const carregarGrupo = cache(async function carregarGrupo(slug: string): Promise<ContextoDoGrupo> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -30,7 +34,7 @@ export async function carregarGrupo(slug: string): Promise<ContextoDoGrupo> {
   const grupo = await resolverGrupo(supabase, user.id, slug);
   if (!grupo) return { status: "nao-encontrado", user };
   return { status: "pronto", user, grupo, supabase, agora: Date.now() };
-}
+});
 
 /**
  * The Grupo at `slug` with the user's papel, or null when they aren't a

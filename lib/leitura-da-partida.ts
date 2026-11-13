@@ -66,6 +66,26 @@ export async function lerPartidaAoVivo(supabase: SupabaseClient, grupoId: string
   };
 }
 
+/**
+ * The Grupo's next Partida: the soonest one not cancelled and not started at
+ * `agora`. Null when none is scheduled. The fut's home page opens it.
+ */
+export async function lerProximaPartida(supabase: SupabaseClient, grupoId: string, agora: number): Promise<string | null> {
+  const proxima = semErro(
+    await supabase
+      .from("partidas")
+      .select("id")
+      .eq("grupo_id", grupoId)
+      .is("cancelada_em", null)
+      .gt("inicio", new Date(agora).toISOString())
+      .order("inicio", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+    "proxima partida",
+  );
+  return (proxima?.id as string | undefined) ?? null;
+}
+
 /** Everything the Partida page shows, or null when there's no such Partida for the caller. */
 export async function lerPartida(supabase: SupabaseClient, grupoId: string, id: string): Promise<LeituraDaPartida | null> {
   const [aoVivo, jogadores] = await Promise.all([

@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
-import { card, SEED_PASSWORD, signIn } from "./support";
+import { abrirAba, card, SEED_PASSWORD, signIn } from "./support";
 
 /** Bypasses RLS, only to arrange and clean up. CI exports both from `supabase status`. */
 function admin() {
@@ -11,7 +11,7 @@ function admin() {
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-test("a user in two Grupos switches between their Elencos at /g/<slug>", async ({ page }) => {
+test("a user in two Grupos switches between their Elencos, staying on the same tab", async ({ page }) => {
   const service = admin();
   const sufixo = randomUUID().slice(0, 8);
   const { data: created, error } = await service.auth.admin.createUser({
@@ -56,22 +56,24 @@ test("a user in two Grupos switches between their Elencos at /g/<slug>", async (
     await expect(page).toHaveURL(new RegExp(`/g/${quinta.slug}$`));
     const trocar = page.getByLabel("Trocar de fut");
     await expect(trocar).toHaveValue(quinta.slug);
+    await abrirAba(page, "Elenco");
+    await expect(page).toHaveURL(new RegExp(`/g/${quinta.slug}/elenco$`));
     await expect(card(page, "Craque da Quinta")).toBeVisible();
     await expect(card(page, "Craque do Sábado")).toHaveCount(0);
 
-    // Switching shows the other Elenco, and only it.
+    // Switching keeps the tab and shows the other Elenco, and only it.
     await trocar.selectOption(sabado.slug);
-    await expect(page).toHaveURL(new RegExp(`/g/${sabado.slug}$`));
+    await expect(page).toHaveURL(new RegExp(`/g/${sabado.slug}/elenco$`));
     await expect(card(page, "Craque do Sábado")).toBeVisible();
     await expect(card(page, "Craque da Quinta")).toHaveCount(0);
 
     // Back goes to the previous Grupo.
     await page.goBack();
-    await expect(page).toHaveURL(new RegExp(`/g/${quinta.slug}$`));
+    await expect(page).toHaveURL(new RegExp(`/g/${quinta.slug}/elenco$`));
     await expect(card(page, "Craque da Quinta")).toBeVisible();
 
     // The link opens that Grupo directly, and `/` reopens the last one used.
-    await page.goto(`/g/${sabado.slug}`);
+    await page.goto(`/g/${sabado.slug}/elenco`);
     await expect(card(page, "Craque do Sábado")).toBeVisible();
     await page.goto("/");
     await expect(page).toHaveURL(new RegExp(`/g/${sabado.slug}$`));

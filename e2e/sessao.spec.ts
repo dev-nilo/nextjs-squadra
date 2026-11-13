@@ -1,16 +1,17 @@
 import { expect, test } from "@playwright/test";
 import { randomUUID } from "node:crypto";
-import { admin, card, DEV_USER, linkDeConfirmacao, SEED_PASSWORD, signIn } from "./support";
+import { abrirAba, admin, card, DEV_USER, linkDeConfirmacao, SEED_PASSWORD, signIn } from "./support";
 
-test("signs in, sees only their own Elenco, and signs out", async ({ page }) => {
+test("signs in, sees only their own Elenco, and signs out", { tag: "@mobile" }, async ({ page }) => {
   await signIn(page, DEV_USER);
+  await abrirAba(page, "Elenco");
 
   await expect(card(page, "Paredão")).toBeVisible();
   // amigo@squadra.test owns this one: RLS must keep it out of dev's Elenco.
   await expect(card(page, "Goleiro do Amigo")).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Menu da conta" }).click();
-  await page.getByRole("button", { name: "Desconectar" }).click();
+  await abrirAba(page, "Você");
+  await page.getByRole("button", { name: "Sair" }).click();
   await expect(page.getByRole("heading", { name: "Bora pro jogo!" })).toBeVisible();
 
   await page.reload();
@@ -18,15 +19,13 @@ test("signs in, sees only their own Elenco, and signs out", async ({ page }) => 
   await expect(card(page, "Paredão")).toHaveCount(0);
 });
 
-test("signing out on a server-rendered page shows the sign-in screen there", async ({ page }) => {
+test("signing out on a server-rendered page shows the sign-in screen there", { tag: "@mobile" }, async ({ page }) => {
   await signIn(page, DEV_USER);
-  await page.getByRole("link", { name: "Partidas" }).click();
-  await expect(page.getByRole("heading", { name: "Partidas" })).toBeVisible();
+  await abrirAba(page, "Você");
 
-  await page.getByRole("button", { name: "Menu da conta" }).click();
-  await page.getByRole("button", { name: "Desconectar" }).click();
+  await page.getByRole("button", { name: "Sair" }).click();
   await expect(page.getByRole("heading", { name: "Bora pro jogo!" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Partidas" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Você", level: 1 })).toHaveCount(0);
 });
 
 test("a plain sign-up confirms the email in one hop to /, with one notice", async ({ page }) => {

@@ -20,7 +20,12 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    // Mobile-first: the flows people do on their phone, against the bottom tab bar
+    // and the docked controls. Tag a test `@mobile` to run it here too.
+    { name: "mobile", use: { ...devices["Pixel 7"] }, grep: /@mobile/ },
+  ],
   webServer: {
     command: `npm run start -- -p ${PORT}`,
     url: `http://localhost:${PORT}/auth`,

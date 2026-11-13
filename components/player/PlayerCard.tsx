@@ -2,31 +2,26 @@ import { Player } from "@/types";
 import { GK_LABELS, OUTFIELD_LABELS } from "@/lib/constants";
 import { getStatColor } from "@/lib/stat-color";
 import { getCountryCode, getCountryName, getFlagUrl } from "@/lib/countries";
-import { CheckCircle2, Pencil, Trash2, Unlink, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CheckCircle2, User } from "lucide-react";
 
 interface PlayerCardProps {
     player: Player;
-    /** Omitted for a membro, who can't edit the Elenco: the card shows no actions. */
-    onDelete?: (id: string) => void;
-    onEdit?: (player: Player) => void;
-    isSelected: boolean;
-    onToggleSelect: (id: string) => void;
     /** The signed-in user's own Jogador ("você"). */
     isMine?: boolean;
-    /** Given to the dono and admins: unlinks the Jogador from its account. */
-    onDesvincular?: (player: Player) => void;
+    /** Ticked in the Elenco's "Sortear rápido" mode. */
+    isSelected?: boolean;
+    /** In the Elenco album: what a tap does (open the card, or tick it while selecting). Omitted: a static card. */
+    onPress?: () => void;
+    /** "Sortear rápido" mode: the card is a toggle. */
+    selecting?: boolean;
 }
 
-export const PlayerCard = ({
-    player,
-    onDelete,
-    onEdit,
-    isSelected,
-    onToggleSelect,
-    isMine = false,
-    onDesvincular,
-}: PlayerCardProps) => {
+/**
+ * The Jogador card. No hover-only actions: in the album a tap opens it (or
+ * ticks it while selecting for the quick Sorteio); its actions live in the
+ * opened card.
+ */
+export const PlayerCard = ({ player, isMine = false, isSelected = false, onPress, selecting = false }: PlayerCardProps) => {
     const labels = player.position === "GOL" ? GK_LABELS : OUTFIELD_LABELS;
     const attributes = player.attributes;
     const countryCode = getCountryCode(player.nationality);
@@ -56,26 +51,26 @@ export const PlayerCard = ({
     ];
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter" || e.key === " ") {
+        if (onPress && (e.key === "Enter" || e.key === " ")) {
             e.preventDefault();
-            onToggleSelect(player.id);
+            onPress();
         }
     };
 
+    const label = `Carta de ${player.name}, ${player.position}, rating ${player.rating}${isSelected ? ", selecionado" : ""}${isMine ? ", você" : player.conta_id ? ", com conta" : ""}`;
+
     return (
         <div
-            role="button"
-            tabIndex={0}
-            aria-pressed={isSelected}
-            aria-label={`Carta de ${player.name}, ${player.position}, rating ${player.rating}${isSelected ? ", selecionado" : ""}${isMine ? ", você" : player.conta_id ? ", com conta" : ""}`}
-            onClick={() => onToggleSelect(player.id)}
-            onKeyDown={handleKeyDown}
+            role={onPress ? "button" : "img"}
+            tabIndex={onPress ? 0 : undefined}
+            aria-pressed={onPress && selecting ? isSelected : undefined}
+            aria-label={label}
+            onClick={onPress}
+            onKeyDown={onPress ? handleKeyDown : undefined}
             className={`
-                relative group w-full max-w-[17rem] sm:max-w-64 mx-auto aspect-[2/3] 
-                transition-all duration-300 ease-out
-                sm:hover:scale-105 sm:hover:z-10 
-                focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
-                cursor-pointer select-none
+                relative w-full max-w-[17rem] sm:max-w-64 mx-auto aspect-[2/3]
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background
+                ${onPress ? "cursor-pointer select-none" : ""}
             `}
         >
             {/* Selection Indicator */}
@@ -95,61 +90,6 @@ export const PlayerCard = ({
                 >
                     Você
                 </span>
-            )}
-
-            {/* Action Buttons - Always visible on mobile, hover on desktop */}
-            {onEdit && onDelete && (
-            <div
-                className="absolute top-1 right-1 sm:top-2 sm:right-2 z-50 flex gap-1.5 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
-                role="toolbar"
-                aria-label="Ações da carta"
-            >
-                <Button
-                    isIconOnly
-                    color="primary"
-                    size="sm"
-                    radius="full"
-                    className="shadow-lg"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit(player);
-                    }}
-                    aria-label={`Editar carta de ${player.name}`}
-                >
-                    <Pencil size={16} />
-                </Button>
-                {onDesvincular && player.conta_id && (
-                    <Button
-                        isIconOnly
-                        variant="flat"
-                        size="sm"
-                        radius="full"
-                        className="shadow-lg bg-content1"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDesvincular(player);
-                        }}
-                        aria-label={`Desvincular conta de ${player.name}`}
-                        title="Desvincular a conta deste jogador"
-                    >
-                        <Unlink size={16} />
-                    </Button>
-                )}
-                <Button
-                    isIconOnly
-                    color="danger"
-                    size="sm"
-                    radius="full"
-                    className="shadow-lg"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(player.id);
-                    }}
-                    aria-label={`Excluir carta de ${player.name}`}
-                >
-                    <Trash2 size={16} />
-                </Button>
-            </div>
             )}
 
             {/* Card Container */}

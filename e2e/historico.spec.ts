@@ -3,7 +3,7 @@ import { DEV_USER, signIn } from "./support";
 
 test("the Partidas page shows past Partidas with their Times, and each Jogador's Frequência", async ({ page }) => {
   await signIn(page, DEV_USER);
-  await page.getByRole("link", { name: "Partidas" }).click();
+  await page.getByRole("link", { name: "Ver todas as partidas" }).click();
 
   // Seeded: last week's Partida has published Times.
   const anteriores = page.getByRole("region", { name: "Anteriores" });

@@ -12,7 +12,16 @@ export async function signIn(page: Page, email: string) {
   await page.getByPlaceholder("Email").fill(email);
   await page.getByPlaceholder("Senha").fill(SEED_PASSWORD);
   await page.getByRole("button", { name: "Entrar", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Menu da conta" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bora pro jogo!" })).toHaveCount(0);
+}
+
+/**
+ * Opens a tab of the fut. Phones get the bottom bar and wider screens the
+ * header's tabs; only one of them is visible, so this finds the right one.
+ */
+export async function abrirAba(page: Page, aba: "Partidas" | "Elenco" | "Você") {
+  await page.getByRole("navigation", { name: "Seções do fut" }).getByRole("link", { name: aba, exact: true }).click();
+  await expect(page.getByRole("heading", { name: aba === "Partidas" ? /./ : aba, level: 1 }).first()).toBeVisible();
 }
 
 /** The Jogador card, by its accessible name ("Carta de <nome>, <posição>, rating <n>"). */

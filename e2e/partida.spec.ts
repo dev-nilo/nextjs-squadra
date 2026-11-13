@@ -28,7 +28,8 @@ test.afterEach(async () => {
 test("the dono creates a Partida, and a second browser sees presence change live", async ({ page, browser }) => {
   const local = `E2E Quadra ${Date.now()}`;
   await signIn(page, DEV_USER);
-  await page.getByRole("link", { name: "Partidas" }).click();
+  // The fut opens on its next Partida; every Partida (and "Nova partida") is a link away.
+  await page.getByRole("link", { name: "Ver todas as partidas" }).click();
   await expect(page.getByRole("heading", { name: "Partidas" })).toBeVisible();
 
   await page.getByRole("button", { name: "Nova partida" }).click();
@@ -44,27 +45,33 @@ test("the dono creates a Partida, and a second browser sees presence change live
   const outro = await (await browser.newContext()).newPage();
   await signIn(outro, DEV_USER);
   await outro.goto(page.url());
-  await expect(outro.getByText("Ao vivo")).toBeVisible();
-  await expect(secao(outro, /^Confirmados/).getByText("Ninguém confirmou ainda.")).toBeVisible();
+  await expect(outro.locator('[data-ao-vivo="true"]')).toBeVisible();
+  await expect(secao(outro, "Quem vai").getByText("Ninguém confirmou ainda.")).toBeVisible();
 
-  // The dono confirms two Jogadores: the other browser sees them, no reload.
-  await page.getByRole("button", { name: "Marcar Paredão: vou" }).click();
-  await expect(secao(outro, /^Confirmados/).getByText("Paredão")).toBeVisible();
-  await page.getByRole("button", { name: "Marcar Xerife: vou" }).click();
-  await expect(secao(outro, "Confirmados (2/2)").getByText("Xerife")).toBeVisible();
+  // The dono answers for others from the Partida's ⋯ menu; the other browser sees it, no reload.
+  await page.getByRole("button", { name: "Mais ações" }).click();
+  await page.getByRole("button", { name: "Responder por alguém" }).click();
+  const porAlguem = page.getByRole("dialog");
+  await porAlguem.getByRole("button", { name: "Marcar Paredão: vou" }).click();
+  await expect(secao(outro, "Quem vai").getByText("Paredão")).toBeVisible();
+  await porAlguem.getByRole("button", { name: "Marcar Xerife: vou" }).click();
+  await expect(secao(outro, "Quem vai").getByText("Xerife")).toBeVisible();
+  await expect(outro.getByText("2 de 2")).toBeVisible();
 
   // Full: the third goes to the lista de espera.
-  await page.getByRole("button", { name: "Marcar Foguete: vou" }).click();
+  await porAlguem.getByRole("button", { name: "Marcar Foguete: vou" }).click();
   await expect(secao(outro, "Lista de espera").getByText("Foguete")).toBeVisible();
 
   // Someone drops out: the first in line takes the vaga, live.
-  await page.getByRole("button", { name: "Marcar Paredão: não vou" }).click();
-  await expect(secao(outro, "Confirmados (2/2)").getByText("Foguete")).toBeVisible();
+  await porAlguem.getByRole("button", { name: "Marcar Paredão: não vou" }).click();
+  await expect(secao(outro, "Quem vai").getByText("Foguete")).toBeVisible();
+  // Who isn't going is folded into one line.
+  await outro.getByText(/^1 não vai/).click();
   await expect(secao(outro, "Não vão").getByText("Paredão")).toBeVisible();
   await expect(secao(outro, "Lista de espera")).toHaveCount(0);
 });
 
-test("a membro answers for their own Jogador only", async ({ page }) => {
+test("a membro answers for their own Jogador only", { tag: "@mobile" }, async ({ page }) => {
   const service = admin();
   const email = `membro-${randomUUID().slice(0, 8)}@squadra.test`;
   const { data: criado } = await service.auth.admin.createUser({ email, password: SEED_PASSWORD, email_confirm: true });
@@ -82,18 +89,20 @@ test("a membro answers for their own Jogador only", async ({ page }) => {
     await signIn(page, email);
     await page.goto(`/g/fut-do-dev/partidas/${partida!.id}`);
     const minha = secao(page, "Sua presença");
-    await expect(minha.getByText("você ainda não respondeu.")).toBeVisible();
+    // The question comes first, with the answers right under it.
+    await expect(minha.getByText("Você vai?")).toBeVisible();
 
     await minha.getByRole("button", { name: "Vou", exact: true }).click();
-    await expect(minha.getByText("você vai.")).toBeVisible();
-    await expect(secao(page, /^Confirmados/).getByText("Canhota")).toBeVisible();
+    await expect(minha.getByText("Você vai", { exact: true })).toBeVisible();
+    await expect(secao(page, "Quem vai").getByText("Canhota")).toBeVisible();
 
-    // No managing for a membro: no answering for others, no editing.
+    // No managing for a membro: no ⋯ menu, no answering for others.
+    await expect(page.getByRole("button", { name: "Mais ações" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: /^Marcar / })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Editar" })).toHaveCount(0);
 
+    await minha.getByRole("button", { name: "Mudar" }).click();
     await minha.getByRole("button", { name: "Não vou" }).click();
-    await expect(minha.getByText("você não vai.")).toBeVisible();
+    await expect(minha.getByText("Você não vai")).toBeVisible();
   } finally {
     await service.from("players").update({ conta_id: null }).eq("grupo_id", FUT_DO_DEV).eq("name", "Canhota");
     await service.auth.admin.deleteUser(userId);
