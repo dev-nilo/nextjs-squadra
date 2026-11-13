@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
-import { abrirAba, admin, card, DEV_USER, linkDeConfirmacao, SEED_PASSWORD, signIn } from "./support";
+import { abrirAba, acaoDaCarta, admin, card, DEV_USER, linkDeConfirmacao, SEED_PASSWORD, signIn } from "./support";
 
 const FUT_DO_DEV = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
@@ -109,10 +109,9 @@ test("someone who opened an invite and signs in on / is sent back to it, not to 
 
     // The dono unlinks it from the opened card: the Jogador stays, without an account.
     await page.goto("/g/fut-do-dev/elenco");
-    await card(page, "Paredão").click();
     page.once("dialog", (d) => d.accept());
-    await page.getByRole("button", { name: "Desvincular conta de Paredão" }).click();
-    await expect(page.getByRole("button", { name: "Desvincular conta de Paredão" })).toHaveCount(0);
+    await acaoDaCarta(page, "Paredão", "Desvincular conta");
+    await expect(card(page, "Paredão")).not.toHaveAccessibleName(/, com conta/);
     const { data: paredao } = await service.from("players").select("conta_id").eq("grupo_id", FUT_DO_DEV).eq("name", "Paredão").single();
     expect(paredao?.conta_id).toBeNull();
   } finally {

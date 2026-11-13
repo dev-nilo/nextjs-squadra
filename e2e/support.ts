@@ -24,9 +24,19 @@ export async function abrirAba(page: Page, aba: "Partidas" | "Elenco" | "Você")
   await expect(page.getByRole("heading", { name: aba === "Partidas" ? /./ : aba, level: 1 }).first()).toBeVisible();
 }
 
-/** The Jogador card, by its accessible name ("Carta de <nome>, <posição>, rating <n>"). */
+/**
+ * The Jogador card, by its accessible name ("Carta de <nome>, <posição>, rating <n>").
+ * A button when a tap does something (a photo card turns, or "Sortear rápido" ticks it), else an image.
+ */
 export function card(page: Page, name: string) {
-  return page.getByRole("button", { name: new RegExp(`^Carta de ${escapeRegExp(name)},`) });
+  const nome = new RegExp(`^Carta de ${escapeRegExp(name)},`);
+  return page.getByRole("button", { name: nome }).or(page.getByRole("img", { name: nome }));
+}
+
+/** Runs one of a card's actions from its ⋯ ("Editar", "Excluir", "Desvincular conta", "Sou eu"). */
+export async function acaoDaCarta(page: Page, name: string, acao: string) {
+  await page.getByRole("button", { name: `Ações da carta de ${name}` }).click();
+  await page.getByRole("button", { name: acao, exact: true }).click();
 }
 
 function escapeRegExp(text: string) {
