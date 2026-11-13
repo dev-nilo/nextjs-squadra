@@ -1,54 +1,31 @@
 "use client";
 
 import { Suspense, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingState } from "@/components/ui/full-screen-loader";
-import {
-  applySessaoToast,
-  completeEmailConfirmation,
-  toSessaoAuth,
-} from "@/lib/sessao";
+import { concluirConfirmacao, mostrarAviso, toSessaoAuth } from "@/lib/sessao";
 
+/**
+ * Where confirmation emails used to send everyone, and where Supabase sends an
+ * error or a PKCE `code`. Same policy as /auth/confirm (concluirConfirmacao);
+ * this page only shows the notice and goes where it says.
+ */
 function CallbackContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const ran = useRef(false);
 
   useEffect(() => {
     if (ran.current) return;
     ran.current = true;
 
-    const handleCallback = async () => {
-      const result = await completeEmailConfirmation(toSessaoAuth(createClient()), {
-        errorCode: searchParams.get("error_code") || searchParams.get("error"),
-        errorDescription: searchParams.get("error_description"),
-        code: searchParams.get("code"),
-        tokenHash: searchParams.get("token_hash"),
-        type: (searchParams.get("type") || "signup") as EmailOtpType,
-      });
-
-      if (!result.ok) {
-        if (result.code === "pkce_failed" || result.code === "otp_failed") {
-          console.error("[auth/callback]", result.code, result.message);
-        } else if (result.code === "confirm_error") {
-          console.error("[auth/callback]", result);
-        }
-        if (result.code !== "no_session") {
-          applySessaoToast(result, "callback", toast);
-        }
-        router.replace("/auth");
-        return;
-      }
-
-      applySessaoToast(result, "callback", toast);
-      router.replace("/");
-    };
-
-    handleCallback();
-  }, [searchParams, router]);
+    void (async () => {
+      const { destino, aviso } = await concluirConfirmacao(toSessaoAuth(createClient()), new URL(window.location.href));
+      mostrarAviso(aviso, toast);
+      router.replace(destino);
+    })();
+  }, [router]);
 
   return <LoadingState label="Processando autenticação..." />;
 }

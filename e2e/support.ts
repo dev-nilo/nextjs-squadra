@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 
 /** Users created by supabase/seed.sql. */
 export const SEED_PASSWORD = "squadra-dev-123";
@@ -21,4 +22,44 @@ export function card(page: Page, name: string) {
 
 function escapeRegExp(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Bypasses RLS, only to arrange and clean up. CI exports both from `supabase status`. */
+export function admin() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error("Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (from `npx supabase status`).");
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+/** The local Supabase's email catcher (Mailpit, or Inbucket on older CLIs). */
+const MAIL = process.env.SUPABASE_MAIL_URL ?? "http://127.0.0.1:54324";
+
+/** The confirmation link from the last email sent to `email`. */
+export async function linkDeConfirmacao(email: string): Promise<string> {
+  const achar = (html: string) => html.match(/href="([^"]*\/auth\/confirm\?[^"]+)"/)?.[1]?.replaceAll("&amp;", "&");
+  for (let tentativa = 0; tentativa < 30; tentativa++) {
+    const busca = await fetch(`${MAIL}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}`).catch(() => null);
+    if (busca?.ok) {
+      const { messages } = (await busca.json()) as { messages?: { ID: string }[] };
+      if (messages?.length) {
+        const mensagem = (await (await fetch(`${MAIL}/api/v1/message/${messages[0].ID}`)).json()) as { HTML: string };
+        const link = achar(mensagem.HTML);
+        if (link) return link;
+      }
+    } else {
+      const caixa = email.split("@")[0];
+      const lista = await fetch(`${MAIL}/api/v1/mailbox/${caixa}`).catch(() => null);
+      const mensagens = lista?.ok ? ((await lista.json()) as { id: string }[]) : [];
+      if (mensagens.length) {
+        const mensagem = (await (await fetch(`${MAIL}/api/v1/mailbox/${caixa}/${mensagens.at(-1)!.id}`)).json()) as {
+          body: { html: string };
+        };
+        const link = achar(mensagem.body.html);
+        if (link) return link;
+      }
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error(`No confirmation email for ${email} at ${MAIL}`);
 }
