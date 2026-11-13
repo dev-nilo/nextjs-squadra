@@ -10,6 +10,7 @@ import { GrupoSwitcher } from "@/components/grupo/grupo-switcher";
 import { AbasDoGrupo } from "@/components/partida/grupo-nav";
 import { ConvidarModal } from "@/components/convite/convidar-modal";
 import { QuemSouEu } from "@/components/jogador/quem-sou-eu";
+import { capacidades } from "@/lib/capacidades";
 import { UserMenu } from "@/components/auth/user-menu";
 import type { Participacao } from "@/lib/grupo";
 import { isDataUrlImage, uploadPlayerImage } from "@/lib/player-image";
@@ -66,14 +67,11 @@ export function ElencoView({
   participacoes,
   jogadores: players,
   userId,
-  podeEditar,
 }: {
   grupo: Participacao;
   participacoes: readonly Participacao[];
   jogadores: Player[];
   userId: string;
-  /** The dono and admins edit the Elenco. RLS enforces it; this only hides what would fail. */
-  podeEditar: boolean;
 }) {
   const router = useRouter();
 
@@ -93,6 +91,9 @@ export function ElencoView({
   const [numTeams, setNumTeams] = useState(3);
   const [minPlayersPerTeam, setMinPlayersPerTeam] = useState(5);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+
+  // What the papel allows. RLS enforces it; this only hides what would fail.
+  const pode = useMemo(() => capacidades(grupo.papel, userId), [grupo.papel, userId]);
 
   // Ids picked for the quick draw. Only those still in the Elenco count.
   const [marcados, setMarcados] = useState<ReadonlySet<string>>(() => new Set());
@@ -291,7 +292,7 @@ export function ElencoView({
                   <span className="hidden sm:inline">{todosMarcados ? "Desmarcar todas" : "Selecionar todas"}</span>
                 </Button>
 
-                {podeEditar && (
+                {pode.editaElenco && (
                   <>
                 <Button
                   onClick={handleOpenNew}
@@ -312,7 +313,10 @@ export function ElencoView({
                   <span className="sm:hidden">CSV</span>
                   <span className="hidden sm:inline">Importar CSV</span>
                 </Button>
+                  </>
+                )}
 
+                {pode.convida && (
                     <Button
                       onClick={() => setIsConvidarOpen(true)}
                       variant="flat"
@@ -321,7 +325,6 @@ export function ElencoView({
                     >
                       Convidar
                     </Button>
-                  </>
                 )}
 
                 {selectedIds.size > 0 && (
@@ -359,7 +362,7 @@ export function ElencoView({
               <p className="text-muted mt-2">
                 {searchQuery
                   ? "Tente ajustar a busca"
-                  : podeEditar
+                  : pode.editaElenco
                     ? "Clique em Nova carta para começar"
                     : "Quem organiza o fut cadastra os jogadores"}
               </p>
@@ -370,9 +373,9 @@ export function ElencoView({
                 <PlayerCard
                   key={player.id}
                   player={player}
-                  onDelete={podeEditar ? excluir : undefined}
-                  onEdit={podeEditar ? handleEdit : undefined}
-                  onDesvincular={podeEditar ? handleDesvincular : undefined}
+                  onDelete={pode.editaElenco ? excluir : undefined}
+                  onEdit={pode.editaElenco ? handleEdit : undefined}
+                  onDesvincular={pode.desvincula(player) ? handleDesvincular : undefined}
                   isMine={player.conta_id === userId}
                   isSelected={selectedIds.has(player.id)}
                   onToggleSelect={toggleSelect}
@@ -391,7 +394,7 @@ export function ElencoView({
                     player={player}
                     isSelected={selectedIds.has(player.id)}
                     actions={
-                      podeEditar ? (
+                      pode.editaElenco ? (
                       <div className="flex gap-1.5 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <Button
                             isIconOnly
@@ -437,7 +440,7 @@ export function ElencoView({
         />
 
         {/* Mounted only while open, so its copy of the Grupo's name isn't on the page otherwise. */}
-        {podeEditar && isConvidarOpen && (
+        {pode.convida && isConvidarOpen && (
           <ConvidarModal isOpen onClose={() => setIsConvidarOpen(false)} grupo={grupo} />
         )}
 
