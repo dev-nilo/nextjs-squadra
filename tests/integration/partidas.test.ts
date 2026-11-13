@@ -138,6 +138,25 @@ describe("vou / não vou", () => {
     expect((await responder(dono, id, daqui!.id, true)).error?.hint).toBe("cancelada");
   });
 
+  it("once the Partida started, a membro can't answer; the dono and admins still can", async () => {
+    const dono = await user("dono");
+    const grupoId = await grupoCom(dono);
+    const ze = await membroComJogador(grupoId, "ze");
+    const adminDoFut = await membroComJogador(grupoId, "admin", "admin");
+    const id = await partida(dono, grupoId, 10);
+    expect((await responder(ze.u, id, ze.jogadorId, true)).error).toBeNull();
+
+    // The game started an hour ago.
+    await service().from("partidas").update({ inicio: new Date(Date.now() - 3_600_000).toISOString() }).eq("id", id).throwOnError();
+
+    expect((await responder(ze.u, id, ze.jogadorId, false)).error?.hint).toBe("ja-comecou");
+    expect(await situacaoDe(id, ze.jogadorId)).toBe("confirmado");
+    // Zé didn't show up after all: an admin fixes the list, which is what Frequência counts.
+    expect((await responder(adminDoFut.u, id, ze.jogadorId, false)).error).toBeNull();
+    expect(await situacaoDe(id, ze.jogadorId)).toBe("nao_vou");
+    expect((await responder(dono, id, adminDoFut.jogadorId, true)).error).toBeNull();
+  });
+
   it("saying vou twice keeps the place in line", async () => {
     const dono = await user("dono");
     const grupoId = await grupoCom(dono);

@@ -31,7 +31,7 @@ One game of the Grupo: a start (date and time), a place and a number of vagas. T
 _Avoid_: Jogo (ambiguous with the app), match, event
 
 **Presença** _(en: attendance answer, RSVP)_:
-A Jogador's answer to a Partida: *vou* or *não vou* (no "talvez"). It belongs to the Jogador, not the account: a Membro answers for the Jogador linked to them, and the `dono` or an admin can answer for any Jogador, including ones with no account. A *vou* is *confirmado* while there are vagas, otherwise it joins the Lista de espera.
+A Jogador's answer to a Partida: *vou* or *não vou* (no "talvez"). It belongs to the Jogador, not the account: a Membro answers for the Jogador linked to them, and the `dono` or an admin can answer for any Jogador, including ones with no account. A *vou* is *confirmado* while there are vagas, otherwise it joins the Lista de espera. Once the Partida starts, a Membro can't answer any more; the `dono` and admins still can, to record who really showed up, which is what Frequência counts.
 _Avoid_: RSVP (in the UI), check-in
 
 **Lista de espera** _(en: waitlist)_:

@@ -66,6 +66,20 @@ export function estadoDaPartida(partida: Pick<Partida, "inicio" | "cancelada_em"
   return new Date(partida.inicio).getTime() <= agora.getTime() ? "encerrada" : "aberta";
 }
 
+/** setTimeout's ceiling (about 24.8 days): a longer wait fires at once. */
+const MAIOR_ESPERA = 2 ** 31 - 1;
+
+/**
+ * How long until an open Partida starts, for a screen that stays open across
+ * its start: wait this long and check the state again. Capped at what
+ * setTimeout can wait; checking again just schedules the rest. Null when the
+ * state can't change by itself any more (started or cancelled).
+ */
+export function esperaAteComecar(partida: Pick<Partida, "inicio" | "cancelada_em">, agora: Date): number | null {
+  if (estadoDaPartida(partida, agora) !== "aberta") return null;
+  return Math.min(new Date(partida.inicio).getTime() - agora.getTime(), MAIOR_ESPERA);
+}
+
 /** Same limits as the partidas table. */
 export const partidaSchema = z.object({
   inicio: z.coerce.date({ message: "Escolha dia e hora." }),
@@ -79,6 +93,7 @@ export const MOTIVO_DA_PRESENCA: Record<string, string> = {
   cancelada: "Essa partida foi cancelada.",
   "jogador-de-fora": "Esse jogador não é desse fut.",
   "sem-permissao": "Você só responde pelo seu jogador.",
+  "ja-comecou": "A partida já começou. Quem organiza ainda pode ajustar a lista.",
   "vagas-abaixo-dos-confirmados": "Já tem mais confirmados do que essas vagas.",
 };
 

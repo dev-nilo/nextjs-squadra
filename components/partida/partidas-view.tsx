@@ -9,22 +9,9 @@ import { GrupoNav } from "@/components/partida/grupo-nav";
 import { PartidaForm } from "@/components/partida/partida-form";
 import { Button } from "@/components/ui/button";
 import type { Participacao } from "@/lib/grupo";
+import type { FrequenciaDoJogador, ResumoDaPartida } from "@/lib/leitura-da-partida";
 import { estadoDaPartida, formatarInicio, type EstadoDaPartida } from "@/lib/partida";
 
-export type ResumoDaPartida = {
-  id: string;
-  inicio: string;
-  local: string;
-  vagas: number;
-  cancelada_em: string | null;
-  confirmados: number;
-  /** Confirmed Jogadores, by name: who played, once the Partida is over. */
-  quemFoi: string[];
-  /** Published Times, by name; null when none were published. */
-  times: { nome: string; jogadores: string[] }[] | null;
-};
-
-export type FrequenciaDoJogador = { nome: string; partidas: number; presencas: number; frequencia: number };
 
 const ROTULO: Record<EstadoDaPartida, string | null> = { aberta: null, encerrada: "Encerrada", cancelada: "Cancelada" };
 
