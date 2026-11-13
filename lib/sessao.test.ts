@@ -2,8 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import {
   changePassword,
   classifyAuthUrlError,
-  completeEmailConfirmation,
-  confirmEmailWithToken,
+  caminhoSeguro,
+  concluirConfirmacao,
+  sessaoToast,
   isEmailUnconfirmedError,
   isSupabaseConfigured,
   login,
@@ -157,87 +158,87 @@ describe("signup", () => {
   });
 });
 
-describe("completeEmailConfirmation", () => {
-  it("returns expired_link for URL errors before calling auth", async () => {
+const ORIGEM = "https://squadra-eight.vercel.app";
+/** The link the confirmation email carries (supabase/templates/confirm-signup.html). */
+const linkDoEmail = (next: string) => new URL(`${ORIGEM}/auth/confirm?token_hash=abc&type=signup&next=${encodeURIComponent(next)}`);
+
+describe("concluirConfirmacao", () => {
+  it("a plain sign-up lands on / in one hop, with one notice", async () => {
     const auth = createFakeAuth();
-    const result = await completeEmailConfirmation(auth, {
-      errorCode: "otp_expired",
-      errorDescription: null,
-      code: null,
-      tokenHash: null,
-      type: "signup",
-    });
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.code).toBe("expired_link");
-    expect(auth.exchangeCodeForSession).not.toHaveBeenCalled();
+    const { destino, aviso } = await concluirConfirmacao(auth, linkDoEmail(`${ORIGEM}/`));
+    expect(auth.verifyOtp).toHaveBeenCalledWith({ token_hash: "abc", type: "signup" });
+    expect(destino).toBe("/");
+    expect(aviso).toEqual({ variant: "success", title: "Email confirmado! Você entrou." });
   });
 
-  it("exchanges PKCE code on success", async () => {
-    const auth = createFakeAuth();
-    const result = await completeEmailConfirmation(auth, {
-      errorCode: null,
-      errorDescription: null,
-      code: "abc",
-      tokenHash: null,
-      type: "signup",
-    });
-    expect(result).toEqual({ ok: true, code: "confirmed", via: "pkce" });
-    expect(auth.exchangeCodeForSession).toHaveBeenCalledWith("abc");
+  it("an invite sign-up lands on the invite", async () => {
+    const { destino } = await concluirConfirmacao(createFakeAuth(), linkDoEmail(`${ORIGEM}/convite/0123456789abcdef0123456789abcdef`));
+    expect(destino).toBe("/convite/0123456789abcdef0123456789abcdef");
   });
 
-  it("verifies OTP token_hash", async () => {
-    const auth = createFakeAuth();
-    const result = await completeEmailConfirmation(auth, {
-      errorCode: null,
-      errorDescription: null,
-      code: null,
-      tokenHash: "tok",
-      type: "signup",
-    });
-    expect(result).toEqual({ ok: true, code: "confirmed", via: "otp" });
-    expect(auth.verifyOtp).toHaveBeenCalledWith({
-      token_hash: "tok",
-      type: "signup",
-    });
+  it("a link sent before this change (next = /auth/callback) also lands on / directly", async () => {
+    expect((await concluirConfirmacao(createFakeAuth(), linkDoEmail(`${ORIGEM}/auth/callback`))).destino).toBe("/");
   });
 
-  it("returns pkce_failed when exchange fails", async () => {
-    const auth = createFakeAuth({
-      exchangeCodeForSession: vi.fn(async () => ({
-        error: { message: "bad code" },
-      })),
-    });
-    const result = await completeEmailConfirmation(auth, {
-      errorCode: null,
-      errorDescription: null,
-      code: "abc",
-      tokenHash: null,
-      type: "signup",
-    });
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.code).toBe("pkce_failed");
+  it("never sends anyone off the site", async () => {
+    expect((await concluirConfirmacao(createFakeAuth(), linkDoEmail("https://evil.example/x"))).destino).toBe("/");
   });
 
-  it("returns no_session when nothing to complete", async () => {
+  it("an expired link in the URL goes to sign-in without calling auth", async () => {
     const auth = createFakeAuth();
-    const result = await completeEmailConfirmation(auth, {
-      errorCode: null,
-      errorDescription: null,
-      code: null,
-      tokenHash: null,
-      type: "signup",
-    });
-    expect(result).toEqual({ ok: false, code: "no_session" });
+    const url = new URL(`${ORIGEM}/auth/callback#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired`);
+    const { destino, aviso } = await concluirConfirmacao(auth, url);
+    expect(auth.verifyOtp).not.toHaveBeenCalled();
+    expect(destino).toBe("/auth");
+    expect(aviso).toMatchObject({ variant: "error", title: "Link expirado ou inválido" });
+  });
+
+  it("a token Supabase refuses goes to sign-in, saying why", async () => {
+    const auth = createFakeAuth({ verifyOtp: vi.fn(async () => ({ error: { message: "Token has expired or is invalid" } })) });
+    const { destino, aviso } = await concluirConfirmacao(auth, linkDoEmail(`${ORIGEM}/`));
+    expect(destino).toBe("/auth");
+    expect(aviso).toMatchObject({ variant: "error", title: "Não foi possível confirmar", description: "Token has expired or is invalid" });
+  });
+
+  it("exchanges a PKCE code", async () => {
+    const auth = createFakeAuth();
+    const { destino, aviso } = await concluirConfirmacao(auth, new URL(`${ORIGEM}/auth/callback?code=xyz`));
+    expect(auth.exchangeCodeForSession).toHaveBeenCalledWith("xyz");
+    expect(destino).toBe("/");
+    expect(aviso?.variant).toBe("success");
+  });
+
+  it("with nothing to confirm and no session, goes to sign-in quietly", async () => {
+    expect(await concluirConfirmacao(createFakeAuth(), new URL(`${ORIGEM}/auth/callback`))).toEqual({ destino: "/auth", aviso: null });
   });
 });
 
-describe("confirmEmailWithToken / logout / resend", () => {
-  it("confirmEmailWithToken succeeds", async () => {
-    const auth = createFakeAuth();
-    const result = await confirmEmailWithToken(auth, "hash", "signup");
-    expect(result).toEqual({ ok: true, code: "confirmed" });
+describe("caminhoSeguro", () => {
+  it("keeps a path on this site, from an absolute URL or a relative path", () => {
+    expect(caminhoSeguro(`${ORIGEM}/convite/abc`, ORIGEM)).toBe("/convite/abc");
+    expect(caminhoSeguro("/convite/abc?x=1#y", ORIGEM)).toBe("/convite/abc?x=1#y");
   });
 
+  it("sends anything off-site to /", () => {
+    expect(caminhoSeguro("https://evil.example/convite/abc", ORIGEM)).toBe("/");
+    expect(caminhoSeguro("//evil.example/x", ORIGEM)).toBe("/");
+    expect(caminhoSeguro("javascript:alert(1)", ORIGEM)).toBe("/");
+  });
+
+  it("is / when there's no next", () => {
+    expect(caminhoSeguro(null, ORIGEM)).toBe("/");
+    expect(caminhoSeguro("", ORIGEM)).toBe("/");
+  });
+});
+
+describe("sessaoToast", () => {
+  it("has a notice for every outcome, so a new code without one won't compile", () => {
+    expect(sessaoToast({ ok: false, code: "logout_failed" })).toMatchObject({ variant: "error" });
+    expect(sessaoToast({ ok: true, code: "logged_out" })).toMatchObject({ variant: "success" });
+  });
+});
+
+describe("logout / resend", () => {
   it("logout succeeds", async () => {
     const auth = createFakeAuth();
     expect(await logout(auth)).toEqual({ ok: true, code: "logged_out" });

@@ -1,70 +1,34 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingState } from "@/components/ui/full-screen-loader";
 import { Alert } from "@/components/ui/alert";
-import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { caminhoSeguro } from "@/lib/convite";
-import {
-  applySessaoToast,
-  completeEmailConfirmation,
-  decodeAuthDescription,
-  toSessaoAuth,
-} from "@/lib/sessao";
+import { concluirConfirmacao, decodeAuthDescription, mostrarAviso, toSessaoAuth } from "@/lib/sessao";
 
+/**
+ * The confirmation email's link lands here, and nothing happens until the user
+ * taps Confirmar, so an email scanner opening the link can't burn the token.
+ * Where to go and what to say after that is concluirConfirmacao's call.
+ */
 function ConfirmContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
 
-  const confirmationUrl = searchParams.get("confirmation_url");
-  const tokenHash = searchParams.get("token_hash");
-  const type = (searchParams.get("type") || "signup") as EmailOtpType;
+  const canConfirm = Boolean(searchParams.get("token_hash"));
   const error = searchParams.get("error_description") || searchParams.get("error");
-  // The email template passes the sign-up's redirect along (an invite link, say).
-  const next = searchParams.get("next");
-
-  const canConfirm = useMemo(
-    () => Boolean(confirmationUrl || tokenHash),
-    [confirmationUrl, tokenHash],
-  );
 
   const handleConfirm = async () => {
-    if (confirmationUrl) {
-      window.location.assign(confirmationUrl);
-      return;
-    }
-
-    if (!tokenHash) {
-      applySessaoToast({ ok: false, code: "invalid_link" }, "confirm", toast);
-      return;
-    }
-
     setLoading(true);
     try {
-      const result = await completeEmailConfirmation(toSessaoAuth(createClient()), {
-        errorCode: null,
-        errorDescription: null,
-        code: null,
-        tokenHash,
-        type,
-      });
-      applySessaoToast(result, "confirm", toast);
-      if (!result.ok) {
-        if (result.code === "otp_failed") {
-          router.replace("/auth?error=confirm_failed");
-        }
-        return;
-      }
-      router.replace(caminhoSeguro(next, window.location.origin));
-    } catch (err) {
-      console.error("[auth/confirm]", err);
-      applySessaoToast({ ok: false, code: "confirm_error" }, "confirm", toast);
+      const { destino, aviso } = await concluirConfirmacao(toSessaoAuth(createClient()), new URL(window.location.href));
+      mostrarAviso(aviso, toast);
+      router.replace(destino);
     } finally {
       setLoading(false);
     }

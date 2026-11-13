@@ -50,15 +50,43 @@ export type SessaoAuth = {
   ) => { data: { subscription: { unsubscribe: () => void } } };
 };
 
+/** Every outcome a Sessão flow can end in. sessaoToast has a case for each, checked by the compiler. */
+export type CodigoOk = "logged_in" | "signed_up" | "confirmed" | "resent" | "logged_out" | "password_changed";
+export type CodigoErro =
+  | "not_configured"
+  | "email_unconfirmed"
+  | "login_failed"
+  | "login_error"
+  | "password_mismatch"
+  | "password_too_short"
+  | "password_unchanged"
+  | "wrong_current_password"
+  | "password_change_failed"
+  | "password_change_error"
+  | "signup_failed"
+  | "email_taken"
+  | "signup_error"
+  | "email_required"
+  | "resend_failed"
+  | "resend_error"
+  | "logout_failed"
+  | "logout_error"
+  | "expired_link"
+  | "confirm_url_error"
+  | "pkce_failed"
+  | "otp_failed"
+  | "no_session"
+  | "confirm_error";
+
 export type SessaoOk = {
   ok: true;
-  code: string;
-  via?: string;
+  code: CodigoOk;
+  via?: "pkce" | "otp" | "implicit";
 };
 
 export type SessaoErr = {
   ok: false;
-  code: string;
+  code: CodigoErro;
   message?: string;
 };
 
@@ -260,30 +288,40 @@ export async function changePassword(
   }
 }
 
-export async function getCurrentUser(
-  auth: SessaoAuth,
-): Promise<{ user: User | null; error: { message: string } | null }> {
-  const { data, error } = await auth.getUser();
-  return { user: data.user ?? null, error };
+// ---------------------------------------------------------------------------
+// Email confirmation. One policy decides where the user lands and what the
+// screen says, for both entry points (/auth/confirm, where the user taps
+// Confirmar, and /auth/callback, kept for links already in inboxes and for a
+// PKCE `code`). The pages only show the notice and navigate.
+// ---------------------------------------------------------------------------
+
+/** Where the confirmation email used to send everyone; it now means `/`. */
+const CALLBACK_ANTIGO = "/auth/callback";
+
+/**
+ * Where to go after confirming the email, from the `next` the email link
+ * carries. Only paths on this site: anything else (another origin,
+ * `//evil.com`, garbage) goes to `/`, so the link can't become an open redirect.
+ */
+export function caminhoSeguro(next: string | null | undefined, origem: string): string {
+  if (!next) return "/";
+  try {
+    const url = new URL(next, origem);
+    if (url.origin !== origem) return "/";
+    if (url.pathname === CALLBACK_ANTIGO) return "/";
+    return `${url.pathname}${url.search}${url.hash}` || "/";
+  } catch {
+    return "/";
+  }
 }
 
-export function subscribeSession(
-  auth: SessaoAuth,
-  onChange: (user: User | null) => void,
-): () => void {
-  const {
-    data: { subscription },
-  } = auth.onAuthStateChange((_event, session) => {
-    onChange(session?.user ?? null);
-  });
-  return () => subscription.unsubscribe();
-}
-
-export function resultFromAuthUrlError(input: {
-  errorCode: string | null;
-  errorDescription: string | null;
-}): SessaoResult {
-  const classified = classifyAuthUrlError(input);
+/** An auth error Supabase put in the URL (query or hash), e.g. otp_expired after a scanner opened the link. */
+export function erroDaUrl(url: URL): SessaoErr | null {
+  const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+  const ler = (nome: string) => url.searchParams.get(nome) || hash.get(nome);
+  const errorCode = ler("error_code") || ler("error");
+  if (!errorCode) return null;
+  const classified = classifyAuthUrlError({ errorCode, errorDescription: ler("error_description") });
   return {
     ok: false,
     code: classified.kind === "expired_link" ? "expired_link" : "confirm_url_error",
@@ -291,79 +329,47 @@ export function resultFromAuthUrlError(input: {
   };
 }
 
-export async function completeEmailConfirmation(
-  auth: SessaoAuth,
-  params: {
-    errorCode: string | null;
-    errorDescription: string | null;
-    code: string | null;
-    tokenHash: string | null;
-    type: EmailOtpType | string;
-  },
-): Promise<SessaoResult> {
-  if (params.errorCode) {
-    const classified = classifyAuthUrlError({
-      errorCode: params.errorCode,
-      errorDescription: params.errorDescription,
-    });
-    return {
-      ok: false,
-      code: classified.kind === "expired_link" ? "expired_link" : "confirm_url_error",
-      message: classified.message,
-    };
-  }
-
+async function confirmar(auth: SessaoAuth, url: URL): Promise<SessaoResult> {
+  const erro = erroDaUrl(url);
+  if (erro) return erro;
   try {
-    if (params.code) {
-      const { error } = await auth.exchangeCodeForSession(params.code);
-      if (error) {
-        return { ok: false, code: "pkce_failed", message: error.message };
-      }
+    const code = url.searchParams.get("code");
+    if (code) {
+      const { error } = await auth.exchangeCodeForSession(code);
+      if (error) return { ok: false, code: "pkce_failed", message: error.message };
       return { ok: true, code: "confirmed", via: "pkce" };
     }
 
-    if (params.tokenHash) {
-      const { error } = await auth.verifyOtp({
-        token_hash: params.tokenHash,
-        type: (params.type || "signup") as EmailOtpType,
-      });
-      if (error) {
-        return { ok: false, code: "otp_failed", message: error.message };
-      }
+    const tokenHash = url.searchParams.get("token_hash");
+    if (tokenHash) {
+      const type = (url.searchParams.get("type") || "signup") as EmailOtpType;
+      const { error } = await auth.verifyOtp({ token_hash: tokenHash, type });
+      if (error) return { ok: false, code: "otp_failed", message: error.message };
       return { ok: true, code: "confirmed", via: "otp" };
     }
 
     const { data, error } = await auth.getSession();
-    if (!error && data.session) {
-      return { ok: true, code: "logged_in", via: "implicit" };
-    }
-
+    if (!error && data.session) return { ok: true, code: "logged_in", via: "implicit" };
     return { ok: false, code: "no_session" };
   } catch {
     return { ok: false, code: "confirm_error" };
   }
 }
 
-export async function confirmEmailWithToken(
-  auth: SessaoAuth,
-  tokenHash: string,
-  type: EmailOtpType | string = "signup",
-): Promise<SessaoResult> {
-  if (!tokenHash) {
-    return { ok: false, code: "invalid_link" };
+export type Aviso = ReturnType<typeof sessaoToast>;
+
+/**
+ * Finishes an email confirmation from the link's URL: where to go and what to
+ * say. Confirmed → the `next` the email carried (an invite, or `/`), with one
+ * notice. Anything else → the sign-in screen, saying what went wrong.
+ */
+export async function concluirConfirmacao(auth: SessaoAuth, url: URL): Promise<{ destino: string; aviso: Aviso }> {
+  const resultado = await confirmar(auth, url);
+  if (!resultado.ok) {
+    // Nothing to confirm and no session: just the sign-in screen, no notice.
+    return { destino: "/auth", aviso: resultado.code === "no_session" ? null : sessaoToast(resultado, "confirm") };
   }
-  try {
-    const { error } = await auth.verifyOtp({
-      token_hash: tokenHash,
-      type: (type || "signup") as EmailOtpType,
-    });
-    if (error) {
-      return { ok: false, code: "otp_failed", message: error.message };
-    }
-    return { ok: true, code: "confirmed" };
-  } catch {
-    return { ok: false, code: "confirm_error" };
-  }
+  return { destino: caminhoSeguro(url.searchParams.get("next"), url.origin), aviso: sessaoToast(resultado, "confirm") };
 }
 
 /** Toast/copy mapping for adapters — single policy for shared codes. */
@@ -373,7 +379,6 @@ export function sessaoToast(
     | "login"
     | "signup"
     | "resend"
-    | "callback"
     | "confirm"
     | "watcher"
     | "password" = "login",
@@ -386,13 +391,7 @@ export function sessaoToast(
   if (result.ok) {
     switch (result.code) {
       case "logged_in":
-        if (result.via === "implicit") {
-          return { variant: "success", title: "Você entrou." };
-        }
-        return {
-          variant: "success",
-          title: "Você entrou.",
-        };
+        return { variant: "success", title: "Você entrou." };
       case "signed_up":
         return {
           variant: "success",
@@ -402,10 +401,7 @@ export function sessaoToast(
           duration: 8000,
         };
       case "confirmed":
-        if (context === "confirm") {
-          return { variant: "success", title: "Email confirmado!" };
-        }
-        return { variant: "success", title: "Email confirmado com sucesso!" };
+        return { variant: "success", title: "Email confirmado! Você entrou." };
       case "resent":
         return {
           variant: "success",
@@ -421,7 +417,7 @@ export function sessaoToast(
           description: "Use a nova senha no próximo login.",
         };
       default:
-        return null;
+        return semCaso(result);
     }
   }
 
@@ -556,12 +552,6 @@ export function sessaoToast(
           context === "confirm" ? "Não foi possível confirmar" : "Erro ao confirmar",
         description: result.message,
       };
-    case "invalid_link":
-      return {
-        variant: "error",
-        title: "Link inválido",
-        description: "Peça um novo email de confirmação e tente novamente.",
-      };
     case "confirm_error":
       return {
         variant: "error",
@@ -570,38 +560,34 @@ export function sessaoToast(
             ? "Erro ao confirmar email"
             : "Erro ao processar confirmação",
       };
+    case "logout_failed":
+    case "logout_error":
+      return { variant: "error", title: "Não deu pra sair agora", description: result.message };
+    case "no_session":
+      return { variant: "error", title: "Entre de novo", description: "Sua sessão não foi encontrada." };
     default:
-      return {
-        variant: "error",
-        title: "Erro",
-        description: result.message,
-      };
+      return semCaso(result);
   }
 }
 
-export function applySessaoToast(
-  result: SessaoResult,
-  context: Parameters<typeof sessaoToast>[1],
-  notify: {
-    success: (
-      title: string,
-      opts?: { description?: string; duration?: number },
-    ) => void;
-    error: (
-      title: string,
-      opts?: { description?: string; duration?: number },
-    ) => void;
-  },
-): void {
-  const payload = sessaoToast(result, context);
-  if (!payload) return;
-  const opts = {
-    description: payload.description,
-    duration: payload.duration,
-  };
-  if (payload.variant === "success") {
-    notify.success(payload.title, opts);
-  } else {
-    notify.error(payload.title, opts);
-  }
+/** A code with no case above is a compile error: every outcome gets its notice. */
+function semCaso(resultado: never): never {
+  throw new Error(`sessaoToast: no notice for ${JSON.stringify(resultado)}`);
+}
+
+type Notificador = {
+  success: (title: string, opts?: { description?: string; duration?: number }) => void;
+  error: (title: string, opts?: { description?: string; duration?: number }) => void;
+};
+
+/** Shows a notice (a sonner `toast` in the app, a fake in tests). */
+export function mostrarAviso(aviso: Aviso, notify: Notificador): void {
+  if (!aviso) return;
+  const opts = { description: aviso.description, duration: aviso.duration };
+  if (aviso.variant === "success") notify.success(aviso.title, opts);
+  else notify.error(aviso.title, opts);
+}
+
+export function applySessaoToast(result: SessaoResult, context: Parameters<typeof sessaoToast>[1], notify: Notificador): void {
+  mostrarAviso(sessaoToast(result, context), notify);
 }

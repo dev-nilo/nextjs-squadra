@@ -26,22 +26,6 @@ export function situacaoDoConvite(valor: unknown): SituacaoDoConvite {
 
 export const caminhoDoConvite = (token: string) => `/convite/${token}`;
 
-/**
- * Where to go after confirming the email, from the `next` the email link
- * carries. Only paths on this site: anything else (another origin,
- * `//evil.com`, garbage) goes to `/`, so the link can't become an open redirect.
- */
-export function caminhoSeguro(next: string | null | undefined, origem: string): string {
-  if (!next) return "/";
-  try {
-    const url = new URL(next, origem);
-    if (url.origin !== origem) return "/";
-    return `${url.pathname}${url.search}${url.hash}` || "/";
-  } catch {
-    return "/";
-  }
-}
-
 // ---------------------------------------------------------------------------
 // The invite being accepted, remembered on this device: whoever opened a link
 // and then lands on `/` with no Grupo is sent back to it instead of being asked

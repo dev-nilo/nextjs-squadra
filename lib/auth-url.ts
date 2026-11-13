@@ -17,10 +17,11 @@ export function getAuthSiteUrl(): string {
 }
 
 /**
- * Where the confirmation email sends the user back to. The email template
- * passes it on as `next` (see supabase/templates/confirm-signup.html), so an
- * invite link survives the email round trip.
+ * Where the confirmation email sends the user back to: `/`, or the invite
+ * they signed up from. The email template passes it on as `next` (see
+ * supabase/templates/confirm-signup.html), and /auth/confirm goes straight
+ * there once confirmed.
  */
-export function getEmailRedirectTo(path = "/auth/callback"): string {
+export function getEmailRedirectTo(path = "/"): string {
   return `${getAuthSiteUrl()}${path}`
 }
