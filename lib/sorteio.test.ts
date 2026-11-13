@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Attributes, Player } from "@/types";
-import { moveMember, sortearTimes, teamAverage } from "@/lib/sorteio";
+import { faltamParaSortear, membrosPorNome, moveMember, sortearTimes, teamAverage } from "@/lib/sorteio";
 import type { Time } from "@/types";
 
 const attrs = (n: number): Attributes => ({
@@ -177,5 +177,22 @@ describe("moveMember", () => {
     const teams = buildTeams();
     expect(moveMember(teams, "a", 0, 5)).toBe(teams);
     expect(moveMember(teams, "a", -1, 1)).toBe(teams);
+  });
+});
+
+describe("faltamParaSortear", () => {
+  it("counts how many more Jogadores the Mínimo por time needs, never below 0", () => {
+    expect(faltamParaSortear(12, 3, 5)).toBe(3);
+    expect(faltamParaSortear(15, 3, 5)).toBe(0);
+    // A floor, not a cap: extra Jogadores are fine.
+    expect(faltamParaSortear(17, 3, 5)).toBe(0);
+  });
+});
+
+describe("membrosPorNome", () => {
+  it("lists by name, ignoring case and accents, with numbers in numeric order, without touching the input", () => {
+    const membros = [{ name: "Zé" }, { name: "álvaro" }, { name: "Bia" }, { name: "Jogador 10" }, { name: "Jogador 2" }];
+    expect(membrosPorNome(membros).map((m) => m.name)).toEqual(["álvaro", "Bia", "Jogador 2", "Jogador 10", "Zé"]);
+    expect(membros[0].name).toBe("Zé");
   });
 });

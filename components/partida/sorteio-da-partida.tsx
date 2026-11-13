@@ -8,6 +8,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { getTeamPresentation } from "@/lib/constants";
+import { membrosPorNome } from "@/lib/sorteio";
 import {
   cabeNoSorteio,
   MIN_TIMES,
@@ -18,8 +19,6 @@ import {
   type SorteioSalvo,
 } from "@/lib/sorteio-partida";
 
-/** Listed by name, not by strength: the draw order would rank people. */
-const porNome = new Intl.Collator("pt-BR", { sensitivity: "base", numeric: true });
 
 /** The Partida's Sorteio: drawn and adjusted by the dono and admins, read-only for everyone once published. */
 export function SorteioDaPartida({
@@ -149,9 +148,7 @@ export function SorteioDaPartida({
                 <span className="text-xs font-semibold tabular-nums text-default-500">OVR médio {time.avg}</span>
               </div>
               <ul className="flex flex-col gap-1" aria-label={`Jogadores do ${time.name}`}>
-                {[...time.members]
-                  .sort((a, b) => porNome.compare(a.name, b.name))
-                  .map((jogador) => (
+                {membrosPorNome(time.members).map((jogador) => (
                     <li key={jogador.id} className="flex items-center justify-between gap-2 text-sm">
                       <span className="min-w-0 truncate text-foreground">
                         {jogador.name} <span className="text-default-500">{jogador.position}</span>

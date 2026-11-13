@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { Logo } from "@/components/ui/logo";
 import { Player, Time } from "@/types";
-import { moveMember } from "@/lib/sorteio";
+import { membrosPorNome } from "@/lib/sorteio";
 import { getTeamPresentation } from "@/lib/constants";
 import { Download, Loader2, Shuffle } from "lucide-react";
 import { toast } from "sonner";
@@ -12,19 +12,12 @@ import { Modal, ModalHeader, ModalBody } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 
-/**
- * Sorteio order runs strongest to weakest, so a numbered list in that order (and in the shared PNG,
- * which hides ratings) would rank people. Display alphabetically instead; membership is untouched.
- */
-const byName = new Intl.Collator("pt-BR", { sensitivity: "base", numeric: true });
-
-const sortByName = (members: Player[]) => [...members].sort((a, b) => byName.compare(a.name, b.name));
 
 interface DrawTeamsModalProps {
     isOpen: boolean;
     onClose: () => void;
     generatedTeams: Time[] | null;
-    setGeneratedTeams: (teams: Time[]) => void;
+    onMover: (jogadorId: string, deTime: number, paraTime: number) => void;
     onRedraw: () => void;
 }
 
@@ -32,7 +25,7 @@ export const DrawTeamsModal = ({
     isOpen,
     onClose,
     generatedTeams,
-    setGeneratedTeams,
+    onMover,
     onRedraw,
 }: DrawTeamsModalProps) => {
     const exportRef = useRef<HTMLDivElement>(null);
@@ -63,7 +56,7 @@ export const DrawTeamsModal = ({
         }
 
         const { playerId, fromTeam } = draggedPlayer;
-        setGeneratedTeams(moveMember(generatedTeams, playerId, fromTeam, toTeam));
+        onMover(playerId, fromTeam, toTeam);
         setDraggedPlayer(null);
         setDragOverTeam(null);
     };
@@ -241,7 +234,7 @@ export const DrawTeamsModal = ({
                                         </p>
                                     ) : (
                                         <ul className="divide-y divide-divider">
-                                            {sortByName(team.members).map((player) => (
+                                            {membrosPorNome(team.members).map((player) => (
                                                 <li
                                                     key={player.id}
                                                     draggable
