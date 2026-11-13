@@ -11,7 +11,7 @@ test("signs in, sees only their own Elenco, and signs out", { tag: "@mobile" }, 
   await expect(card(page, "Goleiro do Amigo")).toHaveCount(0);
 
   await abrirAba(page, "Você");
-  await page.getByRole("button", { name: "Sair" }).click();
+  await page.getByRole("button", { name: "Sair", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Bora pro jogo!" })).toBeVisible();
 
   await page.reload();
@@ -23,7 +23,7 @@ test("signing out on a server-rendered page shows the sign-in screen there", { t
   await signIn(page, DEV_USER);
   await abrirAba(page, "Você");
 
-  await page.getByRole("button", { name: "Sair" }).click();
+  await page.getByRole("button", { name: "Sair", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Bora pro jogo!" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Você", level: 1 })).toHaveCount(0);
 });

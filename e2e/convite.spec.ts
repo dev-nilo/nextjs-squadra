@@ -6,12 +6,12 @@ const FUT_DO_DEV = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
 async function gerarLink(page: Page): Promise<string> {
   await signIn(page, DEV_USER);
-  await abrirAba(page, "Elenco");
-  await page.getByRole("button", { name: "Mais ações" }).click();
-  await page.getByRole("button", { name: "Convidar" }).click();
-  const modal = page.getByRole("dialog");
-  await modal.getByRole("button", { name: "Gerar link novo" }).click();
-  const campo = modal.getByRole("textbox", { name: /Link de convite/ }).first();
+  // Convites live in Pessoas, reached from Você.
+  await abrirAba(page, "Você");
+  await page.getByRole("link", { name: /^Pessoas/ }).click();
+  const convites = page.getByRole("region", { name: "Convites" });
+  await convites.getByRole("button", { name: "Gerar link novo" }).click();
+  const campo = convites.getByRole("textbox", { name: /Link de convite/ }).first();
   await expect(campo).toHaveValue(/\/convite\/[0-9a-f]{32}$/);
   return (await campo.inputValue()).replace(/^https?:\/\/[^/]+/, "");
 }
@@ -51,7 +51,6 @@ test("someone new signs up through an invite, confirms the email and joins as me
     await expect(convidado.getByRole("button", { name: "Nova carta" })).toHaveCount(0);
     await convidado.getByRole("button", { name: "Mais ações" }).click();
     await expect(convidado.getByRole("button", { name: "Sortear rápido" })).toBeVisible();
-    await expect(convidado.getByRole("button", { name: "Convidar" })).toHaveCount(0);
     await convidado.keyboard.press("Escape");
 
     // Not in the Elenco yet: in Você they add themselves, already linked to their account.
@@ -109,7 +108,7 @@ test("someone who opened an invite and signs in on / is sent back to it, not to 
     await expect(visitante.getByRole("img", { name: /^Carta de Paredão,.*, você$/ })).toBeVisible();
 
     // The dono unlinks it from the opened card: the Jogador stays, without an account.
-    await page.reload();
+    await page.goto("/g/fut-do-dev/elenco");
     await card(page, "Paredão").click();
     page.once("dialog", (d) => d.accept());
     await page.getByRole("button", { name: "Desvincular conta de Paredão" }).click();
@@ -144,8 +143,9 @@ test("a cancelled, expired or unknown link says so", async ({ page }) => {
 
 test("the dono cancels a link and it stops working", async ({ page, browser }) => {
   const caminho = await gerarLink(page);
-  await page.getByRole("dialog").getByRole("button", { name: "Cancelar link" }).first().click();
-  await expect(page.getByRole("dialog").getByText("Nenhum link ativo")).toBeVisible();
+  const convites = page.getByRole("region", { name: "Convites" });
+  await convites.getByRole("button", { name: "Cancelar link" }).first().click();
+  await expect(convites.getByText("Nenhum link ativo")).toBeVisible();
 
   const visitante = await (await browser.newContext()).newPage();
   await visitante.goto(caminho);

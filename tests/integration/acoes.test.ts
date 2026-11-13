@@ -6,7 +6,7 @@ import { FUT_NAO_ENCONTRADO, SEM_PERMISSAO, SESSAO_EXPIRADA, type Resultado } fr
 import { criarGrupo } from "@/lib/acoes/grupo";
 import { excluirJogador, importarJogadores, salvarJogador } from "@/lib/acoes/jogador";
 import { cancelarPartida, criarPartida, editarPartida, responderPresenca } from "@/lib/acoes/partida";
-import { excluirFut, lerPessoas, mudarPapel, passarPosse, removerDoFut, renomearFut, sairDoFut } from "@/lib/acoes/pessoas";
+import { excluirFut, mudarPapel, passarPosse, removerDoFut, renomearFut, sairDoFut } from "@/lib/acoes/pessoas";
 import { moverNoSorteio, publicarSorteio, sortearDaPartida } from "@/lib/acoes/sorteio";
 import { criarMeuJogador, desvincularJogador, vincularJogador } from "@/lib/acoes/vinculo";
 import { addMembro, admin as service, anon, newUser, removeUsers, type TestUser } from "./support";
@@ -194,7 +194,8 @@ describe("people and the fut", () => {
     expect(mensagem(await sairDoFut(dono.client, grupo.slug))).toBe("Passe o fut pra um admin antes de sair.");
 
     valor(await mudarPapel(dono.client, grupo.slug, amigo.id, "admin"));
-    const pessoas = valor(await lerPessoas(dono.client, grupo.slug));
+    const { data } = await dono.client.rpc("pessoas_do_grupo", { grupo: grupo.id });
+    const pessoas = data as { user_id: string; papel: string; email: string | null }[];
     expect(pessoas.map((p) => [p.user_id, p.papel])).toEqual([
       [dono.id, "dono"],
       [amigo.id, "admin"],
