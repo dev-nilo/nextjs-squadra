@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { esquecerPaginas } from "@/lib/pwa/paginas";
 import { isSupabaseConfigured, logout as sessaoLogout, toSessaoAuth } from "@/lib/sessao";
 
 export function useAuth() {
@@ -54,6 +55,8 @@ export function useAuth() {
       setError("Erro ao fazer logout");
       return;
     }
+    // The pages saved for use with no signal are this person's: gone with the session.
+    await esquecerPaginas();
     setUser(null);
   };
 
