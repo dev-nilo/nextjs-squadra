@@ -2,13 +2,12 @@ import { describe, expect, it } from "vitest";
 import type { Attributes } from "@/types";
 import {
   calculateOVR,
-  coerceStat,
   DEFAULT_ATTRIBUTES,
   ehFotoDoGrupo,
+  jogadorDaLinha,
   jogadorParaLinha,
   jogadorSchema,
-  normalizeAttributes,
-  normalizePlayer,
+  type LinhaDoJogador,
 } from "@/lib/jogador";
 
 describe("calculateOVR (Jogador domain seam)", () => {
@@ -44,75 +43,38 @@ describe("calculateOVR (Jogador domain seam)", () => {
   });
 });
 
-describe("coerceStat", () => {
-  it("keeps finite numbers", () => {
-    expect(coerceStat(77)).toBe(77);
-  });
+describe("jogadorDaLinha", () => {
+  const linha: LinhaDoJogador = {
+    id: "8f9c2f0e-2c43-4a8e-9d3a-0f6b1e2a7c11",
+    grupo_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    user_id: null,
+    conta_id: "conta-1",
+    name: "Paredão",
+    position: "GOL",
+    nationality: "BR",
+    image_url: null,
+    ovr: 62,
+    ...DEFAULT_ATTRIBUTES,
+    defesa: 76,
+  };
 
-  it("parses numeric strings and rounds", () => {
-    expect(coerceStat("82.6")).toBe(83);
-  });
-
-  it("rejects empty string and non-finite values", () => {
-    expect(coerceStat("")).toBeUndefined();
-    expect(coerceStat("abc")).toBeUndefined();
-    expect(coerceStat(NaN)).toBeUndefined();
-    expect(coerceStat(null)).toBeUndefined();
-  });
-});
-
-describe("normalizeAttributes", () => {
-  it("fills missing keys from defaults", () => {
-    expect(normalizeAttributes({ velocidade: 99 })).toEqual({
-      ...DEFAULT_ATTRIBUTES,
-      velocidade: 99,
-    });
-  });
-
-  it("coerces string attribute values", () => {
-    expect(normalizeAttributes({ chute: "88" }).chute).toBe(88);
-  });
-});
-
-describe("normalizePlayer", () => {
-  it("builds a Jogador with OVR from attributes when rating missing", () => {
-    const player = normalizePlayer({
-      id: "1",
-      name: "Nilo",
-      position: "ATA",
+  it("maps a players row to a Jogador, taking the database's rating as is", () => {
+    expect(jogadorDaLinha(linha)).toEqual({
+      id: linha.id,
+      name: "Paredão",
+      position: "GOL",
       nationality: "BR",
-      velocidade: 80,
-      resistencia: 80,
-      chute: 80,
-      posicionamento: 80,
-      defesa: 80,
-      drible: 80,
-      passe: 80,
-      fisico: 80,
+      image: null,
+      attributes: { ...DEFAULT_ATTRIBUTES, defesa: 76 },
+      rating: 62,
+      user_id: undefined,
+      grupo_id: linha.grupo_id,
+      conta_id: "conta-1",
     });
-
-    expect(player.rating).toBe(80);
-    expect(player.attributes.velocidade).toBe(80);
-    expect(player.name).toBe("Nilo");
   });
 
-  it("prefers nested attributes over defaults and maps image_url", () => {
-    const player = normalizePlayer({
-      id: "2",
-      name: "Ana",
-      attributes: { velocidade: 91 },
-      image_url: "https://example.com/a.jpg",
-      ovr: 55,
-    });
-
-    expect(player.attributes.velocidade).toBe(91);
-    expect(player.attributes.chute).toBe(DEFAULT_ATTRIBUTES.chute);
-    expect(player.image).toBe("https://example.com/a.jpg");
-    expect(player.rating).toBe(55);
-  });
-
-  it("falls back unknown nationality to BR", () => {
-    expect(normalizePlayer({ id: "3", nationality: "ZZ" }).nationality).toBe("BR");
+  it("never recomputes the rating: the trigger players_ovr owns it", () => {
+    expect(jogadorDaLinha({ ...linha, ovr: 10 }).rating).toBe(10);
   });
 });
 
@@ -144,10 +106,10 @@ describe("jogadorSchema", () => {
     expect(jogadorSchema.safeParse({ ...valido, ...mudanca }).success).toBe(false);
   });
 
-  it("maps to the players columns with the rating computed from the attributes", () => {
+  it("maps to the players columns and leaves the rating to the database", () => {
     const linha = jogadorParaLinha(jogadorSchema.parse(valido));
     expect(linha).toMatchObject({ name: "Paredão", position: "GOL", image_url: null, defesa: 90 });
-    expect(linha.ovr).toBe(calculateOVR({ ...DEFAULT_ATTRIBUTES, defesa: 90 }));
+    expect(linha).not.toHaveProperty("ovr");
     expect(linha).not.toHaveProperty("rating");
   });
 });

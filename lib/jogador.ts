@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { Attributes, Player, PlayerPosition } from "@/types";
-import { getCountryCode } from "./countries";
 import { PLAYER_IMAGES_BUCKET } from "./player-image";
 
 export const DEFAULT_ATTRIBUTES: Attributes = {
@@ -14,128 +13,58 @@ export const DEFAULT_ATTRIBUTES: Attributes = {
   fisico: 60,
 };
 
-const STAT_KEYS: (keyof Attributes)[] = [
-  "velocidade",
-  "resistencia",
-  "chute",
-  "posicionamento",
-  "defesa",
-  "drible",
-  "passe",
-  "fisico",
-];
-
-export const coerceStat = (value: unknown): number | undefined => {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    if (trimmed === "") return undefined;
-    const n = Number(trimmed);
-    if (Number.isFinite(n)) return Math.round(n);
-  }
-  return undefined;
-};
-
+/**
+ * The Overall as the screen previews it (the edit modal, a CSV import): the
+ * rounded mean of the attributes. The database computes the stored value the
+ * same way (trigger players_ovr) and ignores whatever a client sends.
+ */
 export const calculateOVR = (attrs: Attributes): number => {
   const values = Object.values(attrs);
   const sum = values.reduce((a, b) => a + b, 0);
   return Math.round(sum / values.length);
 };
 
-const parseNestedAttributes = (
-  raw: unknown,
-): Partial<Record<keyof Attributes, unknown>> | null => {
-  if (raw == null) return null;
-  if (typeof raw === "object" && !Array.isArray(raw)) {
-    return raw as Partial<Record<keyof Attributes, unknown>>;
-  }
-  if (typeof raw === "string") {
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        return parsed as Partial<Record<keyof Attributes, unknown>>;
-      }
-    } catch {
-      return null;
-    }
-  }
-  return null;
+/** The players columns every read of a live Jogador selects. */
+export const COLUNAS_DO_JOGADOR =
+  "id, grupo_id, user_id, conta_id, name, position, nationality, image_url, ovr, velocidade, resistencia, chute, posicionamento, defesa, drible, passe, fisico";
+
+/** A players row, as COLUNAS_DO_JOGADOR reads it. */
+export type LinhaDoJogador = Attributes & {
+  id: string;
+  grupo_id: string;
+  user_id: string | null;
+  conta_id: string | null;
+  name: string;
+  position: PlayerPosition;
+  nationality: string;
+  image_url: string | null;
+  ovr: number;
 };
 
-export const mergePlayerAttributesFromRow = (
-  source: Partial<Player> & Partial<Attributes> & Record<string, unknown>,
-): Attributes => {
-  const nested = parseNestedAttributes(source.attributes);
-  const merged: Attributes = { ...DEFAULT_ATTRIBUTES };
-
-  for (const key of STAT_KEYS) {
-    const fromRoot = coerceStat(source[key]);
-    const fromNested = nested ? coerceStat(nested[key]) : undefined;
-    const v = fromRoot ?? fromNested;
-    if (v !== undefined) {
-      merged[key] = v;
-    }
-  }
-
-  return merged;
-};
-
-export const normalizeAttributes = (value: unknown): Attributes => {
-  const source =
-    value && typeof value === "object" && !Array.isArray(value)
-      ? (value as Partial<Record<keyof Attributes, unknown>>)
-      : {};
-
-  const merged: Attributes = { ...DEFAULT_ATTRIBUTES };
-  for (const key of STAT_KEYS) {
-    const v = coerceStat(source[key]);
-    if (v !== undefined) {
-      merged[key] = v;
-    }
-  }
-  return merged;
-};
-
-export const normalizePlayer = (player: unknown): Player => {
-  const source = (player ?? {}) as Partial<Player> &
-    Partial<Attributes> &
-    Record<string, unknown>;
-
-  const attributes = mergePlayerAttributesFromRow(source);
-
-  const rating =
-    coerceStat(source.rating) ??
-    coerceStat(source["ovr"]) ??
-    calculateOVR(attributes);
-
-  const image =
-    (typeof source.image === "string" && source.image.length > 0
-      ? source.image
-      : null) ??
-    (typeof source.image_url === "string" && source.image_url.length > 0
-      ? source.image_url
-      : null);
-
-  const position = (source.position as PlayerPosition | undefined) ?? "ATA";
-
+/** A players row as the app's Jogador. The rating is the database's, never recomputed here. */
+export function jogadorDaLinha(linha: LinhaDoJogador): Player {
   return {
-    id: String(source.id ?? Date.now()),
-    name:
-      typeof source.name === "string" && source.name.trim()
-        ? source.name.trim()
-        : "Jogador",
-    position,
-    nationality: getCountryCode(source.nationality),
-    image,
-    attributes,
-    rating,
-    user_id: typeof source.user_id === "string" ? source.user_id : undefined,
-    grupo_id: typeof source.grupo_id === "string" ? source.grupo_id : undefined,
-    conta_id: typeof source.conta_id === "string" ? source.conta_id : undefined,
+    id: linha.id,
+    name: linha.name,
+    position: linha.position,
+    nationality: linha.nationality,
+    image: linha.image_url,
+    attributes: {
+      velocidade: linha.velocidade,
+      resistencia: linha.resistencia,
+      chute: linha.chute,
+      posicionamento: linha.posicionamento,
+      defesa: linha.defesa,
+      drible: linha.drible,
+      passe: linha.passe,
+      fisico: linha.fisico,
+    },
+    rating: linha.ovr,
+    user_id: linha.user_id ?? undefined,
+    grupo_id: linha.grupo_id,
+    conta_id: linha.conta_id ?? undefined,
   };
-};
+}
 
 const atributo = z
   .number({ message: "Atributo inválido." })
@@ -168,14 +97,16 @@ export const jogadorSchema = z.object({
 
 export type DadosDoJogador = z.infer<typeof jogadorSchema>;
 
-/** The `players` columns a save writes. The author and the Grupo are set by the caller. */
+/**
+ * The `players` columns a save writes. The author and the Grupo are set by the
+ * caller; the Overall by the database (trigger players_ovr).
+ */
 export function jogadorParaLinha(jogador: DadosDoJogador) {
   return {
     name: jogador.name,
     position: jogador.position,
     nationality: jogador.nationality,
     image_url: jogador.image,
-    ovr: calculateOVR(jogador.attributes),
     ...jogador.attributes,
   };
 }

@@ -1,6 +1,6 @@
-import type { Player, PlayerPosition } from "@/types";
+import type { Attributes, Player, PlayerPosition } from "@/types";
 import { POSITIONS } from "@/lib/constants";
-import { calculateOVR, coerceStat, mergePlayerAttributesFromRow } from "@/lib/jogador";
+import { calculateOVR, DEFAULT_ATTRIBUTES } from "@/lib/jogador";
 import { getCountryCode } from "@/lib/countries";
 
 /**
@@ -169,11 +169,33 @@ function parsePosition(value: unknown): PlayerPosition {
     : "ATA";
 }
 
+/** A CSV cell as a whole attribute value: "82.6" → 83, blank or text → undefined. */
+export const coerceStat = (value: unknown): number | undefined => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed === "") return undefined;
+    const n = Number(trimmed);
+    if (Number.isFinite(n)) return Math.round(n);
+  }
+  return undefined;
+};
+
+/** The 8 attributes of a CSV row; a missing or unreadable cell keeps the default. */
+function atributosDaLinha(mapped: Record<string, string>): Attributes {
+  const atributos: Attributes = { ...DEFAULT_ATTRIBUTES };
+  for (const chave of Object.keys(DEFAULT_ATTRIBUTES) as (keyof Attributes)[]) {
+    const valor = coerceStat(mapped[chave]);
+    if (valor !== undefined) atributos[chave] = valor;
+  }
+  return atributos;
+}
+
 function rowToPlayer(mapped: Record<string, string>): Player | null {
   const name = mapped.name?.trim();
   if (!name) return null;
 
-  const attrs = mergePlayerAttributesFromRow(mapped);
+  const attrs = atributosDaLinha(mapped);
   const position = parsePosition(mapped.position);
   const nationality = getCountryCode(mapped.nationality);
 

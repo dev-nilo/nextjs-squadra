@@ -55,7 +55,7 @@ The configured floor of Jogadores each Time should have. Validates selection bef
 _Avoid_: Jogadores por time (as a hard roster size), playersPerTeam (as a slice limit)
 
 **Overall (OVR)** _(en: overall rating)_:
-The Jogador's rating: the rounded mean of their attributes. The single source for that number.
+The Jogador's rating: the rounded mean of their attributes (0 to 99 each). The database computes it on every save (trigger `players_ovr`) and ignores whatever a client sends; the screen only previews it. The single source for that number.
 _Avoid_: Inline averages at call sites, rating recomputed ad hoc
 
 **Sessão** _(en: session)_:

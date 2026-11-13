@@ -7,7 +7,6 @@ import { COUNTRY_OPTIONS, DEFAULT_COUNTRY_CODE, getCountryCode } from "@/lib/cou
 import { processImage } from "@/lib/player-image-processing";
 import {
     DEFAULT_ATTRIBUTES,
-    normalizeAttributes,
     calculateOVR,
 } from "@/lib/jogador";
 import { StatSlider } from "./StatSlider";
@@ -48,7 +47,7 @@ export const PlayerModal = ({
                 setPosition(initialData.position);
                 setNationality(getCountryCode(initialData.nationality));
                 setImage(initialData.image);
-                setAttributes(normalizeAttributes(initialData.attributes));
+                setAttributes(initialData.attributes);
             } else {
                 // Reset form
                 setName("");
