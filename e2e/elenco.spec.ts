@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { abrirAba, card, DEV_USER, signIn } from "./support";
+import { abrirAba, acaoDaCarta, card, DEV_USER, signIn } from "./support";
 
 test("a new Jogador is saved through the server and shows in another browser", { tag: "@mobile" }, async ({ page, browser }) => {
   const name = `E2E Craque ${Date.now()}`;
@@ -22,9 +22,8 @@ test("a new Jogador is saved through the server and shows in another browser", {
   await expect(card(freshPage, name)).toBeVisible();
   await fresh.close();
 
-  // Leave the seeded Elenco as it was. A tap opens the card, where its actions are.
-  await card(page, name).click();
+  // Leave the seeded Elenco as it was. The card's actions are in its ⋯.
   page.once("dialog", (d) => d.accept());
-  await page.getByRole("button", { name: `Excluir carta de ${name}` }).click();
+  await acaoDaCarta(page, name, "Excluir");
   await expect(card(page, name)).toHaveCount(0);
 });

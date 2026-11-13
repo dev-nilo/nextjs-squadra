@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { FileUp, Plus, Search, Shuffle, User } from "lucide-react";
+import { FileUp, Pencil, Plus, Search, Shuffle, Trash2, Unlink, User, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { excluirJogador, importarJogadores, salvarJogador } from "@/app/actions/jogador";
 import { desvincularJogador, vincularJogador } from "@/app/actions/vinculo";
-import { CartaAberta } from "@/components/elenco/carta-aberta";
 import { capacidades, SO_LEITURA } from "@/lib/capacidades";
 import { useSemConexao } from "@/lib/pwa/conexao";
 import { useSorteioRapido } from "@/hooks/use-sorteio-rapido";
@@ -15,7 +14,7 @@ import { createClient } from "@/lib/supabase/client";
 import { meuJogador } from "@/lib/vinculo";
 import type { Player } from "@/types";
 import { Button } from "@/components/ui/button";
-import { MenuDeAcoes } from "@/components/ui/menu-de-acoes";
+import { MenuDeAcoes, type AcaoDoMenu } from "@/components/ui/menu-de-acoes";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Logo } from "@/components/ui/logo";
@@ -79,7 +78,6 @@ export function ElencoView({
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "rating" | "position">("rating");
-  const [aberta, setAberta] = useState<Player | null>(null);
   const [selecionando, setSelecionando] = useState(false);
 
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
@@ -103,7 +101,15 @@ export function ElencoView({
     setSelecionando(false);
   };
 
-  const tocar = (player: Player) => (selecionando ? toggleSelect(player.id) : setAberta(player));
+  /** What this person can do to a card, in its ⋯ (none with no signal: SO_LEITURA). */
+  const acoesDa = (player: Player): AcaoDoMenu[] => [
+    ...(!meu && !player.conta_id && !semConexao ? [{ rotulo: "Sou eu", icone: <UserCheck size={16} />, onSelect: () => void souEu(player) }] : []),
+    ...(pode.editaElenco ? [{ rotulo: "Editar", icone: <Pencil size={16} />, onSelect: () => handleEdit(player) }] : []),
+    ...(player.conta_id && pode.desvincula(player)
+      ? [{ rotulo: "Desvincular conta", icone: <Unlink size={16} />, onSelect: () => void handleDesvincular(player) }]
+      : []),
+    ...(pode.editaElenco ? [{ rotulo: "Excluir", icone: <Trash2 size={16} />, onSelect: () => void excluir(player), perigo: true }] : []),
+  ];
 
   const salvar = useCallback(
     async (dados: DadosDaCarta): Promise<boolean> => {
@@ -132,7 +138,6 @@ export function ElencoView({
   const excluir = useCallback(
     async (player: Player) => {
       if (!window.confirm(`Excluir a carta de ${player.name}? Não dá pra desfazer.`)) return;
-      setAberta(null);
       const resultado = await excluirJogador(grupo.slug, player.id);
       if (!resultado.ok) {
         toast.error("Não deu pra excluir a carta", { description: resultado.message });
@@ -156,7 +161,6 @@ export function ElencoView({
   );
 
   const handleEdit = useCallback((player: Player) => {
-    setAberta(null);
     setEditingPlayer(player);
     setIsModalOpen(true);
   }, []);
@@ -168,7 +172,6 @@ export function ElencoView({
         toast.error("Não deu pra vincular", { description: resultado.message });
         return;
       }
-      setAberta(null);
       toast.success(`Pronto, você é o ${player.name}`);
     },
     [grupo.slug],
@@ -182,7 +185,6 @@ export function ElencoView({
         toast.error("Não deu pra desvincular", { description: resultado.message });
         return;
       }
-      setAberta(null);
       toast.success("Conta desvinculada", { description: `${player.name} continua no elenco.` });
     },
     [grupo.slug],
@@ -286,7 +288,8 @@ export function ElencoView({
                 isMine={player.conta_id === userId}
                 isSelected={selectedIds.has(player.id)}
                 selecting={selecionando}
-                onPress={() => tocar(player)}
+                onSelect={() => toggleSelect(player.id)}
+                acoes={acoesDa(player)}
               />
             ))}
           </div>
@@ -324,17 +327,6 @@ export function ElencoView({
         </section>
       )}
 
-      {aberta && (
-        <CartaAberta
-          player={aberta}
-          isMine={aberta.conta_id === userId}
-          onClose={() => setAberta(null)}
-          onEditar={pode.editaElenco ? () => handleEdit(aberta) : undefined}
-          onExcluir={pode.editaElenco ? () => void excluir(aberta) : undefined}
-          onDesvincular={aberta.conta_id && pode.desvincula(aberta) ? () => void handleDesvincular(aberta) : undefined}
-          onSouEu={!meu && !aberta.conta_id && !semConexao ? () => void souEu(aberta) : undefined}
-        />
-      )}
 
       <PlayerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={salvar} initialData={editingPlayer} />
 

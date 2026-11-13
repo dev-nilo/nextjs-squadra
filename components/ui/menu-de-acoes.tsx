@@ -15,7 +15,20 @@ export type AcaoDoMenu = {
  * The ⋯ button and its menu (Popover API: closes on outside tap and Escape).
  * The menu opens under the button, aligned to its right edge.
  */
-export function MenuDeAcoes({ nome, acoes }: { /** The menu's accessible name, e.g. "Mais ações do elenco". */ nome: string; acoes: readonly AcaoDoMenu[] }) {
+export function MenuDeAcoes({
+  nome,
+  acoes,
+  rotulo = "Mais ações",
+  classeDoBotao = "",
+}: {
+  /** The menu's accessible name, e.g. "Mais ações do elenco". */
+  nome: string;
+  acoes: readonly AcaoDoMenu[];
+  /** The ⋯ button's accessible name. */
+  rotulo?: string;
+  /** Extra classes for the ⋯ button (e.g. on a card). */
+  classeDoBotao?: string;
+}) {
   const menuId = useId();
   const posicionar = (menu: HTMLElement) => {
     const gatilho = document.querySelector<HTMLElement>(`[popovertarget="${CSS.escape(menuId)}"]`);
@@ -26,7 +39,7 @@ export function MenuDeAcoes({ nome, acoes }: { /** The menu's accessible name, e
   };
   return (
     <>
-      <Button isIconOnly variant="flat" size="sm" popoverTarget={menuId} aria-label="Mais ações">
+      <Button isIconOnly variant="flat" size="sm" popoverTarget={menuId} aria-label={rotulo} className={classeDoBotao}>
         <Ellipsis size={18} />
       </Button>
       <div
