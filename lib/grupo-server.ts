@@ -67,5 +67,3 @@ export async function carregarParticipacoes(
     linha.grupos ? [{ ...linha.grupos, papel: linha.papel, desde: linha.created_at }] : [],
   );
 }
-
-export const ehGestor = (papel: Papel) => papel === "dono" || papel === "admin";

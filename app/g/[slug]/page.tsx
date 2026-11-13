@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ElencoView } from "@/components/elenco/elenco-view";
 import { EntrarParaVer, FutNaoEncontrado } from "@/components/partida/entrar-para-ver";
-import { carregarGrupo, carregarParticipacoes, ehGestor } from "@/lib/grupo-server";
+import { carregarGrupo, carregarParticipacoes } from "@/lib/grupo-server";
 import { normalizePlayer } from "@/lib/jogador";
 
 export const metadata: Metadata = { title: "Elenco · Squadra" };
@@ -29,7 +29,6 @@ export default async function ElencoPage({ params }: { params: Promise<{ slug: s
       participacoes={participacoes ?? [grupo]}
       jogadores={(linhas ?? []).map(normalizePlayer)}
       userId={user.id}
-      podeEditar={ehGestor(grupo.papel)}
     />
   );
 }

@@ -10,6 +10,7 @@ import { PartidaForm } from "@/components/partida/partida-form";
 import { Button } from "@/components/ui/button";
 import type { Participacao } from "@/lib/grupo";
 import type { FrequenciaDoJogador, ResumoDaPartida } from "@/lib/leitura-da-partida";
+import { capacidades } from "@/lib/capacidades";
 import { estadoDaPartida, formatarInicio, type EstadoDaPartida } from "@/lib/partida";
 
 
@@ -20,19 +21,18 @@ export function PartidasView({
   grupo,
   partidas,
   frequencia,
-  podeCriar,
   agora,
 }: {
   grupo: Participacao;
   partidas: ResumoDaPartida[];
   /** From the frequencia_jogadores view, highest first. */
   frequencia: FrequenciaDoJogador[];
-  podeCriar: boolean;
   /** From the server render, so both sides agree on what's upcoming. */
   agora: number;
 }) {
   const router = useRouter();
   const [criando, setCriando] = useState(false);
+  const podeCriar = capacidades(grupo.papel, null).gerePartidas;
   const momento = new Date(agora);
 
   const proximas = partidas

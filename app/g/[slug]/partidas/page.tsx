@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { EntrarParaVer, FutNaoEncontrado } from "@/components/partida/entrar-para-ver";
 import { PartidasView } from "@/components/partida/partidas-view";
-import { carregarGrupo, ehGestor } from "@/lib/grupo-server";
+import { carregarGrupo } from "@/lib/grupo-server";
 import { lerHistorico } from "@/lib/leitura-da-partida";
 
 export const metadata: Metadata = { title: "Partidas · Squadra" };
@@ -15,5 +15,5 @@ export default async function PartidasPage({ params }: { params: Promise<{ slug:
 
   const { supabase, grupo, agora } = ctx;
   const { partidas, frequencia } = await lerHistorico(supabase, grupo.id);
-  return <PartidasView grupo={grupo} partidas={partidas} frequencia={frequencia} podeCriar={ehGestor(grupo.papel)} agora={agora} />;
+  return <PartidasView grupo={grupo} partidas={partidas} frequencia={frequencia} agora={agora} />;
 }

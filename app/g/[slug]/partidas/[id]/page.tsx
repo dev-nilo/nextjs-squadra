@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { z } from "zod";
 import { EntrarParaVer, FutNaoEncontrado } from "@/components/partida/entrar-para-ver";
 import { PartidaView } from "@/components/partida/partida-view";
-import { carregarGrupo, ehGestor } from "@/lib/grupo-server";
+import { carregarGrupo } from "@/lib/grupo-server";
 import { lerPartida } from "@/lib/leitura-da-partida";
 
 export const metadata: Metadata = { title: "Partida · Squadra" };
@@ -23,6 +23,6 @@ export default async function PartidaPage({ params }: { params: Promise<{ slug: 
   const { jogadores, ...inicial } = lida;
 
   return (
-    <PartidaView grupo={grupo} userId={user.id} podeGerir={ehGestor(grupo.papel)} inicial={inicial} jogadores={jogadores} agora={agora} />
+    <PartidaView grupo={grupo} userId={user.id} inicial={inicial} jogadores={jogadores} agora={agora} />
   );
 }

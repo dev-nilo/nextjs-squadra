@@ -7,7 +7,7 @@ Amateur football squad management: a group's roster, its weekly games with prese
 A bilingual glossary. The domain terms stay in Portuguese in the code, the UI and the database, because that's how the people using it talk. Each one gives its English equivalent for readers, and the definitions are in English. Use the Portuguese term in code and docs. The English word is a gloss, not an alias.
 
 **Jogador** _(en: player)_:
-A player card with position, nationality, attributes, overall rating, and optional image. It may be linked to the account of the person it represents ("sou esse aqui"): at most one Jogador per account in each Grupo. A Membro links themselves, or adds themselves with default attributes; the `dono` or an `admin` can unlink. Many Jogadores have no account, and that's fine.
+A player card with position, nationality, attributes, overall rating, and optional image. It may be linked to the account of the person it represents ("sou esse aqui"): at most one Jogador per account in each Grupo. A Membro links themselves, or adds themselves with default attributes; the `dono`, an `admin` or the person themselves can unlink. Many Jogadores have no account, and that's fine.
 _Avoid_: Card (UI only), athlete
 
 **Elenco** _(en: roster)_:

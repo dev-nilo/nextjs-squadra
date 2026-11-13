@@ -11,6 +11,7 @@ import { SorteioDaPartida } from "@/components/partida/sorteio-da-partida";
 import { Button } from "@/components/ui/button";
 import type { Participacao } from "@/lib/grupo";
 import { usePartidaAoVivo } from "@/hooks/use-partida-ao-vivo";
+import { capacidades } from "@/lib/capacidades";
 import type { JogadorDaLista, PartidaAoVivo } from "@/lib/leitura-da-partida";
 import {
   formatarInicio,
@@ -25,14 +26,12 @@ import {
 export function PartidaView({
   grupo,
   userId,
-  podeGerir,
   inicial,
   jogadores,
   agora,
 }: {
   grupo: Participacao;
   userId: string;
-  podeGerir: boolean;
   inicial: PartidaAoVivo;
   jogadores: JogadorDaLista[];
   agora: number;
@@ -49,8 +48,12 @@ export function PartidaView({
   const respondidos = new Set(presencas.map((p) => p.jogador_id));
   const semResposta = jogadores.filter((j) => !respondidos.has(j.id));
 
-  const podeResponder = (jogadorId: string) =>
-    estado !== "cancelada" && (podeGerir || (estado === "aberta" && jogadorId === meu?.id));
+  const pode = capacidades(grupo.papel, userId);
+  const podeGerir = pode.gerePartidas;
+  const podeResponder = (jogadorId: string) => {
+    const jogador = porId.get(jogadorId);
+    return !!jogador && pode.respondePor(jogador, estado);
+  };
 
   const responder = async (jogadorId: string, vou: boolean) => {
     setRespondendo(jogadorId);
