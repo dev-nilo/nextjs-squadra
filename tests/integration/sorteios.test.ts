@@ -99,10 +99,11 @@ describe("the snapshot", () => {
     expect(jogadorZero(await lido())).toMatchObject({ name: "Renomeado", rating: 99 });
   });
 
-  it("still accepts the previous deploy's call with novo => true", async () => {
+  it("takes only the Partida and the Times: the old `novo` parameter is gone", async () => {
     const { dono, partidaId, ids } = await partidaComConfirmados(4, 10);
     const { error } = await dono.client.rpc("salvar_sorteio", { partida: partidaId, times: [[ids[0], ids[1]], [ids[2], ids[3]]], novo: true });
-    expect(error).toBeNull();
+    // PostgREST finds no function with those arguments.
+    expect(error?.code).toBe("PGRST202");
   });
 });
 
