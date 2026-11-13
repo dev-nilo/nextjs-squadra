@@ -23,6 +23,8 @@
   /* Papel: figurinha card stock. Same in both themes, it's a physical object. */
   --paper: 251 246 234;
   --paper-foreground: 20 33 61;
+  --paper-borda: 255 255 255; /* the white die-cut edge */
+  --paper-ouro: 154 116 32; /* the brilhante's gold ink, 5:1 on Papel */
 
   --content1: 255 255 255;
   --content1-foreground: 18 27 48;
@@ -100,6 +102,8 @@
 
   --paper: 251 246 234;
   --paper-foreground: 20 33 61;
+  --paper-borda: 255 255 255; /* the white die-cut edge */
+  --paper-ouro: 154 116 32; /* the brilhante's gold ink, 5:1 on Papel */
 
   --content1: 27 42 76;
   --content1-foreground: 242 244 247;

@@ -22,6 +22,15 @@ The mark is **Meio-campo**: the pitch's center circle seen from above, split by 
 - Light and dark follow the OS (`next-themes`, `defaultTheme="system"`, class strategy). There is no toggle.
 - The idea is **a quadra à noite**: light is Giz (chalk-white court lines, `#F2F4F7`) with navy ink; dark is the brand navy itself (`#14213D`) with Giz text, never a tinted near-black.
 - The Jogador card is the **one warm, printed object** in the app (Papel, `#FBF6EA`, same in both themes). Everything around it stays quiet.
+- **The figurinha** (`PlayerCard`), printed in **two inks**: navy on Papel, inside a white die-cut border (`paper-borda`, both themes). Nothing on it that a cheap sticker printer couldn't print: no gradients, no glow.
+  - **No photo** (most of the pelada): no empty photo window. The OVR, printed huge (`.text-numeral`, 54cqw), is the card's face; the position in words top-right ("atacante", "ala", "fixo", "goleiro").
+  - **With a photo**: the photo on top, printed in the same ink (a navy/Papel duotone: grayscale multiplied onto Papel, navy lightened in), so phone photos of every kind sit together. The OVR shrinks to 20cqw.
+  - The name in sentence case, bold, left-aligned, then one navy rule.
+  - The attributes in one ink, lowercase labels: the Jogador's **two best** (`pontosFortes`) in full weight, the rest at 55%. It says what they're good at. No traffic-light colors.
+  - The flag, small, next to the position (every nationality, Brazil's too).
+  - From OVR 85 (`OVR_BRILHANTE`) it's a **brilhante**: the OVR, the rule and a double frame printed in gold ink (`paper-ouro`). Flat, never animated.
+  - "você" is a Colete pill after the name; selected is a Colete ring plus a check.
+  - Every size is in `cqw` (the card is its own inline-size container), so the same card works in the 2-column album, opened, and in Você. No hover scale.
 - Every token has a light value under `:root` and a dark value under `.dark`. Only use tokens, so both themes stay correct for free.
 - Any change must be checked in **both** themes.
 
@@ -32,6 +41,7 @@ The mark is **Meio-campo**: the pitch's center circle seen from above, split by 
 | `background` / `foreground` | Page canvas (Giz `#F2F4F7` / navy `#14213D`) and default text (navy ink / Giz) |
 | `panel` / `panel-foreground` | The auth "pitch" panel: navy with cream in light, a deeper navy than the canvas in dark (so the auth card still floats). Wrap it in `.on-panel` so the mark inverts on it. |
 | `paper` / `paper-foreground` | Papel `#FBF6EA` with navy ink. **Only** the Jogador card (figurinha card stock). Same in both themes. |
+| `paper-borda`, `paper-ouro` | The figurinha's white die-cut edge and the brilhante's gold ink (5:1 on Papel). Same in both themes. **Only** the Jogador card. |
 | `brand` / `brand-foreground` | **Logo only**: the mark's navy half and ring, and its cream half. Navy/cream in light, swapped in dark. Never use for UI actions (that's `primary`). |
 | `content1` | Surfaces: modals, header, menus (white in light, a lifted navy in dark) |
 | `content2`–`content4` | Nested / raised fills |
@@ -69,7 +79,7 @@ Named classes, defined in `@layer components` in `app/globals.css`. Use the clas
 | `.text-numeral` | Bricolage at `wdth 75`, `opsz 96`, weight 800, tabular, tight | **Printed numerals**: OVR, "8 de 14", Time averages, the Sorteio spread. Combine with a size from the scale. |
 | `.text-display` | `text-2xl sm:text-4xl font-normal leading-tight tracking-tight` | **Only** the auth picture caption, in a single weight |
 
-Weights: body 400, labels and names in lists 500, section headings 600, titles 700, numerals 800. `font-black` is left only for the "Squadra" wordmark (and the Jogador card until its redesign).
+Weights: body 400, labels and names in lists 500, section headings 600, titles 700, numerals 800. `font-black` is left only for the "Squadra" wordmark.
 
 ## Copy
 
@@ -89,7 +99,7 @@ Weights: body 400, labels and names in lists 500, section headings 600, titles 7
 | `rounded-lg` | **Small items**: alerts, list rows, draggable rows, menu items, image previews |
 | `rounded-full` | Avatars, badges, round icon buttons |
 
-The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card rounded-b-xl`, a FUT-card shape that is part of the product identity. `rounded-t-card` is a named token (2rem) in `tailwind.config.ts`.
+The **only exception** is the Jogador card (`PlayerCard`): its radii are in `cqw` (6cqw outside, 4cqw for the paper) so they scale with the card, like a die-cut sticker.
 
 ## Elevation
 

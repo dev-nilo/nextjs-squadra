@@ -5,3 +5,6 @@ export const getStatColor = (value: number) => {
   if (value >= 50) return "text-warning-600";
   return "text-danger";
 };
+
+/** From this OVR on, the figurinha is a "brilhante" (foil). */
+export const OVR_BRILHANTE = 85;
