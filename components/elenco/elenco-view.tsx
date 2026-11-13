@@ -11,13 +11,13 @@ import { AbasDoGrupo } from "@/components/partida/grupo-nav";
 import { ConvidarModal } from "@/components/convite/convidar-modal";
 import { QuemSouEu } from "@/components/jogador/quem-sou-eu";
 import { capacidades } from "@/lib/capacidades";
+import { useSorteioRapido } from "@/hooks/use-sorteio-rapido";
 import { UserMenu } from "@/components/auth/user-menu";
 import type { Participacao } from "@/lib/grupo";
 import { isDataUrlImage, uploadPlayerImage } from "@/lib/player-image";
-import { sortearTimes } from "@/lib/sorteio";
 import { createClient } from "@/lib/supabase/client";
 import { meuJogador } from "@/lib/vinculo";
-import type { Player, Time } from "@/types";
+import type { Player } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -82,44 +82,26 @@ export function ElencoView({
   const [isImportCsvOpen, setIsImportCsvOpen] = useState(false);
   const [isConvidarOpen, setIsConvidarOpen] = useState(false);
 
-  const [generatedTeams, setGeneratedTeams] = useState<Time[] | null>(null);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "rating" | "position">("rating");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const [numTeams, setNumTeams] = useState(3);
-  const [minPlayersPerTeam, setMinPlayersPerTeam] = useState(5);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
 
   // What the papel allows. RLS enforces it; this only hides what would fail.
   const pode = useMemo(() => capacidades(grupo.papel, userId), [grupo.papel, userId]);
 
-  // Ids picked for the quick draw. Only those still in the Elenco count.
-  const [marcados, setMarcados] = useState<ReadonlySet<string>>(() => new Set());
-  const selectedIds = useMemo(
-    () => new Set(players.filter((p) => marcados.has(p.id)).map((p) => p.id)),
-    [players, marcados],
-  );
-  const todosMarcados = players.length > 0 && selectedIds.size === players.length;
+  const sorteio = useSorteioRapido(players);
+  const { selectedIds, todosMarcados, alternar: toggleSelect } = sorteio;
 
   useEffect(esquecerCacheAntigo, []);
 
-  const toggleSelect = useCallback((id: string) => {
-    setMarcados((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
-
   const toggleSelectAll = () => {
     if (todosMarcados) {
-      setMarcados(new Set());
+      sorteio.limpar();
       toast.info("Seleção limpa");
     } else {
-      setMarcados(new Set(players.map((p) => p.id)));
+      sorteio.marcarTodos();
       toast.success(`${players.length} carta(s) selecionada(s)`);
     }
   };
@@ -198,17 +180,10 @@ export function ElencoView({
   };
 
   const handleDrawTeams = () => {
-    const selectedPlayers = players.filter((p) => selectedIds.has(p.id));
-    const minRequiredPlayers = numTeams * minPlayersPerTeam;
-
-    if (selectedPlayers.length < minRequiredPlayers) {
-      toast.error("Poucos jogadores", {
-        description: `Selecione pelo menos ${minRequiredPlayers} jogadores`,
-      });
+    if (!sorteio.sortear()) {
+      toast.error("Poucos jogadores", { description: `Faltam ${sorteio.faltam} jogadores pra esse sorteio` });
       return;
     }
-
-    setGeneratedTeams(sortearTimes(selectedPlayers, numTeams));
     setIsTeamConfigOpen(false);
     setIsDrawModalOpen(true);
   };
@@ -453,19 +428,20 @@ export function ElencoView({
         <TeamConfigModal
             isOpen={isTeamConfigOpen}
             onClose={() => setIsTeamConfigOpen(false)}
-            numTeams={numTeams}
-            setNumTeams={setNumTeams}
-            minPlayersPerTeam={minPlayersPerTeam}
-            setMinPlayersPerTeam={setMinPlayersPerTeam}
+            numTeams={sorteio.numTimes}
+            setNumTeams={sorteio.setNumTimes}
+            minimoPorTime={sorteio.minimoPorTime}
+            setMinimoPorTime={sorteio.setMinimoPorTime}
             selectedCount={selectedIds.size}
+            faltam={sorteio.faltam}
             onDraw={handleDrawTeams}
         />
 
         <DrawTeamsModal
             isOpen={isDrawModalOpen}
             onClose={() => setIsDrawModalOpen(false)}
-            generatedTeams={generatedTeams}
-            setGeneratedTeams={setGeneratedTeams}
+            generatedTeams={sorteio.times}
+            onMover={sorteio.mover}
             onRedraw={handleDrawTeams}
         />
 

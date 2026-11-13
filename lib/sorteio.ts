@@ -124,3 +124,20 @@ export const sortearTimes = (
     avg: teamAverage(members),
   }));
 };
+
+/**
+ * How many more selected Jogadores a quick Sorteio needs: each Time gets at
+ * least `minimoPorTime` (the Mínimo por time is a floor, not a cap: whoever
+ * is left over joins a Time too). 0 when there are enough.
+ */
+export const faltamParaSortear = (selecionados: number, numTimes: number, minimoPorTime: number): number =>
+  Math.max(0, numTimes * minimoPorTime - selecionados);
+
+const porNome = new Intl.Collator("pt-BR", { sensitivity: "base", numeric: true });
+
+/**
+ * A Time's members by name. The draw order runs strongest to weakest, so
+ * listing them that way (or numbering them) would rank people.
+ */
+export const membrosPorNome = <T extends { name: string }>(membros: readonly T[]): T[] =>
+  [...membros].sort((a, b) => porNome.compare(a.name, b.name));

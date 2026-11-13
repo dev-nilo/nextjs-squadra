@@ -5,6 +5,7 @@ import { Shuffle } from "lucide-react";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { MAX_TIMES, MIN_TIMES } from "@/lib/sorteio-partida";
 
 interface RangeSliderProps {
     label: string;
@@ -53,9 +54,11 @@ interface TeamConfigModalProps {
     onClose: () => void;
     numTeams: number;
     setNumTeams: (n: number) => void;
-    minPlayersPerTeam: number;
-    setMinPlayersPerTeam: (n: number) => void;
+    minimoPorTime: number;
+    setMinimoPorTime: (n: number) => void;
     selectedCount: number;
+    /** From faltamParaSortear: 0 when there are enough selected Jogadores. */
+    faltam: number;
     onDraw: () => void;
 }
 
@@ -64,38 +67,39 @@ export const TeamConfigModal = ({
     onClose,
     numTeams,
     setNumTeams,
-    minPlayersPerTeam,
-    setMinPlayersPerTeam,
+    minimoPorTime,
+    setMinimoPorTime,
     selectedCount,
+    faltam,
     onDraw,
 }: TeamConfigModalProps) => {
-    const required = numTeams * minPlayersPerTeam;
-    const hasEnough = selectedCount >= required;
+    const required = numTeams * minimoPorTime;
+    const hasEnough = faltam === 0;
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} className="max-w-md">
             <ModalHeader className="flex flex-col gap-1">
                 <h2 className="text-title">Configurar times</h2>
                 <p className="text-muted">
-                    Defina quantos times e jogadores por time
+                    Quantos times, e o mínimo de jogadores em cada. Quem sobrar também entra num time.
                 </p>
             </ModalHeader>
 
             <ModalBody className="flex flex-col gap-5">
                 <RangeSlider
                     label="Número de times"
-                    min={2}
-                    max={8}
+                    min={MIN_TIMES}
+                    max={MAX_TIMES}
                     value={numTeams}
                     onChange={setNumTeams}
                 />
 
                 <RangeSlider
-                    label="Jogadores por time"
+                    label="Mínimo por time"
                     min={1}
                     max={20}
-                    value={minPlayersPerTeam}
-                    onChange={setMinPlayersPerTeam}
+                    value={minimoPorTime}
+                    onChange={setMinimoPorTime}
                 />
 
                 <div className="rounded-xl border border-divider bg-default-50 p-4 space-y-2.5">
@@ -110,7 +114,7 @@ export const TeamConfigModal = ({
                     <Alert tone={hasEnough ? "success" : "danger"} className="mt-1">
                         {hasEnough
                             ? "✓ Quantidade suficiente"
-                            : `✗ Faltam ${required - selectedCount} jogadores`}
+                            : `✗ Faltam ${faltam} jogadores`}
                     </Alert>
                 </div>
             </ModalBody>
