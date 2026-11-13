@@ -29,9 +29,6 @@ const config = {
           foreground: "rgb(var(--paper-foreground) / <alpha-value>)",
           borda: "rgb(var(--paper-borda) / <alpha-value>)",
           ouro: "rgb(var(--paper-ouro) / <alpha-value>)",
-          bom: "rgb(var(--paper-bom) / <alpha-value>)",
-          medio: "rgb(var(--paper-medio) / <alpha-value>)",
-          fraco: "rgb(var(--paper-fraco) / <alpha-value>)",
         },
         panel: {
           DEFAULT: "rgb(var(--panel) / <alpha-value>)",
