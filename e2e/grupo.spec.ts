@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
-import { card, DEV_USER, SEED_PASSWORD, signIn } from "./support";
+import { abrirAba, card, DEV_USER, SEED_PASSWORD, signIn } from "./support";
 
 /** Bypasses RLS, only to arrange and clean up. CI exports both from `supabase status`. */
 function admin() {
@@ -37,7 +37,7 @@ test("a user with no Grupo names it on first access", async ({ page }) => {
     await campo.fill("  Fut de Quinta  ");
     await page.getByRole("button", { name: "Criar fut" }).click();
 
-    // The Elenco opens with the Grupo's name, and the user is its dono.
+    // The fut opens with its name, and the user is its dono.
     await expect(page.getByText("Fut de Quinta", { exact: true })).toBeVisible();
     const { data: grupo } = await service.from("grupos").select("id, slug").eq("criado_por", userId).single().throwOnError();
     expect(grupo?.slug).toMatch(/^fut-de-quinta(-\d+)?$/);
@@ -46,7 +46,8 @@ test("a user with no Grupo names it on first access", async ({ page }) => {
 
     // The first Jogador lands in the new Grupo, and the naming screen doesn't come back.
     const jogador = `Primeiro ${Date.now()}`;
-    await page.getByRole("button", { name: /^Nova( carta)?$/ }).click();
+    await abrirAba(page, "Elenco");
+    await page.getByRole("button", { name: "Nova carta" }).click();
     const modal = page.getByRole("dialog");
     await modal.getByLabel("Nome do jogador").fill(jogador);
     await modal.getByLabel("Posição").selectOption("ALA");
@@ -65,7 +66,7 @@ test("a user with no Grupo names it on first access", async ({ page }) => {
   }
 });
 
-test("a user who already has a Grupo goes straight to the Elenco", async ({ page }) => {
+test("a user who already has a Grupo goes straight to it", async ({ page }) => {
   await signIn(page, DEV_USER);
   await expect(page.getByText("Fut do Dev", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Dê um nome pro seu fut" })).toHaveCount(0);

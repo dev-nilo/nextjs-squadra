@@ -1,11 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
-import { admin, card, DEV_USER, linkDeConfirmacao, SEED_PASSWORD, signIn } from "./support";
+import { abrirAba, admin, card, DEV_USER, linkDeConfirmacao, SEED_PASSWORD, signIn } from "./support";
 
 const FUT_DO_DEV = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
 async function gerarLink(page: Page): Promise<string> {
   await signIn(page, DEV_USER);
+  await abrirAba(page, "Elenco");
+  await page.getByRole("button", { name: "Mais ações" }).click();
   await page.getByRole("button", { name: "Convidar" }).click();
   const modal = page.getByRole("dialog");
   await modal.getByRole("button", { name: "Gerar link novo" }).click();
@@ -43,19 +45,24 @@ test("someone new signs up through an invite, confirms the email and joins as me
     await convidado.getByRole("button", { name: "Entrar no Fut do Dev" }).click();
 
     await expect(convidado).toHaveURL(/\/g\/fut-do-dev$/);
+    await abrirAba(convidado, "Elenco");
     await expect(card(convidado, "Paredão")).toBeVisible();
     // A membro reads the Elenco but doesn't get the editing actions.
-    await expect(convidado.getByRole("button", { name: /^Nova( carta)?$/ })).toHaveCount(0);
+    await expect(convidado.getByRole("button", { name: "Nova carta" })).toHaveCount(0);
+    await convidado.getByRole("button", { name: "Mais ações" }).click();
+    await expect(convidado.getByRole("button", { name: "Sortear rápido" })).toBeVisible();
     await expect(convidado.getByRole("button", { name: "Convidar" })).toHaveCount(0);
+    await convidado.keyboard.press("Escape");
 
-    // Not in the Elenco yet: they add themselves, already linked to their account.
+    // Not in the Elenco yet: in Você they add themselves, already linked to their account.
+    await abrirAba(convidado, "Você");
     await convidado.getByRole("button", { name: "Escolher meu jogador" }).click();
     const escolher = convidado.getByRole("dialog");
     await escolher.getByLabel("Seu nome", { exact: true }).fill("Convidado Novo");
     await escolher.getByLabel("Posição").selectOption("ATA");
     await escolher.getByRole("button", { name: "Criar meu jogador" }).click();
-    await expect(convidado.getByRole("button", { name: /^Carta de Convidado Novo, ATA, rating 60, você$/ })).toBeVisible();
-    await expect(convidado.getByRole("region", { name: "Vincular sua conta" })).toHaveCount(0);
+    await expect(convidado.getByRole("img", { name: /^Carta de Convidado Novo, ATA, rating 60, você$/ })).toBeVisible();
+    await expect(convidado.getByRole("button", { name: "Escolher meu jogador" })).toHaveCount(0);
 
     const { data: conta } = await service.auth.admin.listUsers({ perPage: 1000 });
     const userId = conta.users.find((u) => u.email === email)!.id;
@@ -93,16 +100,17 @@ test("someone who opened an invite and signs in on / is sent back to it, not to 
     const { data: membros } = await service.from("grupo_membros").select("papel").eq("grupo_id", FUT_DO_DEV).eq("user_id", criado.user!.id);
     expect(membros).toEqual([{ papel: "membro" }]);
 
-    // "Sou esse aqui": they claim a seeded Jogador nobody had claimed.
+    // "Sou esse aqui": in Você they claim a seeded Jogador nobody had claimed.
+    await abrirAba(visitante, "Você");
     await visitante.getByRole("button", { name: "Escolher meu jogador" }).click();
     await visitante.getByRole("dialog").getByRole("button", { name: "Sou Paredão" }).click();
-    await expect(visitante.getByRole("button", { name: /^Carta de Paredão,.*, você$/ })).toBeVisible();
+    await expect(visitante.getByRole("img", { name: /^Carta de Paredão,.*, você$/ })).toBeVisible();
     await visitante.reload();
-    await expect(visitante.getByRole("button", { name: /^Carta de Paredão,.*, você$/ })).toBeVisible();
+    await expect(visitante.getByRole("img", { name: /^Carta de Paredão,.*, você$/ })).toBeVisible();
 
-    // The dono unlinks it: the Jogador stays, without an account.
+    // The dono unlinks it from the opened card: the Jogador stays, without an account.
     await page.reload();
-    await card(page, "Paredão").hover();
+    await card(page, "Paredão").click();
     page.once("dialog", (d) => d.accept());
     await page.getByRole("button", { name: "Desvincular conta de Paredão" }).click();
     await expect(page.getByRole("button", { name: "Desvincular conta de Paredão" })).toHaveCount(0);

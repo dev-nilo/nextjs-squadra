@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CalendarPlus, ChevronRight, MapPin } from "lucide-react";
 import { criarPartida } from "@/app/actions/partida";
-import { GrupoNav } from "@/components/partida/grupo-nav";
 import { PartidaForm } from "@/components/partida/partida-form";
 import { Button } from "@/components/ui/button";
 import type { Participacao } from "@/lib/grupo";
@@ -16,7 +15,10 @@ import { estadoDaPartida, formatarInicio, type EstadoDaPartida } from "@/lib/par
 
 const ROTULO: Record<EstadoDaPartida, string | null> = { aberta: null, encerrada: "Encerrada", cancelada: "Cancelada" };
 
-/** `/g/<slug>/partidas`: upcoming Partidas first, then past and cancelled ones. */
+/**
+ * `/g/<slug>/partidas`, and the fut's home when nothing is scheduled:
+ * upcoming Partidas first, then past and cancelled ones, then Frequência.
+ */
 export function PartidasView({
   grupo,
   partidas,
@@ -41,35 +43,31 @@ export function PartidasView({
   const anteriores = partidas.filter((p) => estadoDaPartida(p, momento) !== "aberta");
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <GrupoNav slug={grupo.slug} nome={grupo.nome} aba="partidas" />
+    <div className="mx-auto flex max-w-3xl flex-col gap-8">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-title">Partidas</h1>
+        {podeCriar && (
+          <Button color="primary" size="sm" startContent={<CalendarPlus size={16} />} onClick={() => setCriando(true)}>
+            Nova partida
+          </Button>
+        )}
+      </div>
 
-      <main className="mx-auto flex max-w-3xl flex-col gap-8 px-3 py-6 sm:px-6 sm:py-8">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-title">Partidas</h1>
-          {podeCriar && (
-            <Button color="primary" size="sm" startContent={<CalendarPlus size={16} />} onClick={() => setCriando(true)}>
-              Nova partida
-            </Button>
-          )}
-        </div>
+      <Secao titulo="Próximas" vazio={podeCriar ? "Nenhuma partida marcada. Crie a próxima." : "Nenhuma partida marcada ainda."}>
+        {proximas.map((p) => (
+          <ItemDaPartida key={p.id} slug={grupo.slug} partida={p} estado="aberta" />
+        ))}
+      </Secao>
 
-        <Secao titulo="Próximas" vazio={podeCriar ? "Nenhuma partida marcada. Crie a próxima." : "Nenhuma partida marcada ainda."}>
-          {proximas.map((p) => (
-            <ItemDaPartida key={p.id} slug={grupo.slug} partida={p} estado="aberta" />
+      {anteriores.length > 0 && (
+        <Secao titulo="Anteriores">
+          {anteriores.map((p) => (
+            <ItemDaPartida key={p.id} slug={grupo.slug} partida={p} estado={estadoDaPartida(p, momento)} detalhes />
           ))}
         </Secao>
+      )}
 
-        {anteriores.length > 0 && (
-          <Secao titulo="Anteriores">
-            {anteriores.map((p) => (
-              <ItemDaPartida key={p.id} slug={grupo.slug} partida={p} estado={estadoDaPartida(p, momento)} detalhes />
-            ))}
-          </Secao>
-        )}
-
-        {frequencia.length > 0 && <Frequencia linhas={frequencia} />}
-      </main>
+      {frequencia.length > 0 && <Frequencia linhas={frequencia} />}
 
       {criando && (
         <PartidaForm

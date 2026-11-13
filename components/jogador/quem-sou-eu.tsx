@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { criarMeuJogador, vincularJogador } from "@/app/actions/vinculo";
 import { Alert } from "@/components/ui/alert";
@@ -10,76 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Modal, ModalBody, ModalHeader } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
 import { POSITIONS } from "@/lib/constants";
-import type { Participacao } from "@/lib/grupo";
 import { semConta } from "@/lib/vinculo";
 import type { Player } from "@/types";
 
-const chaveDispensado = (grupoId: string) => `squadra:quem-sou-eu-dispensado:${grupoId}`;
-
-function foiDispensado(grupoId: string) {
-  try {
-    return localStorage.getItem(chaveDispensado(grupoId)) === "1";
-  } catch {
-    return false;
-  }
-}
-
 /**
- * For a Membro with no Jogador in this Grupo yet: pick "sou esse aqui" from
- * the Jogadores nobody claimed, or add themselves. Dismissable per Grupo.
+ * "Qual desses é você?": claim a Jogador nobody has claimed, or add yourself.
+ * Opened from Você. The action revalidates the fut's pages, which bring the
+ * linked Jogador back.
  */
-export function QuemSouEu({ grupo, players }: { grupo: Participacao; players: readonly Player[] }) {
-  const [dispensado, setDispensado] = useState(() => foiDispensado(grupo.id));
-  const [aberto, setAberto] = useState(false);
-
-  if (dispensado && !aberto) return null;
-
-  const dispensar = () => {
-    try {
-      localStorage.setItem(chaveDispensado(grupo.id), "1");
-    } catch {
-      /* storage unavailable: hide for this visit only */
-    }
-    setDispensado(true);
-  };
-
-  return (
-    <>
-      {!dispensado && (
-        <div
-          role="region"
-          aria-label="Vincular sua conta"
-          className="mb-6 flex flex-col gap-3 rounded-2xl border border-accent/50 bg-accent/10 p-4 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <div className="flex items-start gap-3">
-            <UserCheck className="mt-0.5 h-5 w-5 shrink-0 text-foreground" aria-hidden="true" />
-            <div>
-              <p className="font-bold text-foreground">Qual desses é você?</p>
-              <p className="text-sm text-default-500">
-                Vincule sua conta ao seu jogador. É assim que o fut vai saber quem confirmou presença.
-              </p>
-            </div>
-          </div>
-          <div className="flex shrink-0 gap-2">
-            <Button size="sm" variant="flat" onClick={dispensar}>
-              Agora não
-            </Button>
-            <Button size="sm" color="primary" onClick={() => setAberto(true)}>
-              Escolher meu jogador
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {aberto && (
-        <EscolherJogador slug={grupo.slug} players={players} onClose={() => setAberto(false)} />
-      )}
-    </>
-  );
-}
-
-/** The action revalidates the Elenco page, which brings the linked Jogador back. */
-function EscolherJogador({ slug, players, onClose }: { slug: string; players: readonly Player[]; onClose: () => void }) {
+export function EscolherJogador({ slug, players, onClose }: { slug: string; players: readonly Player[]; onClose: () => void }) {
   const [busca, setBusca] = useState("");
   const [nome, setNome] = useState("");
   const [posicao, setPosicao] = useState("ALA");

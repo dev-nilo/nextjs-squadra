@@ -28,7 +28,8 @@ test.afterEach(async () => {
 test("the dono creates a Partida, and a second browser sees presence change live", async ({ page, browser }) => {
   const local = `E2E Quadra ${Date.now()}`;
   await signIn(page, DEV_USER);
-  await page.getByRole("link", { name: "Partidas" }).click();
+  // The fut opens on its next Partida; every Partida (and "Nova partida") is a link away.
+  await page.getByRole("link", { name: "Ver todas as partidas" }).click();
   await expect(page.getByRole("heading", { name: "Partidas" })).toBeVisible();
 
   await page.getByRole("button", { name: "Nova partida" }).click();
@@ -64,7 +65,7 @@ test("the dono creates a Partida, and a second browser sees presence change live
   await expect(secao(outro, "Lista de espera")).toHaveCount(0);
 });
 
-test("a membro answers for their own Jogador only", async ({ page }) => {
+test("a membro answers for their own Jogador only", { tag: "@mobile" }, async ({ page }) => {
   const service = admin();
   const email = `membro-${randomUUID().slice(0, 8)}@squadra.test`;
   const { data: criado } = await service.auth.admin.createUser({ email, password: SEED_PASSWORD, email_confirm: true });

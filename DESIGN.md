@@ -114,15 +114,22 @@ The **only exception** is the Jogador card (`PlayerCard`): `rounded-t-card round
 ## Layout
 
 - **App shell**: `app/layout.tsx` renders the single `<Toaster position="top-center" richColors theme="system" />`. Pages never render their own Toaster. Toast colors are remapped to the tokens in `app/globals.css` (sonner's `--normal-*`, `--success-*`, `--error-*`… variables), so they follow the palette.
-- **Home**: sticky header with `BrandLockup` left of the search (`bg-content1/95 backdrop-blur-sm border-b border-divider shadow-lg`), content in `max-w-7xl mx-auto px-3 sm:px-6`.
+- **The fut's frame** (`app/g/[slug]/layout.tsx` → `FutShell`): every page inside a fut shares one header, one navigation and one width, so only the content changes between tabs. Pages render only their content, never their own header or `<main>`.
+  - **Header** (`CabecalhoDoFut`): one slim sticky row (`h-14`, `bg-content1/95`, `border-b`), the mark (links to the fut's home) and the fut switcher; on `md+` the tabs sit on its right, underlined in `accent`. Pads by `env(safe-area-inset-top)`.
+  - **Tabs**: **Partidas · Elenco · Você** (`lib/navegacao.ts`). Phones get a fixed bottom tab bar (`BarraDeAbas`, `h-16`, icon + label, active in `foreground` with a small `accent` pill on top, padded by `env(safe-area-inset-bottom)`, `md:hidden`). The page's `<main>` leaves `5rem` + the safe area free below it.
+  - **Width**: `max-w-5xl` for every page. Each page uses it its own way: the Elenco is a 2 / 3 / 4-column album, the Partida two columns on `lg` (lists left, Times right, sticky), Partidas and Você a centered reading column.
+  - **Routes**: `/g/<slug>` is the next Partida (the app opens there), or the history when none is scheduled; `/partidas` every Partida + Frequência; `/partidas/<id>` one Partida; `/elenco`; `/voce`. Switching futs keeps the tab (`caminhoNoOutroFut`).
+  - **Docked controls**: the only thing docked above the tab bar is the Partida's "Sua presença" (Vou / Não vou) while it's open, plus the Elenco's "Sortear rápido" counter bar while selecting. Every other primary action ("Nova carta", "Nova partida", "Sortear times") goes in its page's title row. No floating action button.
+  - **Você** (`/voce`): your Jogador card or "Escolher meu jogador", your Frequência, then the account (change password, sign out). It replaces the avatar menu inside a fut; screens outside one (invite, first access) still use `UserMenu`.
+- **Album**: a tap on a card opens it full size (`CartaAberta`) with its actions (Editar, Excluir, Desvincular conta, "Sou eu"). "Sortear rápido" in the ⋯ menu is a mode where taps tick cards instead. **No hover-only actions anywhere**: a phone has no hover.
 - **Auth screen**: `AuthShell` (`components/auth/auth-shell.tsx`) is the one sign-in layout, used by `/` when there's no Sessão and by every `/auth` route (via `app/auth/layout.tsx`). A `bg-background` card (`sm:rounded-3xl`, `shadow-2xl`) floats over a full-bleed night pitch that shows in the margins. Inside: the content column (`max-w-sm`, centered) and an inset pitch picture (`rounded-2xl`, `.on-panel`) on the right, a band on top on mobile. The picture is drawn, not photographed (`NightPitch`: SVG grass grain, mowing stripes, blurred bands of floodlight and shadow, faint markings) and `KickableBall` on top: drag and release to flick it, tap to kick it away from the touched side, Enter/Space to kick from the keyboard; it rolls with grass friction, spins as it rolls and bounces off the picture edges, and under `prefers-reduced-motion` the friction is high enough that it barely rolls, with pill tags top-right ("Futsal", "Society") and a caption bottom-left: mark + `.text-display` line in a single weight (no highlighted word). `AuthPanel` centers mark, title ("Bora pro jogo!") and the inline switch link ("Primeira vez aqui? Criar conta"); fields are `size="lg"` with placeholder + `aria-label`, passwords use `PasswordInput`, the submit is `size="lg" radius="full"`. No links to flows that don't exist (password reset, social login).
-- Mobile first: everything must work at 375px with no horizontal scroll.
+- Mobile first: design for the phone, then widen. Everything must work at 375px with no horizontal scroll, and the E2E suite runs the `@mobile` tests on a phone viewport (`playwright.config.ts`).
 
 ## Interaction
 
 - Focus: `focus-visible:ring-2 ring-primary` on every interactive element.
 - Selection: `ring-2 ring-primary` plus a `primary/10` tint.
-- Hover on rows: border shifts toward `primary/40–50`. Only the Jogador card scales (`sm:hover:scale-105`).
+- Hover on rows: border shifts toward `primary/40–50`. Hover is a desktop extra, never the only way to reach an action. Cards don't scale on hover.
 - Motion: `transition-colors` / `transition-opacity`; `animate-scale-in` for elements that pop in (selection badge); `animate-coin-toss` only for the loader mark.
 
 ## Export (Times Sorteados PNG)

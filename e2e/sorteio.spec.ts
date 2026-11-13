@@ -1,10 +1,14 @@
 import { expect, test } from "@playwright/test";
-import { DEV_USER, signIn } from "./support";
+import { abrirAba, DEV_USER, signIn } from "./support";
 
-test("the Sorteio puts every selected Jogador in exactly one Time", async ({ page }) => {
+test("the quick Sorteio puts every selected Jogador in exactly one Time", { tag: "@mobile" }, async ({ page }) => {
   await signIn(page, DEV_USER);
+  await abrirAba(page, "Elenco");
 
-  await page.getByRole("button", { name: /^Selecionar( todas)?$/ }).click();
+  // "Sortear rápido" turns taps into selection, with a counter bar.
+  await page.getByRole("button", { name: "Mais ações" }).click();
+  await page.getByRole("button", { name: "Sortear rápido" }).click();
+  await page.getByRole("button", { name: "Selecionar todos" }).click();
   const drawButton = page.getByRole("button", { name: /^Sortear times \(\d+\)$/ });
   const selected = Number((await drawButton.textContent())?.match(/\((\d+)\)/)?.[1]);
   expect(selected).toBeGreaterThanOrEqual(15);

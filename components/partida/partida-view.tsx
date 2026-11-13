@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Check, MapPin, Pencil, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, MapPin, Pencil, UserCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { cancelarPartida, editarPartida, responderPresenca } from "@/app/actions/partida";
-import { GrupoNav } from "@/components/partida/grupo-nav";
 import { PartidaForm } from "@/components/partida/partida-form";
 import { SorteioDaPartida } from "@/components/partida/sorteio-da-partida";
 import { Button } from "@/components/ui/button";
@@ -22,19 +21,29 @@ import {
   type Presenca,
 } from "@/lib/partida";
 
-/** `/g/<slug>/partidas/<id>`: the Partida, your answer, and the presence list, live. */
+/**
+ * A Partida, your answer, and the presence list, live. At `/g/<slug>/partidas/<id>`
+ * and as the fut's home (`naInicio`), where it's the next Partida.
+ *
+ * Phones: one column (the Partida, the Times, the lists) with your Vou / Não vou
+ * docked above the tab bar while the Partida is open. Wider screens: the lists on
+ * the left, the Times on the right.
+ */
 export function PartidaView({
   grupo,
   userId,
   inicial,
   jogadores,
   agora,
+  naInicio = false,
 }: {
   grupo: Participacao;
   userId: string;
   inicial: PartidaAoVivo;
   jogadores: JogadorDaLista[];
   agora: number;
+  /** The fut's home: links to every Partida instead of back to the list. */
+  naInicio?: boolean;
 }) {
   const { partida, presencas, sorteio, aoVivo, recarregar, estado } = usePartidaAoVivo(grupo.id, inicial, agora);
   const [respondendo, setRespondendo] = useState<string | null>(null);
@@ -84,141 +93,168 @@ export function PartidaView({
   const nome = (jogadorId: string) => porId.get(jogadorId)?.name ?? "Jogador";
   const minha = meu ? situacaoDoJogador(lista, meu.id) : null;
 
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <GrupoNav slug={grupo.slug} nome={grupo.nome} aba="partidas" />
+  const fut = `/g/${encodeURIComponent(grupo.slug)}`;
+  const docada = estado === "aberta";
 
-      <main className="mx-auto flex max-w-3xl flex-col gap-6 px-3 py-6 sm:px-6 sm:py-8">
-        <Link href={`/g/${grupo.slug}/partidas`} className="flex items-center gap-1 text-sm font-semibold text-default-500 hover:text-foreground">
+  return (
+    <div className={`flex flex-col gap-6 ${docada ? "pb-28 md:pb-0" : ""}`}>
+      {naInicio ? (
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-label">Próxima partida</p>
+          <Link href={`${fut}/partidas`} className="flex items-center gap-0.5 text-sm font-medium text-default-500 hover:text-foreground">
+            Ver todas as partidas <ChevronRight size={16} aria-hidden="true" />
+          </Link>
+        </div>
+      ) : (
+        <Link href={`${fut}/partidas`} className="flex w-fit items-center gap-1 text-sm font-medium text-default-500 hover:text-foreground">
           <ArrowLeft size={16} aria-hidden="true" /> Partidas
         </Link>
+      )}
 
-        <section className="flex flex-col gap-3 rounded-2xl border border-divider bg-content1 p-4 sm:p-5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-title capitalize">{formatarInicio(partida.inicio)}</h1>
-              <p className="flex items-center gap-1 text-default-500">
-                <MapPin size={16} aria-hidden="true" /> {partida.local}
-              </p>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start lg:gap-8">
+        <div className="flex flex-col gap-6 lg:col-start-1 lg:row-start-1">
+          <section className="flex flex-col gap-3 rounded-2xl border border-divider bg-content1 p-4 sm:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex flex-col gap-1">
+                <h1 className="text-title capitalize">{formatarInicio(partida.inicio)}</h1>
+                <p className="flex items-center gap-1 text-default-500">
+                  <MapPin size={16} aria-hidden="true" /> {partida.local}
+                </p>
+              </div>
+              <AoVivo ativo={aoVivo} />
             </div>
-            <AoVivo ativo={aoVivo} />
-          </div>
 
-          {estado === "cancelada" && <p className="font-semibold text-danger">Partida cancelada.</p>}
-          {estado === "encerrada" && <p className="font-semibold text-default-500">Essa partida já começou.</p>}
+            {estado === "cancelada" && <p className="font-semibold text-danger">Partida cancelada.</p>}
+            {estado === "encerrada" && <p className="font-semibold text-default-500">Essa partida já começou.</p>}
 
-          <p className="text-sm text-default-600" aria-live="polite">
-            <span className="font-bold tabular-nums text-foreground">
-              {lista.confirmados.length} de {partida.vagas}
-            </span>{" "}
-            vagas confirmadas
-            {lista.espera.length > 0 && <>, {lista.espera.length} na lista de espera</>}
-          </p>
-
-          {podeGerir && estado !== "cancelada" && (
-            <div className="flex gap-2">
-              <Button size="sm" variant="flat" startContent={<Pencil size={14} />} onClick={() => setEditando(true)}>
-                Editar
-              </Button>
-              <Button size="sm" variant="flat" color="danger" onClick={cancelar}>
-                Cancelar partida
-              </Button>
-            </div>
-          )}
-        </section>
-
-        <section aria-label="Sua presença" className="flex flex-col gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
-          {meu ? (
-            <>
-              <p className="text-sm text-default-600">
-                <span className="font-bold text-foreground">{meu.name}</span>:{" "}
-                {minha?.situacao === "confirmado"
-                  ? "você vai. ✔"
-                  : minha?.situacao === "espera"
-                    ? `você está na lista de espera (${minha.posicao}º).`
-                    : minha?.situacao === "nao_vou"
-                      ? "você não vai."
-                      : "você ainda não respondeu."}
-              </p>
-              {podeResponder(meu.id) && (
-                <div className="flex gap-2">
-                  <Button
-                    color="primary"
-                    startContent={<Check size={16} />}
-                    isLoading={respondendo === meu.id}
-                    isDisabled={minha?.situacao === "confirmado" || minha?.situacao === "espera"}
-                    onClick={() => responder(meu.id, true)}
-                  >
-                    {oQueVouFaz(lista) === "entra-na-espera" ? "Entrar na lista de espera" : "Vou"}
-                  </Button>
-                  <Button
-                    variant="flat"
-                    startContent={<X size={16} />}
-                    isDisabled={respondendo === meu.id || minha?.situacao === "nao_vou"}
-                    onClick={() => responder(meu.id, false)}
-                  >
-                    Não vou
-                  </Button>
-                </div>
-              )}
-            </>
-          ) : (
-            <p className="text-sm text-default-600">
-              Pra responder, diga qual jogador é você no{" "}
-              <Link href={`/g/${grupo.slug}`} className="font-semibold text-foreground underline underline-offset-4">
-                elenco
-              </Link>
-              .
+            <p className="text-sm text-default-600" aria-live="polite">
+              <span className="font-semibold tabular-nums text-foreground">
+                {lista.confirmados.length} de {partida.vagas}
+              </span>{" "}
+              vagas confirmadas
+              {lista.espera.length > 0 && <>, {lista.espera.length} na lista de espera</>}
             </p>
-          )}
-        </section>
 
-        <SorteioDaPartida
-          slug={grupo.slug}
-          partidaId={id}
-          sorteio={sorteio}
-          confirmados={lista.confirmados.map((p) => p.jogador_id)}
-          podeGerir={podeGerir}
-          aberta={estado !== "cancelada"}
-          onMudou={recarregar}
-        />
+            {podeGerir && estado !== "cancelada" && (
+              <div className="flex gap-2">
+                <Button size="sm" variant="flat" startContent={<Pencil size={14} />} onClick={() => setEditando(true)}>
+                  Editar
+                </Button>
+                <Button size="sm" variant="flat" color="danger" onClick={cancelar}>
+                  Cancelar partida
+                </Button>
+              </div>
+            )}
+          </section>
 
-        <ListaDeJogadores
-          titulo={`Confirmados (${lista.confirmados.length}/${partida.vagas})`}
-          itens={lista.confirmados.map((p) => ({ id: p.jogador_id, nome: nome(p.jogador_id) }))}
-          vazio="Ninguém confirmou ainda."
-          acoes={podeGerir ? (j) => <AcoesDoGestor jogadorId={j} vai responder={responder} ocupado={respondendo === j} podeResponder={podeResponder(j)} nome={nome(j)} /> : undefined}
-        />
+          <section
+            aria-label="Sua presença"
+            className={
+              docada
+                ? "fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-divider bg-content1/95 shadow-2xl backdrop-blur-sm md:static md:z-auto md:rounded-2xl md:border md:border-primary/30 md:bg-primary/5 md:shadow-none md:backdrop-blur-none"
+                : "rounded-2xl border border-divider bg-content1"
+            }
+          >
+            <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 md:p-4">
+              {meu ? (
+                <>
+                  <p className="min-w-0 text-sm text-default-600">
+                    <span className="font-semibold text-foreground">{meu.name}</span>:{" "}
+                    {minha?.situacao === "confirmado"
+                      ? "você vai. ✔"
+                      : minha?.situacao === "espera"
+                        ? `você está na lista de espera (${minha.posicao}º).`
+                        : minha?.situacao === "nao_vou"
+                          ? "você não vai."
+                          : "você ainda não respondeu."}
+                  </p>
+                  {podeResponder(meu.id) && (
+                    <div className="flex gap-2">
+                      <Button
+                        color="primary"
+                        startContent={<Check size={16} />}
+                        isLoading={respondendo === meu.id}
+                        isDisabled={minha?.situacao === "confirmado" || minha?.situacao === "espera"}
+                        onClick={() => responder(meu.id, true)}
+                      >
+                        {oQueVouFaz(lista) === "entra-na-espera" ? "Entrar na lista de espera" : "Vou"}
+                      </Button>
+                      <Button
+                        variant="flat"
+                        startContent={<X size={16} />}
+                        isDisabled={respondendo === meu.id || minha?.situacao === "nao_vou"}
+                        onClick={() => responder(meu.id, false)}
+                      >
+                        Não vou
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="min-w-0 text-sm text-default-600">Escolha seu jogador para responder.</p>
+                  <Link
+                    href={`${fut}/voce`}
+                    className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  >
+                    <UserCheck size={16} aria-hidden="true" /> Escolher meu jogador
+                  </Link>
+                </>
+              )}
+            </div>
+          </section>
+        </div>
 
-        {lista.espera.length > 0 && (
+        <div className="flex flex-col gap-6 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <SorteioDaPartida
+            slug={grupo.slug}
+            partidaId={id}
+            sorteio={sorteio}
+            confirmados={lista.confirmados.map((p) => p.jogador_id)}
+            podeGerir={podeGerir}
+            aberta={estado !== "cancelada"}
+            onMudou={recarregar}
+          />
+        </div>
+
+        <div className="flex flex-col gap-6 lg:col-start-1 lg:row-start-2">
           <ListaDeJogadores
-            titulo="Lista de espera"
-            ordenada
-            itens={lista.espera.map((p) => ({ id: p.jogador_id, nome: nome(p.jogador_id) }))}
+            titulo={`Confirmados (${lista.confirmados.length}/${partida.vagas})`}
+            itens={lista.confirmados.map((p) => ({ id: p.jogador_id, nome: nome(p.jogador_id) }))}
+            vazio="Ninguém confirmou ainda."
             acoes={podeGerir ? (j) => <AcoesDoGestor jogadorId={j} vai responder={responder} ocupado={respondendo === j} podeResponder={podeResponder(j)} nome={nome(j)} /> : undefined}
           />
-        )}
 
-        {lista.naoVou.length > 0 && (
-          <ListaDeJogadores
-            titulo="Não vão"
-            itens={lista.naoVou.map((p) => ({ id: p.jogador_id, nome: nome(p.jogador_id) }))}
-            acoes={podeGerir ? (j) => <AcoesDoGestor jogadorId={j} vai={false} responder={responder} ocupado={respondendo === j} podeResponder={podeResponder(j)} nome={nome(j)} /> : undefined}
-          />
-        )}
+          {lista.espera.length > 0 && (
+            <ListaDeJogadores
+              titulo="Lista de espera"
+              ordenada
+              itens={lista.espera.map((p) => ({ id: p.jogador_id, nome: nome(p.jogador_id) }))}
+              acoes={podeGerir ? (j) => <AcoesDoGestor jogadorId={j} vai responder={responder} ocupado={respondendo === j} podeResponder={podeResponder(j)} nome={nome(j)} /> : undefined}
+            />
+          )}
 
-        {semResposta.length > 0 && (
-          <ListaDeJogadores
-            titulo="Sem resposta"
-            itens={semResposta.map((j) => ({ id: j.id, nome: j.name }))}
-            acoes={
-              podeGerir
-                ? (j) => <AcoesDoGestor jogadorId={j} vai={null} responder={responder} ocupado={respondendo === j} podeResponder={podeResponder(j)} nome={nome(j)} />
-                : undefined
-            }
-          />
-        )}
-      </main>
+          {lista.naoVou.length > 0 && (
+            <ListaDeJogadores
+              titulo="Não vão"
+              itens={lista.naoVou.map((p) => ({ id: p.jogador_id, nome: nome(p.jogador_id) }))}
+              acoes={podeGerir ? (j) => <AcoesDoGestor jogadorId={j} vai={false} responder={responder} ocupado={respondendo === j} podeResponder={podeResponder(j)} nome={nome(j)} /> : undefined}
+            />
+          )}
+
+          {semResposta.length > 0 && (
+            <ListaDeJogadores
+              titulo="Sem resposta"
+              itens={semResposta.map((j) => ({ id: j.id, nome: j.name }))}
+              acoes={
+                podeGerir
+                  ? (j) => <AcoesDoGestor jogadorId={j} vai={null} responder={responder} ocupado={respondendo === j} podeResponder={podeResponder(j)} nome={nome(j)} />
+                  : undefined
+              }
+            />
+          )}
+        </div>
+      </div>
 
       {editando && (
         <PartidaForm

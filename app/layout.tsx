@@ -44,6 +44,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  // Draw under the iPhone's notch and home indicator; the fut's header and tab bar pad by the safe area.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
