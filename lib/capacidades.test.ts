@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Papel } from "@/lib/grupo";
 import type { EstadoDaPartida } from "@/lib/partida";
-import { capacidades } from "./capacidades";
+import { capacidades, SO_LEITURA } from "./capacidades";
 
 // The same table the integration tests prove on the database side
 // (elenco-papeis, convites, partidas, sorteios, jogador-conta).
@@ -53,5 +53,14 @@ describe("capacidades", () => {
     const pode = capacidades("membro", null);
     expect(pode.respondePor(semConta, "aberta")).toBe(false);
     expect(pode.desvincula(semConta)).toBe(false);
+  });
+});
+
+describe("SO_LEITURA", () => {
+  it("allows no write at all", () => {
+    const jogador = { conta_id: "u1" };
+    expect(SO_LEITURA.editaElenco || SO_LEITURA.convida || SO_LEITURA.gerePartidas).toBe(false);
+    expect(SO_LEITURA.respondePor(jogador, "aberta")).toBe(false);
+    expect(SO_LEITURA.desvincula(jogador)).toBe(false);
   });
 });

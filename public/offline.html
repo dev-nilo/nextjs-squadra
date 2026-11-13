@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#F2F4F7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14213D" media="(prefers-color-scheme: dark)" />
+    <title>Sem conexão · Squadra</title>
+    <!-- Served by the service worker with no signal: everything it needs is in this file. -->
+    <style>
+      :root {
+        --fundo: #f2f4f7;
+        --texto: #14213d;
+        --suave: #5b6478;
+        --marca: #14213d;
+        --marca-fundo: #f4ede0;
+        --botao: #14213d;
+        --botao-texto: #f4ede0;
+        color-scheme: light dark;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fundo: #14213d;
+          --texto: #f4ede0;
+          --suave: #b7bfd0;
+          --marca: #f4ede0;
+          --marca-fundo: #14213d;
+          --botao: #f4ede0;
+          --botao-texto: #14213d;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+        background: var(--fundo);
+        color: var(--texto);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        text-align: center;
+      }
+      main {
+        max-width: 22rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+      svg {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 8px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.5rem;
+        line-height: 1.2;
+      }
+      p {
+        margin: 0;
+        color: var(--suave);
+        line-height: 1.5;
+      }
+      button {
+        margin-top: 12px;
+        height: 48px;
+        padding: 0 24px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--botao);
+        color: var(--botao-texto);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:focus-visible {
+        outline: 2px solid var(--texto);
+        outline-offset: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r="44" fill="var(--marca-fundo)" />
+        <path d="M50 6 A44 44 0 0 0 50 94 A22 22 0 0 0 50 50 A22 22 0 0 1 50 6 Z" fill="var(--marca)" />
+        <circle cx="50" cy="50" r="44" fill="none" stroke="var(--marca)" stroke-width="9" />
+      </svg>
+      <h1>Sem conexão</h1>
+      <p>Essa tela ainda não foi aberta com internet neste aparelho. A próxima partida e o elenco que você já abriu continuam aqui sem sinal.</p>
+      <button type="button" onclick="location.reload()">Tentar de novo</button>
+    </main>
+    <script>
+      // Back online: try again on its own.
+      addEventListener("online", () => location.reload());
+    </script>
+  </body>
+</html>

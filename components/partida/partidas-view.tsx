@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import type { Participacao } from "@/lib/grupo";
 import type { FrequenciaDoJogador, ResumoDaPartida } from "@/lib/leitura-da-partida";
 import { capacidades } from "@/lib/capacidades";
+import { useSemConexao } from "@/lib/pwa/conexao";
 import { estadoDaPartida, formatarInicio, type EstadoDaPartida } from "@/lib/partida";
 
 
@@ -34,6 +35,7 @@ export function PartidasView({
 }) {
   const router = useRouter();
   const [criando, setCriando] = useState(false);
+  const semConexao = useSemConexao();
   const podeCriar = capacidades(grupo.papel, null).gerePartidas;
   const momento = new Date(agora);
 
@@ -46,7 +48,7 @@ export function PartidasView({
     <div className="mx-auto flex max-w-3xl flex-col gap-8">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-title">Partidas</h1>
-        {podeCriar && (
+        {podeCriar && !semConexao && (
           <Button color="primary" size="sm" startContent={<CalendarPlus size={16} />} onClick={() => setCriando(true)}>
             Nova partida
           </Button>

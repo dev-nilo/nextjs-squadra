@@ -13,11 +13,14 @@ import { MenuDeAcoes } from "@/components/ui/menu-de-acoes";
 import { Modal, ModalBody, ModalHeader } from "@/components/ui/modal";
 import type { Participacao } from "@/lib/grupo";
 import { usePartidaAoVivo } from "@/hooks/use-partida-ao-vivo";
-import { capacidades } from "@/lib/capacidades";
+import { capacidades, SO_LEITURA } from "@/lib/capacidades";
+import { useSemConexao } from "@/lib/pwa/conexao";
+import { deveOferecerInstalacao, instalar, INSTRUCOES_IOS, comoInstalar } from "@/lib/pwa/instalar";
 import type { JogadorDaLista, PartidaAoVivo } from "@/lib/leitura-da-partida";
 import { formatarInicio, oQueVouFaz, organizarPresencas, situacaoDoJogador, type ListaDePresenca } from "@/lib/partida";
 
-type Responder = (jogadorId: string, vou: boolean) => Promise<void>;
+/** Answers for a Jogador; true when it went through. */
+type Responder = (jogadorId: string, vou: boolean) => Promise<boolean>;
 
 /**
  * A Partida, live. At `/g/<slug>/partidas/<id>` and as the fut's home
@@ -49,6 +52,7 @@ export function PartidaView({
   const [respondendo, setRespondendo] = useState<string | null>(null);
   const [editando, setEditando] = useState(false);
   const [respondendoPorOutros, setRespondendoPorOutros] = useState(false);
+  const semConexao = useSemConexao();
 
   const id = partida.id;
   const lista = useMemo(() => organizarPresencas(presencas, partida.vagas), [presencas, partida.vagas]);
@@ -57,7 +61,8 @@ export function PartidaView({
   const respondidos = new Set(presencas.map((p) => p.jogador_id));
   const semResposta = jogadores.filter((j) => !respondidos.has(j.id));
 
-  const pode = capacidades(grupo.papel, userId);
+  // With no signal nothing changes: no answering, no managing.
+  const pode = semConexao ? SO_LEITURA : capacidades(grupo.papel, userId);
   const podeGerir = pode.gerePartidas && estado !== "cancelada";
   const podeResponder = (jogadorId: string) => {
     const jogador = porId.get(jogadorId);
@@ -70,10 +75,11 @@ export function PartidaView({
       const resultado = await responderPresenca(grupo.slug, id, jogadorId, vou);
       if (!resultado.ok) {
         toast.error("Não deu pra responder", { description: resultado.message });
-        return;
+        return false;
       }
       if (resultado.valor.situacao === "espera") toast.info("Partida lotada", { description: "Entrou na lista de espera." });
       await recarregar();
+      return true;
     } finally {
       setRespondendo(null);
     }
@@ -138,7 +144,11 @@ export function PartidaView({
               aberta={estado === "aberta"}
               podeResponder={!!meu && podeResponder(meu.id)}
               ocupado={!!meu && respondendo === meu.id}
-              responder={responder}
+              responder={async (jogadorId, vou) => {
+                const foi = await responder(jogadorId, vou);
+                if (foi) oferecerInstalacao();
+                return foi;
+              }}
               escolherHref={`${fut}/voce`}
             />
           </section>
@@ -202,6 +212,20 @@ export function PartidaView({
       )}
     </div>
   );
+}
+
+/**
+ * Once, right after someone answers for the first time: put Squadra on the
+ * home screen, so next time it's one tap.
+ */
+function oferecerInstalacao() {
+  if (!deveOferecerInstalacao()) return;
+  const ios = comoInstalar() === "ios";
+  toast("Deixe o Squadra na tela inicial", {
+    description: ios ? INSTRUCOES_IOS : "Na próxima, é só tocar no ícone pra responder.",
+    duration: 12_000,
+    action: ios ? undefined : { label: "Instalar", onClick: () => void instalar() },
+  });
 }
 
 /**
@@ -286,7 +310,15 @@ function SuaPresenca({
     );
   }
 
-  if (!minha) return null;
+  if (!minha) {
+    // No signal (or the Partida closed) before answering: say so, no buttons.
+    if (!aberta) return null;
+    return (
+      <section aria-label="Sua presença" className="border-t border-divider pt-4">
+        <p className="font-semibold text-default-600">Você ainda não respondeu.</p>
+      </section>
+    );
+  }
 
   const { icone, texto, tom } =
     minha.situacao === "confirmado"

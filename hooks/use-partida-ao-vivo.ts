@@ -9,7 +9,8 @@ import { createClient } from "@/lib/supabase/client";
  * A Partida that stays current while the page is open. One way to refresh:
  * `recarregar` reads it again through the read model. Supabase Realtime calls
  * it for anyone's change (filtered by this Partida and the subscriber's RLS),
- * the page calls it after its own writes, and the state flips to "encerrada"
+ * the page calls it after its own writes, coming back to the page calls it,
+ * and the state flips to "encerrada"
  * when the start time comes, even with nothing else happening.
  */
 export function usePartidaAoVivo(grupoId: string, inicial: PartidaAoVivo, agoraDoServidor: number) {
@@ -58,6 +59,20 @@ export function usePartidaAoVivo(grupoId: string, inicial: PartidaAoVivo, agoraD
       if (canal) void supabase.removeChannel(canal);
     };
   }, [id, recarregar]);
+
+  // Back in the foreground or back online (a phone drops the socket in the
+  // background): catch up on what changed meanwhile.
+  useEffect(() => {
+    const voltou = () => {
+      if (document.visibilityState === "visible" && navigator.onLine) void recarregar();
+    };
+    document.addEventListener("visibilitychange", voltou);
+    window.addEventListener("online", voltou);
+    return () => {
+      document.removeEventListener("visibilitychange", voltou);
+      window.removeEventListener("online", voltou);
+    };
+  }, [recarregar]);
 
   useEffect(() => {
     const espera = esperaAteComecar(dados.partida, new Date(agora));

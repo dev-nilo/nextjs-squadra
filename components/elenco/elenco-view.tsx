@@ -7,7 +7,8 @@ import { excluirJogador, importarJogadores, salvarJogador } from "@/app/actions/
 import { desvincularJogador, vincularJogador } from "@/app/actions/vinculo";
 import { ConvidarModal } from "@/components/convite/convidar-modal";
 import { CartaAberta } from "@/components/elenco/carta-aberta";
-import { capacidades } from "@/lib/capacidades";
+import { capacidades, SO_LEITURA } from "@/lib/capacidades";
+import { useSemConexao } from "@/lib/pwa/conexao";
 import { useSorteioRapido } from "@/hooks/use-sorteio-rapido";
 import type { Participacao } from "@/lib/grupo";
 import { isDataUrlImage, uploadPlayerImage } from "@/lib/player-image";
@@ -86,7 +87,9 @@ export function ElencoView({
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
 
   // What the papel allows. RLS enforces it; this only hides what would fail.
-  const pode = useMemo(() => capacidades(grupo.papel, userId), [grupo.papel, userId]);
+  const semConexao = useSemConexao();
+  // With no signal the album is read-only: no new cards, no edits, no claiming.
+  const pode = useMemo(() => (semConexao ? SO_LEITURA : capacidades(grupo.papel, userId)), [semConexao, grupo.papel, userId]);
 
   const sorteio = useSorteioRapido(players);
   const { selectedIds, todosMarcados, alternar: toggleSelect } = sorteio;
@@ -332,7 +335,7 @@ export function ElencoView({
           onEditar={pode.editaElenco ? () => handleEdit(aberta) : undefined}
           onExcluir={pode.editaElenco ? () => void excluir(aberta) : undefined}
           onDesvincular={aberta.conta_id && pode.desvincula(aberta) ? () => void handleDesvincular(aberta) : undefined}
-          onSouEu={!meu && !aberta.conta_id ? () => void souEu(aberta) : undefined}
+          onSouEu={!meu && !aberta.conta_id && !semConexao ? () => void souEu(aberta) : undefined}
         />
       )}
 

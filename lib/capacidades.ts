@@ -43,3 +43,15 @@ export function capacidades(papel: Papel, userId: string | null): Capacidades {
     desvincula: (jogador) => jogador.conta_id != null && (organiza || ehDela(jogador)),
   };
 }
+
+/**
+ * What anyone can do with no signal: read. The app queues nothing for later,
+ * so every write is off until the connection comes back.
+ */
+export const SO_LEITURA: Capacidades = {
+  editaElenco: false,
+  convida: false,
+  gerePartidas: false,
+  respondePor: () => false,
+  desvincula: () => false,
+};

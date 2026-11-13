@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { KeyRound, LogOut, Unlink, UserCheck } from "lucide-react";
+import { Download, KeyRound, LogOut, Unlink, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { desvincularJogador } from "@/app/actions/vinculo";
 import { ChangePasswordModal } from "@/components/auth/change-password-modal";
@@ -11,6 +11,8 @@ import { PlayerCard } from "@/components/player/PlayerCard";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import type { Participacao } from "@/lib/grupo";
+import { useSemConexao } from "@/lib/pwa/conexao";
+import { instalar, INSTRUCOES_IOS, useComoInstalar } from "@/lib/pwa/instalar";
 import type { Player } from "@/types";
 
 /**
@@ -35,6 +37,8 @@ export function VoceView({
   const { logout } = useAuth();
   const [escolhendo, setEscolhendo] = useState(false);
   const [trocandoSenha, setTrocandoSenha] = useState(false);
+  // With no signal: look, don't touch.
+  const semConexao = useSemConexao();
 
   const desvincular = async () => {
     if (!meu || !window.confirm(`Desvincular sua conta de ${meu.name}? O jogador continua no elenco.`)) return;
@@ -64,7 +68,7 @@ export function VoceView({
             <div className="w-56 shrink-0">
               <PlayerCard player={meu} isMine />
             </div>
-            <Button variant="flat" size="sm" startContent={<Unlink size={16} />} onClick={desvincular}>
+            <Button variant="flat" size="sm" startContent={<Unlink size={16} />} onClick={desvincular} isDisabled={semConexao}>
               Desvincular minha conta
             </Button>
           </div>
@@ -73,7 +77,7 @@ export function VoceView({
             <p className="text-sm text-default-600">
               Você ainda não disse qual jogador é você nesse fut. É assim que o fut sabe quem confirmou presença.
             </p>
-            <Button color="primary" startContent={<UserCheck size={16} />} onClick={() => setEscolhendo(true)}>
+            <Button color="primary" startContent={<UserCheck size={16} />} onClick={() => setEscolhendo(true)} isDisabled={semConexao}>
               Escolher meu jogador
             </Button>
           </div>
@@ -96,14 +100,16 @@ export function VoceView({
         </section>
       )}
 
+      <InstalarApp />
+
       <section aria-label="Conta" className="flex flex-col gap-3">
         <h2 className="text-label">Conta</h2>
         <p className="truncate text-sm text-default-600">{email}</p>
         <div className="flex flex-wrap gap-2">
-          <Button variant="flat" startContent={<KeyRound size={16} />} onClick={() => setTrocandoSenha(true)}>
+          <Button variant="flat" startContent={<KeyRound size={16} />} onClick={() => setTrocandoSenha(true)} isDisabled={semConexao}>
             Alterar senha
           </Button>
-          <Button variant="flat" color="danger" startContent={<LogOut size={16} />} onClick={sair}>
+          <Button variant="flat" color="danger" startContent={<LogOut size={16} />} onClick={sair} isDisabled={semConexao}>
             Sair
           </Button>
         </div>
@@ -112,5 +118,38 @@ export function VoceView({
       {escolhendo && <EscolherJogador slug={grupo.slug} players={jogadores} onClose={() => setEscolhendo(false)} />}
       <ChangePasswordModal open={trocandoSenha} email={email} onOpenChange={setTrocandoSenha} />
     </div>
+  );
+}
+
+/**
+ * "Instalar o app": the native prompt on Android and desktop Chrome / Edge,
+ * the Share-menu steps on iPhone. Hidden once installed, and where the
+ * browser can't install at all.
+ */
+function InstalarApp() {
+  const como = useComoInstalar();
+  if (como === "instalado" || como === "indisponivel") return null;
+  return (
+    <section aria-label="App" className="flex flex-col gap-3">
+      <h2 className="text-label">App</h2>
+      <div className="flex flex-col items-start gap-3 rounded-2xl border border-divider bg-content1 p-4">
+        <p className="text-sm text-default-600">
+          Deixe o Squadra na tela inicial: abre direto na próxima partida e mostra a lista mesmo sem sinal na quadra.
+        </p>
+        {como === "pronto" ? (
+          <Button
+            color="primary"
+            startContent={<Download size={16} />}
+            onClick={async () => {
+              if (await instalar()) toast.success("Pronto, o Squadra está na sua tela inicial.");
+            }}
+          >
+            Instalar o app
+          </Button>
+        ) : (
+          <p className="text-sm font-semibold text-foreground">{INSTRUCOES_IOS}</p>
+        )}
+      </div>
+    </section>
   );
 }
