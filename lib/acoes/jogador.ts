@@ -1,7 +1,8 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { ehFotoDoGrupo, jogadorParaLinha, jogadorSchema } from "@/lib/jogador";
+import { caminhoDaFoto, caminhoDaFotoDoJogador, ehFotoDoGrupo, jogadorParaLinha, jogadorSchema } from "@/lib/jogador";
+import { PLAYER_IMAGES_BUCKET } from "@/lib/player-image";
 import { exigir, exigirLinhas, idSchema, noGrupo, recusar, validar } from "./executar";
 
 const importacaoSchema = z
@@ -12,10 +13,27 @@ const importacaoSchema = z
 /** An id already taken by a Jogador of another Grupo (only a tampered request sends one). */
 const ID_DE_OUTRO_FUT = { "23505": "Esse jogador não é desse fut. Recarregue a página." };
 
+const urlDoSupabase = () => process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+
+/**
+ * Deletes a photo file that nothing points at any more. Called only after the
+ * row changed, and best effort: a leftover file costs storage, not
+ * correctness, so a failure here never fails the action.
+ */
+async function apagarFoto(supabase: SupabaseClient, caminho: string) {
+  try {
+    const { error } = await supabase.storage.from(PLAYER_IMAGES_BUCKET).remove([caminho]);
+    if (error) throw error;
+  } catch (e) {
+    console.error("[jogador] Photo cleanup failed:", e);
+  }
+}
+
 /**
  * Creates or edits a Jogador in the Grupo; RLS only lets its dono and admins
- * do either. The rating is computed here from the attributes, and a new
- * Jogador's author is whoever is signed in.
+ * do either. The rating is computed by the database from the attributes, and
+ * a new Jogador's author is whoever is signed in. A photo removed from the
+ * card, or replaced by a file at another path, is deleted from Storage.
  */
 export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: unknown) =>
   noGrupo(
@@ -34,7 +52,7 @@ export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: un
       if (error) exigir({ data: null, error });
 
       // The photo stays as it was, is removed, or is one uploaded for this Grupo.
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+      const supabaseUrl = urlDoSupabase();
       if (jogador.image !== null && jogador.image !== atual?.image_url && !ehFotoDoGrupo(jogador.image, grupo.id, supabaseUrl)) {
         recusar("Não deu pra usar essa foto. Envie de novo.");
       }
@@ -49,6 +67,10 @@ export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: un
             .eq("grupo_id", grupo.id)
             .select("id"),
         );
+        // Compared by path, not URL: a new photo uploaded over the same file
+        // only changes the URL's ?v=, and that file is the one now in use.
+        const antiga = caminhoDaFotoDoJogador(atual.image_url, grupo.id, jogador.id, supabaseUrl);
+        if (antiga && antiga !== caminhoDaFoto(jogador.image, grupo.id, supabaseUrl)) await apagarFoto(supabase, antiga);
       } else {
         exigir(
           await supabase
@@ -62,11 +84,16 @@ export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: un
     },
   );
 
-/** Removes a Jogador from the Elenco, with their presences. RLS only lets the dono and admins. */
+/** Removes a Jogador from the Elenco, with their presences and their photo. RLS only lets the dono and admins. */
 export const excluirJogador = (supabase: SupabaseClient, slug: unknown, jogadorId: unknown) =>
   noGrupo(supabase, slug, { acao: "excluirJogador", generica: "Não deu pra excluir a carta agora. Tenta de novo." }, async ({ grupo }) => {
     const id = validar(idSchema, jogadorId, "Jogador inválido.");
-    exigirLinhas(await supabase.from("players").delete().eq("id", id).eq("grupo_id", grupo.id).select("id"));
+    const [excluido] = exigirLinhas<{ image_url: string | null }>(
+      await supabase.from("players").delete().eq("id", id).eq("grupo_id", grupo.id).select("image_url"),
+    );
+    // Only once the row is gone, so a refused delete never touches Storage.
+    const foto = caminhoDaFotoDoJogador(excluido.image_url, grupo.id, id, urlDoSupabase());
+    if (foto) await apagarFoto(supabase, foto);
     return null;
   });
 

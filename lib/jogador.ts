@@ -112,18 +112,42 @@ export function jogadorParaLinha(jogador: DadosDoJogador) {
 }
 
 /**
- * A photo the app uploaded for this Grupo: a public URL in the player-images
- * bucket, under the Grupo's folder, on this project's Supabase. Anything else
- * (another site, another Grupo's folder, an inline image) isn't saved.
+ * Where a photo the app uploaded for this Grupo lives in the player-images
+ * bucket (`<grupo_id>/<file>`): a public URL on this project's Supabase, for a
+ * file directly in the Grupo's folder. Null for anything else (another site,
+ * another Grupo's folder, a subfolder, an inline image).
  */
-export function ehFotoDoGrupo(url: string, grupoId: string, supabaseUrl: string): boolean {
+export function caminhoDaFoto(url: string | null | undefined, grupoId: string, supabaseUrl: string): string | null {
+  if (!url) return null;
   try {
     const foto = new URL(url);
-    return (
-      foto.origin === new URL(supabaseUrl).origin &&
-      foto.pathname.startsWith(`/storage/v1/object/public/${PLAYER_IMAGES_BUCKET}/${grupoId}/`)
-    );
+    if (foto.origin !== new URL(supabaseUrl).origin) return null;
+    const pasta = `/storage/v1/object/public/${PLAYER_IMAGES_BUCKET}/${grupoId}/`;
+    if (!foto.pathname.startsWith(pasta)) return null;
+    const arquivo = decodeURIComponent(foto.pathname.slice(pasta.length));
+    return arquivo && !arquivo.includes("/") ? `${grupoId}/${arquivo}` : null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+/** A photo the app uploaded for this Grupo. Anything else isn't saved. */
+export function ehFotoDoGrupo(url: string, grupoId: string, supabaseUrl: string): boolean {
+  return caminhoDaFoto(url, grupoId, supabaseUrl) !== null;
+}
+
+/**
+ * The Jogador's own photo file, as the upload names it
+ * (`<grupo_id>/<jogador_id>.<ext>`), or null. Only this file is ever deleted
+ * along with the Jogador, so a card that points at someone else's photo (only
+ * a tampered request makes one) can't take that photo with it.
+ */
+export function caminhoDaFotoDoJogador(
+  url: string | null | undefined,
+  grupoId: string,
+  jogadorId: string,
+  supabaseUrl: string,
+): string | null {
+  const caminho = caminhoDaFoto(url, grupoId, supabaseUrl);
+  return caminho?.startsWith(`${grupoId}/${jogadorId}.`) ? caminho : null;
 }
