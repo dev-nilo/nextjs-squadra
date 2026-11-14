@@ -119,12 +119,8 @@ export const DrawTeamsModal = ({
                     <div className="min-w-0">
                         <h2 className="text-title">Times sorteados</h2>
                         <p className="text-muted mt-1">
-                            <span className="hidden sm:inline">
-                                Arraste jogadores entre os times para reorganizar
-                            </span>
-                            <span className="sm:hidden">
-                                Arraste para reorganizar (melhor no desktop)
-                            </span>
+                            Troque alguém de time pelo seletor ao lado do nome
+                            <span className="hidden sm:inline">, ou arraste</span>
                         </p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto shrink-0">
@@ -230,41 +226,63 @@ export const DrawTeamsModal = ({
 
                                     {team.members.length === 0 ? (
                                         <p className="text-center text-muted py-10">
-                                            Arraste jogadores para cá
+                                            Nenhum jogador neste time
                                         </p>
                                     ) : (
                                         <ul className="divide-y divide-divider">
                                             {membrosPorNome(team.members).map((player) => (
                                                 <li
                                                     key={player.id}
-                                                    draggable
-                                                    onDragStart={() =>
-                                                        handleDragStart(player.id, idx)
-                                                    }
-                                                    onDragEnd={() => {
-                                                        setDraggedPlayer(null);
-                                                        setDragOverTeam(null);
-                                                    }}
-                                                    aria-label={`${player.name}, ${player.position}, arraste para mover de ${team.name}`}
-                                                    className="flex items-center gap-2.5 px-3 py-2 cursor-grab active:cursor-grabbing hover:bg-default-50 transition-colors touch-manipulation"
+                                                    aria-label={`${player.name}, ${player.position}`}
+                                                    className="flex items-center gap-2 px-3 py-2 hover:bg-default-50 transition-colors touch-manipulation"
                                                 >
-                                                    <PlayerAvatar
-                                                        src={player.image}
-                                                        name={player.name}
-                                                        size="sm"
-                                                    />
-                                                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-                                                        {player.name}
-                                                    </span>
-                                                    <span className="shrink-0 rounded-full bg-default-100 px-2 py-0.5 text-xs font-medium text-default-600">
-                                                        {player.position}
-                                                    </span>
-                                                    <span
-                                                        data-export-ignore="true"
-                                                        className="w-7 shrink-0 text-right text-sm font-semibold tabular-nums text-default-600"
+                                                    {/* Dragging is a desktop extra: the select beside it works with a tap and
+                                                        the keyboard. It stays outside the draggable part, where a form
+                                                        control can misbehave in some browsers. */}
+                                                    <div
+                                                        draggable
+                                                        onDragStart={() =>
+                                                            handleDragStart(player.id, idx)
+                                                        }
+                                                        onDragEnd={() => {
+                                                            setDraggedPlayer(null);
+                                                            setDragOverTeam(null);
+                                                        }}
+                                                        className="flex min-w-0 flex-1 items-center gap-2.5 cursor-grab active:cursor-grabbing"
                                                     >
-                                                        {player.rating}
-                                                    </span>
+                                                        <PlayerAvatar
+                                                            src={player.image}
+                                                            name={player.name}
+                                                            size="sm"
+                                                        />
+                                                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                                                            {player.name}
+                                                        </span>
+                                                        <span className="shrink-0 rounded-full bg-default-100 px-2 py-0.5 text-xs font-medium text-default-600">
+                                                            {player.position}
+                                                        </span>
+                                                        <span
+                                                            data-export-ignore="true"
+                                                            className="w-7 shrink-0 text-right text-sm font-semibold tabular-nums text-default-600"
+                                                        >
+                                                            {player.rating}
+                                                        </span>
+                                                    </div>
+                                                    <select
+                                                        data-export-ignore="true"
+                                                        aria-label={`Mover ${player.name}`}
+                                                        value={idx}
+                                                        onChange={(e) =>
+                                                            onMover(player.id, idx, Number(e.target.value))
+                                                        }
+                                                        className="shrink-0 rounded-lg border border-default-200 bg-default-100 px-1 py-0.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                                    >
+                                                        {generatedTeams.map((destino, i) => (
+                                                            <option key={destino.name} value={i}>
+                                                                {i === idx ? destino.name : `→ ${destino.name}`}
+                                                            </option>
+                                                        ))}
+                                                    </select>
                                                 </li>
                                             ))}
                                         </ul>
