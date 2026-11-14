@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Mail } from "lucide-react";
+import { CheckCircle2, KeyRound, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingState } from "@/components/ui/full-screen-loader";
 import { Alert } from "@/components/ui/alert";
@@ -11,9 +11,10 @@ import { createClient } from "@/lib/supabase/client";
 import { concluirConfirmacao, decodeAuthDescription, mostrarAviso, toSessaoAuth } from "@/lib/sessao";
 
 /**
- * The confirmation email's link lands here, and nothing happens until the user
- * taps Confirmar, so an email scanner opening the link can't burn the token.
- * Where to go and what to say after that is concluirConfirmacao's call.
+ * The links in the confirmation and password recovery emails land here, and
+ * nothing happens until the user taps the button, so an email scanner opening
+ * the link can't burn the token. Where to go and what to say after that is
+ * concluirConfirmacao's call.
  */
 function ConfirmContent() {
   const router = useRouter();
@@ -22,6 +23,8 @@ function ConfirmContent() {
 
   const canConfirm = Boolean(searchParams.get("token_hash"));
   const error = searchParams.get("error_description") || searchParams.get("error");
+  const recuperacao = searchParams.get("type") === "recovery";
+  const Icone = recuperacao ? KeyRound : Mail;
 
   const handleConfirm = async () => {
     setLoading(true);
@@ -38,12 +41,13 @@ function ConfirmContent() {
     <div>
       <div className="flex flex-col gap-1 pb-6">
         <div className="flex items-center gap-2">
-          <Mail size={22} className="text-primary" aria-hidden="true" />
-          <h1 className="text-title">Confirmar email</h1>
+          <Icone size={22} className="text-primary" aria-hidden="true" />
+          <h1 className="text-title">{recuperacao ? "Trocar a senha" : "Confirmar email"}</h1>
         </div>
         <p className="text-muted">
-          Clique no botão abaixo para ativar sua conta. Isso evita que o link expire
-          automaticamente por scanners de email.
+          {recuperacao
+            ? "Toque em Continuar pra criar a senha nova. O link só é usado nesse toque, assim o antivírus do email não o gasta antes de você."
+            : "Clique no botão abaixo para ativar sua conta. Isso evita que o link expire automaticamente por scanners de email."}
         </p>
       </div>
       <div className="flex flex-col gap-4">
@@ -51,8 +55,9 @@ function ConfirmContent() {
 
         {!canConfirm && !error && (
           <Alert tone="warning">
-            Link incompleto. Abra o link mais recente do email de confirmação ou
-            cadastre-se novamente.
+            {recuperacao
+              ? "Link incompleto. Abra o link mais recente do email de recuperação, ou peça outro em Esqueci minha senha."
+              : "Link incompleto. Abra o link mais recente do email de confirmação ou cadastre-se novamente."}
           </Alert>
         )}
 
@@ -64,7 +69,7 @@ function ConfirmContent() {
           startContent={<CheckCircle2 size={18} />}
           onClick={handleConfirm}
         >
-          Confirmar minha conta
+          {recuperacao ? "Continuar" : "Confirmar minha conta"}
         </Button>
 
         <Button variant="flat" className="w-full" onClick={() => router.push("/auth")}>

@@ -42,6 +42,10 @@ export type SessaoAuth = {
   updateUser: (attrs: {
     password: string;
   }) => Promise<{ error: { message: string } | null }>;
+  resetPasswordForEmail: (
+    email: string,
+    options?: { redirectTo?: string },
+  ) => Promise<{ error: { message: string } | null }>;
   onAuthStateChange: (
     callback: (
       event: string,
@@ -51,9 +55,22 @@ export type SessaoAuth = {
 };
 
 /** Every outcome a Sessão flow can end in. sessaoToast has a case for each, checked by the compiler. */
-export type CodigoOk = "logged_in" | "signed_up" | "confirmed" | "resent" | "logged_out" | "password_changed";
+export type CodigoOk =
+  | "logged_in"
+  | "signed_up"
+  | "confirmed"
+  | "resent"
+  | "logged_out"
+  | "password_changed"
+  | "recovery_sent"
+  | "recovery_verified"
+  | "password_set";
 export type CodigoErro =
   | "not_configured"
+  | "recovery_failed"
+  | "recovery_error"
+  | "password_set_failed"
+  | "password_set_error"
   | "email_unconfirmed"
   | "login_failed"
   | "login_error"
@@ -289,10 +306,93 @@ export async function changePassword(
 }
 
 // ---------------------------------------------------------------------------
+// Password recovery. "Esqueci minha senha" sends a link; tapping it on
+// /auth/confirm signs the person in (the policy below), and NOVA_SENHA sets
+// the new password.
+// ---------------------------------------------------------------------------
+
+/** Where a tapped recovery link always ends: the page that sets the new password. */
+export const NOVA_SENHA = "/auth/nova-senha";
+
+/**
+ * Where Supabase's default recovery email sends people back to, in case a
+ * project still has it instead of supabase/templates/recovery.html. It comes
+ * back with a PKCE `code`, which only works in the browser that asked.
+ */
+export const RETORNO_DA_RECUPERACAO = `/auth/callback?next=${NOVA_SENHA}`;
+
+/**
+ * Sends a password recovery link to `email`. The notice never says whether
+ * the email has an account.
+ */
+export async function pedirNovaSenha(
+  auth: SessaoAuth,
+  email: string,
+  redirectTo: string,
+  env: SupabaseEnv = readSupabaseEnv(),
+): Promise<SessaoResult> {
+  if (!isSupabaseConfigured(env)) {
+    return { ok: false, code: "not_configured" };
+  }
+  const target = email.trim();
+  if (!target) {
+    return { ok: false, code: "email_required" };
+  }
+
+  try {
+    const { error } = await auth.resetPasswordForEmail(target, { redirectTo });
+    if (error) {
+      return { ok: false, code: "recovery_failed", message: error.message };
+    }
+    return { ok: true, code: "recovery_sent" };
+  } catch {
+    return { ok: false, code: "recovery_error" };
+  }
+}
+
+/**
+ * Sets a new password for whoever is signed in, without the current one:
+ * tapping the recovery link is the proof. Supabase lets any signed-in session
+ * change its password unless "secure password change" is on, so this adds no
+ * power a session doesn't have; changePassword asks for the current password
+ * because the screen in Você is for someone who still knows it.
+ */
+export async function definirNovaSenha(
+  auth: SessaoAuth,
+  input: { newPassword: string; confirmPassword: string },
+  env: SupabaseEnv = readSupabaseEnv(),
+): Promise<SessaoResult> {
+  if (!isSupabaseConfigured(env)) {
+    return { ok: false, code: "not_configured" };
+  }
+  if (input.newPassword !== input.confirmPassword) {
+    return { ok: false, code: "password_mismatch" };
+  }
+  if (input.newPassword.length < 6) {
+    return { ok: false, code: "password_too_short" };
+  }
+
+  try {
+    const { data, error: sessionError } = await auth.getSession();
+    if (sessionError || !data.session) {
+      return { ok: false, code: "no_session" };
+    }
+    const { error } = await auth.updateUser({ password: input.newPassword });
+    if (error) {
+      return { ok: false, code: "password_set_failed", message: error.message };
+    }
+    return { ok: true, code: "password_set" };
+  } catch {
+    return { ok: false, code: "password_set_error" };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Email confirmation. One policy decides where the user lands and what the
 // screen says, for both entry points (/auth/confirm, where the user taps
-// Confirmar, and /auth/callback, kept for links already in inboxes and for a
-// PKCE `code`). The pages only show the notice and navigate.
+// Confirmar or Continuar, and /auth/callback, kept for links already in
+// inboxes and for a PKCE `code`), and for both kinds of link (signing up and
+// recovering a password). The pages only show the notice and navigate.
 // ---------------------------------------------------------------------------
 
 /** Where the confirmation email used to send everyone; it now means `/`. */
@@ -329,15 +429,25 @@ export function erroDaUrl(url: URL): SessaoErr | null {
   };
 }
 
-async function confirmar(auth: SessaoAuth, url: URL): Promise<SessaoResult> {
+/**
+ * A password recovery link: ours carries type=recovery
+ * (supabase/templates/recovery.html); Supabase's default email comes back
+ * through RETORNO_DA_RECUPERACAO, with next = NOVA_SENHA.
+ */
+export function ehRecuperacao(url: URL): boolean {
+  return url.searchParams.get("type") === "recovery" || caminhoSeguro(url.searchParams.get("next"), url.origin) === NOVA_SENHA;
+}
+
+async function confirmar(auth: SessaoAuth, url: URL, recuperacao: boolean): Promise<SessaoResult> {
   const erro = erroDaUrl(url);
   if (erro) return erro;
+  const confirmado = recuperacao ? "recovery_verified" : "confirmed";
   try {
     const code = url.searchParams.get("code");
     if (code) {
       const { error } = await auth.exchangeCodeForSession(code);
       if (error) return { ok: false, code: "pkce_failed", message: error.message };
-      return { ok: true, code: "confirmed", via: "pkce" };
+      return { ok: true, code: confirmado, via: "pkce" };
     }
 
     const tokenHash = url.searchParams.get("token_hash");
@@ -345,7 +455,7 @@ async function confirmar(auth: SessaoAuth, url: URL): Promise<SessaoResult> {
       const type = (url.searchParams.get("type") || "signup") as EmailOtpType;
       const { error } = await auth.verifyOtp({ token_hash: tokenHash, type });
       if (error) return { ok: false, code: "otp_failed", message: error.message };
-      return { ok: true, code: "confirmed", via: "otp" };
+      return { ok: true, code: confirmado, via: "otp" };
     }
 
     const { data, error } = await auth.getSession();
@@ -359,17 +469,22 @@ async function confirmar(auth: SessaoAuth, url: URL): Promise<SessaoResult> {
 export type Aviso = ReturnType<typeof sessaoToast>;
 
 /**
- * Finishes an email confirmation from the link's URL: where to go and what to
- * say. Confirmed → the `next` the email carried (an invite, or `/`), with one
- * notice. Anything else → the sign-in screen, saying what went wrong.
+ * Finishes an email link from its URL: where to go and what to say.
+ * Confirmed → the `next` the email carried (an invite, or `/`), with one
+ * notice; a recovery link → NOVA_SENHA, whatever `next` says, so nobody is
+ * signed in by it without setting the new password. Anything else → the
+ * sign-in screen, saying what went wrong.
  */
 export async function concluirConfirmacao(auth: SessaoAuth, url: URL): Promise<{ destino: string; aviso: Aviso }> {
-  const resultado = await confirmar(auth, url);
+  const recuperacao = ehRecuperacao(url);
+  const contexto = recuperacao ? "recovery" : "confirm";
+  const resultado = await confirmar(auth, url, recuperacao);
   if (!resultado.ok) {
     // Nothing to confirm and no session: just the sign-in screen, no notice.
-    return { destino: "/auth", aviso: resultado.code === "no_session" ? null : sessaoToast(resultado, "confirm") };
+    return { destino: "/auth", aviso: resultado.code === "no_session" ? null : sessaoToast(resultado, contexto) };
   }
-  return { destino: caminhoSeguro(url.searchParams.get("next"), url.origin), aviso: sessaoToast(resultado, "confirm") };
+  const destino = recuperacao ? NOVA_SENHA : caminhoSeguro(url.searchParams.get("next"), url.origin);
+  return { destino, aviso: sessaoToast(resultado, contexto) };
 }
 
 /** Toast/copy mapping for adapters — single policy for shared codes. */
@@ -381,7 +496,8 @@ export function sessaoToast(
     | "resend"
     | "confirm"
     | "watcher"
-    | "password" = "login",
+    | "password"
+    | "recovery" = "login",
 ): {
   variant: "success" | "error";
   title: string;
@@ -416,12 +532,39 @@ export function sessaoToast(
           title: "Senha atualizada",
           description: "Use a nova senha no próximo login.",
         };
+      case "recovery_sent":
+        return {
+          variant: "success",
+          title: "Link enviado",
+          description: "Se esse email tiver conta no Squadra, chega um link pra criar uma senha nova. Só o mais recente vale.",
+          duration: 8000,
+        };
+      case "recovery_verified":
+        return { variant: "success", title: "Agora é só criar a senha nova." };
+      case "password_set":
+        return { variant: "success", title: "Senha nova salva. Você entrou." };
       default:
         return semCaso(result);
     }
   }
 
+  // A recovery link that no longer works: the way out is a new one.
+  const linkDeRecuperacaoVencido = {
+    variant: "error" as const,
+    title: "Esse link não vale mais",
+    description: "Peça outro em Esqueci minha senha. Só o mais recente funciona.",
+    duration: 8000,
+  };
+
   switch (result.code) {
+    case "recovery_failed":
+      return { variant: "error", title: "Não deu pra enviar o link", description: result.message };
+    case "recovery_error":
+      return { variant: "error", title: "Erro ao enviar o link", description: "Algo deu errado. Tente novamente." };
+    case "password_set_failed":
+      return { variant: "error", title: "Não deu pra salvar a senha", description: result.message };
+    case "password_set_error":
+      return { variant: "error", title: "Erro ao salvar a senha", description: "Algo deu errado. Tente novamente." };
     case "not_configured":
       return {
         variant: "error",
@@ -505,7 +648,7 @@ export function sessaoToast(
     case "email_required":
       return {
         variant: "error",
-        title: "Informe o email para reenviar a confirmação",
+        title: context === "recovery" ? "Informe o seu email" : "Informe o email para reenviar a confirmação",
       };
     case "resend_failed":
       return {
@@ -516,6 +659,7 @@ export function sessaoToast(
     case "resend_error":
       return { variant: "error", title: "Erro ao reenviar email" };
     case "expired_link":
+      if (context === "recovery") return linkDeRecuperacaoVencido;
       if (context === "watcher") {
         return {
           variant: "error",
@@ -540,12 +684,17 @@ export function sessaoToast(
         duration: context === "watcher" ? 9000 : undefined,
       };
     case "pkce_failed":
+      if (context === "recovery") {
+        // Supabase's default email: the code only works in the browser that asked for the link.
+        return { ...linkDeRecuperacaoVencido, description: "Abra o link no mesmo navegador em que pediu, ou peça outro em Esqueci minha senha." };
+      }
       return {
         variant: "error",
         title: "Erro ao autenticar",
         description: result.message,
       };
     case "otp_failed":
+      if (context === "recovery") return linkDeRecuperacaoVencido;
       return {
         variant: "error",
         title:
