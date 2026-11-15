@@ -82,6 +82,31 @@ describe("creating and revoking invites", () => {
   });
 });
 
+describe("a link's rules live in the database", () => {
+  it("the token, expiry and author always come from the defaults", async () => {
+    const dono = await user("dono");
+    const grupo = await futCom(dono);
+
+    const comToken = await dono.client.from("convites").insert({ grupo_id: grupo.id, token: "facil" }).select("id");
+    expect(comToken.error).not.toBeNull();
+    const semFim = await dono.client.from("convites").insert({ grupo_id: grupo.id, expira_em: "2099-01-01" }).select("id");
+    expect(semFim.error).not.toBeNull();
+    expect((await convidar(dono, grupo.id)).error).toBeNull();
+  });
+
+  it("a cancelled link stays cancelled", async () => {
+    const dono = await user("dono");
+    const grupo = await futCom(dono);
+    const { data: convite } = await convidar(dono, grupo.id);
+    await dono.client.from("convites").update({ revogado_em: new Date().toISOString() }).eq("id", convite!.id).throwOnError();
+
+    const reaberto = await dono.client.from("convites").update({ revogado_em: null }).eq("id", convite!.id).select("id");
+    expect(reaberto.error).not.toBeNull();
+    const { data } = await service().from("convites").select("revogado_em").eq("id", convite!.id).single();
+    expect(data?.revogado_em).not.toBeNull();
+  });
+});
+
 describe("what the link shows before joining", () => {
   it("shows the Grupo's name to anyone holding a valid link, signed in or not", async () => {
     const dono = await user("dono");
