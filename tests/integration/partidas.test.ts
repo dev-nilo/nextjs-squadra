@@ -224,6 +224,33 @@ describe("dropping out", () => {
     await responder(b.u, id, b.jogadorId, true);
     expect((await lista(id)).filter((p) => p.situacao === "espera").map((p) => p.jogador_id)).toEqual([d.jogadorId, b.jogadorId]);
   });
+
+  it("deleting a confirmed Jogador hands their vaga to the first in line, not to whoever answers next", async () => {
+    const dono = await user("dono");
+    const grupoId = await grupoCom(dono);
+    const [a, b, c, d] = await Promise.all(["a", "b", "c", "d"].map((n) => membroComJogador(grupoId, n)));
+    const id = await partida(dono, grupoId, 2);
+    for (const m of [a, b, c]) await responder(m.u, id, m.jogadorId, true);
+
+    expect((await dono.client.from("players").delete().eq("id", a.jogadorId).select("id")).data).toHaveLength(1);
+    expect(await situacaoDe(id, c.jogadorId)).toBe("confirmado");
+
+    // The vaga is taken, so a newcomer waits.
+    expect((await responder(d.u, id, d.jogadorId, true)).data).toMatchObject({ situacao: "espera" });
+    expect(await situacaoDe(id, b.jogadorId)).toBe("confirmado");
+  });
+
+  it("once the Partida started, deleting a confirmed Jogador promotes nobody: the list is what happened", async () => {
+    const dono = await user("dono");
+    const grupoId = await grupoCom(dono);
+    const [a, b, c] = await Promise.all(["a", "b", "c"].map((n) => membroComJogador(grupoId, n)));
+    const id = await partida(dono, grupoId, 2);
+    for (const m of [a, b, c]) await responder(m.u, id, m.jogadorId, true);
+    await service().from("partidas").update({ inicio: new Date(Date.now() - 3_600_000).toISOString() }).eq("id", id).throwOnError();
+
+    await dono.client.from("players").delete().eq("id", a.jogadorId).throwOnError();
+    expect(await situacaoDe(id, c.jogadorId)).toBe("espera");
+  });
 });
 
 describe("changing the vagas", () => {
