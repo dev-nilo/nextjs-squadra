@@ -5,11 +5,11 @@
 | Supabase | `npm run db:start` (Docker), thrown away | `squadra-staging` (free project) | the current project |
 | App | `npm run dev` / CI runner | Vercel **Preview**, one per PR (Vercel's Git integration) | Vercel **Production**, deployed by CI (`deploy-production`) |
 | Data | `supabase/seed.sql` | `supabase/seed.sql`, fake only | real users |
-| Who changes the schema | `supabase start` / `db reset` | CI, on every PR (`migrate-staging`) | CI, after merge to `main` (`migrate-production`) |
+| Who changes the schema | `supabase start` / `db reset` | CI, on a PR that adds migrations (`migrate-staging`) | CI, after merge to `main` (`migrate-production`) |
 
 Nobody runs SQL by hand against staging or production. A schema change is a file in `supabase/migrations`, and CI pushes it.
 
-Until the secrets below exist, the staging and production jobs log a notice and skip, so CI stays green.
+Until the secrets below exist, the staging and production migration jobs log a notice and skip, so CI stays green. `deploy-production` fails instead of skipping without `VERCEL_TOKEN`, because nothing else deploys production.
 
 ## One-time setup
 
@@ -37,7 +37,7 @@ Repo → Settings → Secrets and variables → **Actions**:
 | --- | --- |
 | `SUPABASE_ACCESS_TOKEN` | the token from step 2 |
 | `STAGING_PROJECT_REF` | the staging ref from step 1 |
-| `PROD_PROJECT_REF` | `rellxqqnjlehwonedyvz` |
+| `PROD_PROJECT_REF` | production's project ref (Project Settings → General) |
 | `VERCEL_TOKEN` | a Vercel token scoped to the `ayanno-team` team (Vercel → Account Settings → Tokens). Production deploys only through it |
 
 Optional: Settings → Environments → `supabase-production` → add yourself as a **required reviewer**, so every production migration waits for one click.

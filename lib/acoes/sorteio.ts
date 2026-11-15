@@ -19,7 +19,8 @@ const sorteadoEmSchema = z.string().datetime({ offset: true });
 /**
  * Draws the Times on the server, over the confirmed Jogadores as the database
  * has them. The browser only says how many Times; it never sends Jogadores or
- * ratings, so a draw can't be rigged from DevTools.
+ * ratings, so nobody can fake a rating from DevTools. An admin calling
+ * salvar_sorteio directly can still choose the split, as moving Jogadores does.
  */
 export const sortearDaPartida = (supabase: SupabaseClient, slug: unknown, partidaId: unknown, numTimes: unknown) =>
   noGrupo(

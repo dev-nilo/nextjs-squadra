@@ -57,7 +57,7 @@ The mark is **Meio-campo**: the pitch's center circle seen from above, split by 
 | `team-1…6` | Vintage kit colors for Times, by index: navy, brick, pitch green, ochre, petrol, wine. Lighter in dark. **Only** for team identity (the crest), never semantic. |
 
 Rules:
-- No raw Tailwind palette colors (`gray-*`, `zinc-*`, `white`, `black`, `red-*`…) and no hex/arbitrary colors in `app/`, `components/` or `lib/`. ESLint enforces this.
+- No raw Tailwind palette colors (`gray-*`, `zinc-*`, `white`, `black`, `red-*`…) and no arbitrary hex classes (`bg-[#…]`) in `app/`, `components/` or `lib/`; ESLint enforces this on class strings. The only hex literals are the manifest and theme colors and the logo's center spot.
 - Tints use opacity on a token: `bg-primary/10`, `border-danger/20`.
 - Team colors (`getTeamPresentation` in `lib/constants.ts`) cycle through `team-1…6`. Never use `danger`/`success` for a Time: a red team reads as an error.
 - Attribute values use `getStatColor` (`lib/stat-color.ts`): ≥80 `success`, ≥70 `primary`, ≥50 `warning-600`, else `danger`.

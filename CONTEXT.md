@@ -11,18 +11,18 @@ A player card with position, nationality, attributes, overall rating, and option
 _Avoid_: Card (UI only), athlete
 
 **Elenco** _(en: roster)_:
-The full set of Jogadores of a Grupo. Every Membro sees it; only `dono` and `admin` change it.
+The full set of Jogadores of a Grupo. Every Membro sees it; the `dono` and admins create, edit and delete Jogadores, and a membro can only add themselves.
 _Avoid_: Roster (when meaning the whole collection), squad (ambiguous with Time), a per-user Elenco, guest local-only mode
 
 **Grupo** _(en: group)_:
 The people who play together and share one Elenco, like a weekly pelada. Named by whoever creates it, who becomes its `dono`. Reached at `/g/<slug>`; the slug is fixed at creation.
-_Avoid_: Team (that's a Time), league, club, "fut" in code (it's only the UI word on the naming screen)
+_Avoid_: Team (that's a Time), league, club. "Fut" is the UI's word for a Grupo; code mirrors it only in names tied to the UI (`sairDoFut`, `gereFut`), and tables and database functions say grupo.
 
 **Membro** _(en: member)_:
 A user's membership in a Grupo, with a papel:
 - `dono`: exactly one per Grupo. Everything an admin does, plus the people and the Grupo itself: makes others admin or membro, removes them, renames or deletes the Grupo, and hands it to an admin (becoming an admin). The dono can't leave before handing it over.
 - `admin`: organizes: edits Jogadores, runs Partidas and the Sorteio, creates Convites.
-- `membro`: answers for their own Jogador and sees everything.
+- `membro`: answers for their own Jogador and sees the Grupo, except draft Sorteios and other people's emails.
 
 A Membro is known on screen by their linked Jogador's name; only the dono and admins see emails. Leaving, or being removed, unlinks their Jogador, which stays in the Elenco with its presences. A removed person can come back through a Convite that's still valid. Every one of these changes goes through a database function (ADR 0008).
 _Avoid_: Member of the Elenco, player (a Jogador may have no account at all)
@@ -40,7 +40,7 @@ A Jogador's answer to a Partida: *vou* or *não vou* (no "talvez"). It belongs t
 _Avoid_: RSVP (in the UI), check-in
 
 **Lista de espera** _(en: waitlist)_:
-The Jogadores who said *vou* after the vagas ran out, in the order they asked. When a confirmed Jogador drops out, or the vagas go up, the first in line takes the vaga in the same transaction. Saying *não vou* and then *vou* again goes to the end of the line.
+The Jogadores who said *vou* after the vagas ran out, in the order the database applied their answers. When a confirmed Jogador drops out, or the vagas go up, the first in line takes the vaga in the same transaction. Saying *não vou* and then *vou* again goes to the end of the line.
 _Avoid_: Fila (fine in speech, but the code says espera), reserve list, bench
 
 **Frequência** _(en: attendance rate)_:
@@ -56,7 +56,7 @@ A named group of Jogadores produced by a Sorteio, with a computed average rating
 _Avoid_: TeamData, squad
 
 **Mínimo por time** _(en: minimum per team)_:
-The configured floor of Jogadores each Time should have. Validates selection before a Sorteio; does not cap how many selected Jogadores are distributed.
+The floor of Jogadores each Time must have: 2 for a Partida's Sorteio (`MINIMO_POR_TIME`), and set by whoever runs the Elenco's quick Sorteio (default 5). Validates selection before a Sorteio; does not cap how many selected Jogadores are distributed.
 _Avoid_: Jogadores por time (as a hard roster size), playersPerTeam (as a slice limit)
 
 **Overall (OVR)** _(en: overall rating)_:

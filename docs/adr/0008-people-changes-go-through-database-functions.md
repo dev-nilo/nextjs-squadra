@@ -9,7 +9,7 @@ Changing someone's papel, removing them, leaving, handing the Grupo over, renami
 
 A policy also says only "no rows", where a function can say why. And with the rules spread over policies, nothing tied them to what the screens show.
 
-**How it stays honest:** `tests/integration/pessoas.test.ts` runs every action against every papel and checks that the database accepts exactly what `capacidades()` (`lib/capacidades.ts`) tells the screens to show. A new rule changes the function, `capacidades()` and that matrix together.
+**How it stays honest:** `tests/integration/pessoas.test.ts` runs the seven people and fut actions as the dono, an admin and a membro, and checks that the database accepts exactly what `capacidades()` (`lib/capacidades.ts`) says for `gerePessoas`, `gereFut` and `saiDoFut`, and returns emails exactly when `veEmails` says so. The other capabilities have their own papel tests, which don't read `capacidades()` yet. A new rule changes the function, `capacidades()` and that matrix together.
 
 Rejected:
 - Keeping the policies and adding functions only for handing over and deleting. That leaves two ways to change a papel, with rules in two places.

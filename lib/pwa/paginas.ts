@@ -61,7 +61,7 @@ export function guardarPagina(url: string): void {
   else sw.addEventListener("controllerchange", pedir, { once: true });
 }
 
-/** Forgets every saved page: on sign out, so the next person on this phone sees nothing of yours. */
+/** Forgets every saved page on sign out, so the next person on this phone can't open your lists. Cached photos stay until the browser evicts them. */
 export async function esquecerPaginas(): Promise<void> {
   if (typeof caches === "undefined") return;
   try {
