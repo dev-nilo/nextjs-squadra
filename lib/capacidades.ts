@@ -5,7 +5,9 @@ import type { EstadoDaPartida } from "@/lib/partida";
  * What a Membro can do in their Grupo, by papel, so every screen shows the
  * same buttons the database accepts. This only decides what's shown: RLS and
  * the database functions enforce each rule (named next to it), and the Server
- * Actions don't check papéis in TypeScript (ADR 0007).
+ * Actions don't check papéis in TypeScript, except excluirFut before it deletes
+ * photos (ADR 0007). tests/integration/pessoas.test.ts checks gerePessoas,
+ * gereFut, saiDoFut and veEmails against the database.
  *
  * Pure, so a client component computes it from the Grupo's papel it already
  * has. Functions can't travel from a Server Component to a client one.
