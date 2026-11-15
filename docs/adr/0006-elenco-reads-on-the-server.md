@@ -6,7 +6,7 @@ Supersedes [ADR 0002](0002-elenco-one-deep-module.md).
 
 The browser no longer keeps a copy of the Elenco in localStorage, and there's no offline mode or "sync" button. That copy served the app when it ran in the browser only. Once Jogadores belonged to a Grupo with roles, it went stale: another admin's edits, a Jogador linked to an account, or a role change only reached a browser on its next sync. It also left player names behind in a shared browser. The app now clears those old keys on load.
 
-Photos still go from the browser straight to Storage, under the Grupo's folder, where the Storage policies only let the dono and admins write. The action only saves a photo URL in that folder of this project's bucket, or the one the Jogador already had.
+Photos still go from the browser straight to Storage, under the Grupo's folder, where the Storage policies only let the dono and admins write. The action only saves a photo URL in that folder of this project's bucket, or the one the Jogador already had. When a Jogador is deleted, or their photo leaves the card (removed, or replaced by a file at another path), the action deletes their own file, `<grupo_id>/<jogador_id>.<ext>`, once the row has changed. That's best effort: a leftover file costs storage, not correctness.
 
 The last Grupo opened is a cookie, `squadra-futs`, set by `proxy.ts` (most recent first, up to five slugs), so `/` can redirect on the server. It isn't trusted: `/` opens the first of those Grupos the user is still a Membro of, else the default.
 

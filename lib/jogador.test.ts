@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { Attributes } from "@/types";
 import {
   calculateOVR,
+  caminhoDaFoto,
+  caminhoDaFotoDoJogador,
   DEFAULT_ATTRIBUTES,
   ehFotoDoGrupo,
   jogadorDaLinha,
@@ -130,7 +132,45 @@ describe("ehFotoDoGrupo", () => {
     ["an encoded climb out of the folder", `${pasta}/%2e%2e/outro/x.jpg`],
     ["an inline image", "data:image/png;base64,AAAA"],
     ["something that isn't a URL", "jogador.jpg"],
+    ["a file in a subfolder", `${pasta}/sub/x.jpg`],
+    ["an encoded slash in the file name", `${pasta}/sub%2Fx.jpg`],
+    ["the folder itself", `${pasta}/`],
   ])("rejects %s", (_caso, url) => {
     expect(ehFotoDoGrupo(url, grupo, base)).toBe(false);
+  });
+});
+
+describe("caminhoDaFoto", () => {
+  const base = "https://abc.supabase.co";
+  const grupo = "11111111-1111-4111-8111-111111111111";
+  const pasta = `${base}/storage/v1/object/public/player-images/${grupo}`;
+
+  it("gives the file's path in the bucket, without the cache-busting query", () => {
+    expect(caminhoDaFoto(`${pasta}/jogador.jpg?v=1`, grupo, base)).toBe(`${grupo}/jogador.jpg`);
+  });
+
+  it("is null with no photo, or for one the app didn't upload for this Grupo", () => {
+    expect(caminhoDaFoto(null, grupo, base)).toBeNull();
+    expect(caminhoDaFoto(undefined, grupo, base)).toBeNull();
+    expect(caminhoDaFoto("", grupo, base)).toBeNull();
+    expect(caminhoDaFoto(`https://example.com/storage/v1/object/public/player-images/${grupo}/x.jpg`, grupo, base)).toBeNull();
+    expect(caminhoDaFoto(`${pasta}/x.jpg`, "22222222-2222-4222-8222-222222222222", base)).toBeNull();
+  });
+});
+
+describe("caminhoDaFotoDoJogador", () => {
+  const base = "https://abc.supabase.co";
+  const grupo = "11111111-1111-4111-8111-111111111111";
+  const jogador = "33333333-3333-4333-8333-333333333333";
+  const pasta = `${base}/storage/v1/object/public/player-images/${grupo}`;
+
+  it("is the Jogador's own file, named <jogador_id>.<ext> by the upload", () => {
+    expect(caminhoDaFotoDoJogador(`${pasta}/${jogador}.jpg?v=9`, grupo, jogador, base)).toBe(`${grupo}/${jogador}.jpg`);
+    expect(caminhoDaFotoDoJogador(`${pasta}/${jogador}.png`, grupo, jogador, base)).toBe(`${grupo}/${jogador}.png`);
+  });
+
+  it("is null for another Jogador's file, even in the same Grupo", () => {
+    expect(caminhoDaFotoDoJogador(`${pasta}/44444444-4444-4444-8444-444444444444.jpg`, grupo, jogador, base)).toBeNull();
+    expect(caminhoDaFotoDoJogador(`${pasta}/${jogador}-copia.jpg`, grupo, jogador, base)).toBeNull();
   });
 });

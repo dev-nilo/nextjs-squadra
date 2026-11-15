@@ -106,6 +106,55 @@ describe("the Elenco", () => {
     const { data } = await service().from("players").select("name").eq("grupo_id", grupo.id).order("name");
     expect(data?.map((p) => p.name)).toEqual(["A", "B"]);
   });
+
+  it("deletes a Jogador's photo file with them and when it leaves the card, never someone else's", async () => {
+    // salvarJogador only takes photos on this project's Supabase. CI sets it; a local run may not.
+    process.env.NEXT_PUBLIC_SUPABASE_URL ??= process.env.SUPABASE_URL;
+    const dono = await user("dono");
+    const grupo = await grupoDe(dono);
+    const fotos = dono.client.storage.from("player-images");
+    const JPG = new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xe0])], { type: "image/jpeg" });
+    const enviados: string[] = [];
+    /** Uploads like the Elenco screen does, and gives the URL the card saves. */
+    const enviar = async (caminho: string) => {
+      enviados.push(caminho);
+      const { error } = await fotos.upload(caminho, JPG, { upsert: true, contentType: "image/jpeg" });
+      if (error) throw error;
+      return `${fotos.getPublicUrl(caminho).data.publicUrl}?v=${enviados.length}`;
+    };
+    const existe = async (caminho: string) => !(await service().storage.from("player-images").download(caminho)).error;
+
+    try {
+      // Deleted with the Jogador.
+      const comFoto = carta("Com foto");
+      const foto = `${grupo.id}/${comFoto.id}.jpg`;
+      valor(await salvarJogador(dono.client, grupo.slug, { ...comFoto, image: await enviar(foto) }));
+      valor(await excluirJogador(dono.client, grupo.slug, comFoto.id));
+      expect(await existe(foto)).toBe(false);
+
+      // A new photo over the same file keeps it (only the ?v= changed); removing the photo deletes it.
+      const outra = carta("Outra");
+      const daOutra = `${grupo.id}/${outra.id}.jpg`;
+      valor(await salvarJogador(dono.client, grupo.slug, { ...outra, image: await enviar(daOutra) }));
+      valor(await salvarJogador(dono.client, grupo.slug, { ...outra, image: await enviar(daOutra) }));
+      expect(await existe(daOutra)).toBe(true);
+      valor(await salvarJogador(dono.client, grupo.slug, { ...outra, image: null }));
+      expect(await existe(daOutra)).toBe(false);
+
+      // A card pointing at another Jogador's photo (only a tampered request makes one) never takes it along.
+      const dona = carta("Dona da foto");
+      const daDona = `${grupo.id}/${dona.id}.jpg`;
+      const urlDaDona = await enviar(daDona);
+      valor(await salvarJogador(dono.client, grupo.slug, { ...dona, image: urlDaDona }));
+      const intrusa = carta("Intrusa", { image: urlDaDona });
+      valor(await salvarJogador(dono.client, grupo.slug, intrusa));
+      valor(await excluirJogador(dono.client, grupo.slug, intrusa.id));
+      expect(await existe(daDona)).toBe(true);
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+    } finally {
+      await service().storage.from("player-images").remove(enviados);
+    }
+  });
 });
 
 describe("a Partida and its Sorteio", () => {
