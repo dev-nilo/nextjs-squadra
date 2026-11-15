@@ -257,6 +257,15 @@ describe("no direct writes any more", () => {
     expect(data?.nome).toBe(NOME);
   });
 
+  it("the privileges for those direct writes are gone, not only refused by RLS", async () => {
+    const grupo = await fut();
+    const c = gente.dono.client;
+    // Without a privilege Postgres raises 42501; with one but no policy, RLS returns no rows and no error.
+    expect((await c.from("grupos").delete().eq("id", grupo)).error?.code).toBe("42501");
+    expect((await c.from("grupos").update({ nome: "Na mão" }).eq("id", grupo)).error?.code).toBe("42501");
+    expect((await c.from("grupo_membros").delete().eq("grupo_id", grupo).eq("user_id", gente.membro.id)).error?.code).toBe("42501");
+  });
+
   it("nobody calls the internal helpers", async () => {
     const grupo = await fut();
     const { error } = await gente.dono.client.rpc("desligar_do_grupo", { grupo, pessoa: gente.membro.id });
