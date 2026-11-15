@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { addMembro, admin, newUser, removeUsers, type TestUser } from "./support";
+import { addMembro, admin, anon, newUser, removeUsers, type TestUser } from "./support";
 
 const BUCKET = "player-images";
 const PNG = new Blob([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], { type: "image/png" });
@@ -67,5 +67,39 @@ describe("player-images under {grupo_id}/", () => {
   it("no longer accepts writes to the old {user_id}/ folder", async () => {
     const dono = await user("dono");
     expect((await upload(dono, `${dono.id}/antiga.png`)).error).not.toBeNull();
+  });
+});
+
+describe("who can list a Grupo's photos", () => {
+  const nomes = async (quem: ReturnType<typeof anon>, pasta: string) => {
+    const { data, error } = await quem.storage.from(BUCKET).list(pasta);
+    if (error) throw error;
+    return (data ?? []).map((f) => f.name);
+  };
+
+  it("only its Membros list the folder; anon and outsiders see nothing, not even the Grupo ids", async () => {
+    const dono = await user("dono");
+    const membro = await user("membro");
+    const deFora = await user("fora");
+    const grupo = await grupoDe(dono);
+    await addMembro(grupo.id, membro, "membro");
+    expect((await upload(dono, `${grupo.id}/jogador.png`)).error).toBeNull();
+
+    expect(await nomes(dono.client, grupo.id)).toEqual(["jogador.png"]);
+    expect(await nomes(membro.client, grupo.id)).toEqual(["jogador.png"]);
+    expect(await nomes(deFora.client, grupo.id)).toEqual([]);
+    expect(await nomes(anon(), grupo.id)).toEqual([]);
+    expect(await nomes(anon(), "")).not.toContain(grupo.id);
+  });
+
+  it("still shows a photo to anyone holding its public URL", async () => {
+    const dono = await user("dono");
+    const grupo = await grupoDe(dono);
+    const caminho = `${grupo.id}/jogador.png`;
+    expect((await upload(dono, caminho)).error).toBeNull();
+
+    const { data } = anon().storage.from(BUCKET).getPublicUrl(caminho);
+    const resposta = await fetch(data.publicUrl);
+    expect(resposta.status).toBe(200);
   });
 });
