@@ -64,5 +64,5 @@ The Jogador's rating: the rounded mean of their attributes (0 to 99 each). The d
 _Avoid_: Inline averages at call sites, rating recomputed ad hoc
 
 **Sessão** _(en: session)_:
-The authenticated user's signed-in state with Supabase Auth. Email confirmation (PKCE, OTP, expired-link handling) completes a Sessão; UI entry points are adapters over that flow.
+The authenticated user's signed-in state with Supabase Auth. Email confirmation (PKCE, OTP, expired-link handling) completes a Sessão; UI entry points are adapters over that flow. A password recovery link goes through the same flow and always ends on the page that sets the new password.
 _Avoid_: Multiple divergent OTP/error policies per page

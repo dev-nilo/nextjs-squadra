@@ -255,6 +255,12 @@ otp_expiry = 3600
 subject = "Confirme seu email no Squadra"
 content_path = "./supabase/templates/confirm-signup.html"
 
+# Same idea for "Esqueci minha senha": /auth/confirm, where the user taps Continuar,
+# then /auth/nova-senha. Hosted projects: Authentication → Emails → Reset password.
+[auth.email.template.recovery]
+subject = "Crie uma senha nova no Squadra"
+content_path = "./supabase/templates/recovery.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"

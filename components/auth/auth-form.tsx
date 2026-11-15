@@ -10,7 +10,9 @@ import { getEmailRedirectTo } from "@/lib/auth-url";
 import {
   applySessaoToast,
   login,
+  pedirNovaSenha,
   resendConfirmation,
+  RETORNO_DA_RECUPERACAO,
   signup,
   toSessaoAuth,
 } from "@/lib/sessao";
@@ -21,7 +23,10 @@ interface AuthFormProps {
   redirectPath?: string;
 }
 
-export function LoginForm({ onSuccess }: AuthFormProps) {
+const linkDiscreto =
+  "rounded text-sm font-medium text-default-500 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+
+export function LoginForm({ onSuccess, onEsqueci }: AuthFormProps & { onEsqueci?: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -67,6 +72,53 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
 
       <Button type="submit" color="primary" size="lg" radius="full" className="mt-2 w-full" isLoading={loading}>
         {loading ? "Entrando..." : "Entrar"}
+      </Button>
+
+      {onEsqueci && (
+        <button type="button" onClick={onEsqueci} className={`mx-auto block ${linkDiscreto}`}>
+          Esqueci minha senha
+        </button>
+      )}
+    </form>
+  );
+}
+
+/**
+ * Asks for a password recovery link. The email links to /auth/confirm, where
+ * a tap signs the person in, and then to the page that sets the new password.
+ */
+export function RecoveryForm() {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleRecovery = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const result = await pedirNovaSenha(toSessaoAuth(createClient()), email, getEmailRedirectTo(RETORNO_DA_RECUPERACAO));
+      applySessaoToast(result, "recovery", toast);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleRecovery} className="space-y-4">
+      <Input
+        aria-label="Email"
+        id="recovery-email"
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        isDisabled={loading}
+        isRequired
+        size="lg"
+        autoComplete="email"
+      />
+
+      <Button type="submit" color="primary" size="lg" radius="full" className="mt-2 w-full" isLoading={loading}>
+        {loading ? "Enviando..." : "Enviar link"}
       </Button>
     </form>
   );

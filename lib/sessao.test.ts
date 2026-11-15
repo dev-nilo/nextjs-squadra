@@ -4,13 +4,18 @@ import {
   classifyAuthUrlError,
   caminhoSeguro,
   concluirConfirmacao,
+  definirNovaSenha,
   sessaoToast,
   isEmailUnconfirmedError,
   isSupabaseConfigured,
   login,
   logout,
+  NOVA_SENHA,
+  pedirNovaSenha,
   resendConfirmation,
+  RETORNO_DA_RECUPERACAO,
   signup,
+  veioDeUmLink,
   type SessaoAuth,
 } from "@/lib/sessao";
 
@@ -28,6 +33,8 @@ function createFakeAuth(overrides: Partial<SessaoAuth> = {}): SessaoAuth {
     exchangeCodeForSession: vi.fn(async () => ({ error: null })),
     verifyOtp: vi.fn(async () => ({ error: null })),
     updateUser: vi.fn(async () => ({ error: null })),
+    resetPasswordForEmail: vi.fn(async () => ({ error: null })),
+    getClaims: vi.fn(async () => ({ data: null, error: null })),
     onAuthStateChange: vi.fn(() => ({
       data: { subscription: { unsubscribe: vi.fn() } },
     })),
@@ -208,6 +215,21 @@ describe("concluirConfirmacao", () => {
     expect(aviso?.variant).toBe("success");
   });
 
+  it("a PKCE code the browser client already exchanged on load still counts, once there's a session", async () => {
+    const auth = createFakeAuth({
+      exchangeCodeForSession: vi.fn(async () => ({ error: { message: "PKCE code verifier not found in storage" } })),
+      getSession: vi.fn(async () => ({ data: { session: { access_token: "t" } }, error: null })),
+    });
+    const { destino, aviso } = await concluirConfirmacao(auth, new URL(`${ORIGEM}/auth/callback?code=xyz`));
+    expect(destino).toBe("/");
+    expect(aviso?.variant).toBe("success");
+  });
+
+  it("a PKCE code that fails with no session is a failure", async () => {
+    const auth = createFakeAuth({ exchangeCodeForSession: vi.fn(async () => ({ error: { message: "invalid flow state" } })) });
+    expect((await concluirConfirmacao(auth, new URL(`${ORIGEM}/auth/callback?code=xyz`))).destino).toBe("/auth");
+  });
+
   it("with nothing to confirm and no session, goes to sign-in quietly", async () => {
     expect(await concluirConfirmacao(createFakeAuth(), new URL(`${ORIGEM}/auth/callback`))).toEqual({ destino: "/auth", aviso: null });
   });
@@ -223,6 +245,9 @@ describe("caminhoSeguro", () => {
     expect(caminhoSeguro("https://evil.example/convite/abc", ORIGEM)).toBe("/");
     expect(caminhoSeguro("//evil.example/x", ORIGEM)).toBe("/");
     expect(caminhoSeguro("javascript:alert(1)", ORIGEM)).toBe("/");
+    // Parses on this origin, but its pathname "//evil.com" is another site to a router.
+    expect(caminhoSeguro("/.//evil.com", ORIGEM)).toBe("/");
+    expect(caminhoSeguro(`${ORIGEM}/.//evil.com/x`, ORIGEM)).toBe("/");
   });
 
   it("is / when there's no next", () => {
@@ -293,6 +318,137 @@ describe("changePassword", () => {
     );
     expect(result).toEqual({ ok: true, code: "password_changed" });
     expect(auth.updateUser).toHaveBeenCalledWith({ password: "newpass" });
+  });
+});
+
+describe("pedirNovaSenha", () => {
+  const env = { url: "u", key: "k" };
+
+  it("sends the link to the trimmed email, coming back where Supabase's default email needs", async () => {
+    const auth = createFakeAuth();
+    const result = await pedirNovaSenha(auth, "  a@b.com ", `${ORIGEM}${RETORNO_DA_RECUPERACAO}`, env);
+    expect(result).toEqual({ ok: true, code: "recovery_sent" });
+    expect(auth.resetPasswordForEmail).toHaveBeenCalledWith("a@b.com", { redirectTo: `${ORIGEM}/auth/callback?next=${NOVA_SENHA}` });
+  });
+
+  it("needs an email, and says the same thing whether or not it has an account", async () => {
+    const auth = createFakeAuth();
+    expect(await pedirNovaSenha(auth, " ", "https://cb", env)).toEqual({ ok: false, code: "email_required" });
+    expect(auth.resetPasswordForEmail).not.toHaveBeenCalled();
+    expect(sessaoToast({ ok: true, code: "recovery_sent" }, "recovery")?.description).toMatch(/^Se esse email tiver conta/);
+  });
+
+  it("passes on what Supabase refused, e.g. asking again too soon", async () => {
+    const auth = createFakeAuth({
+      resetPasswordForEmail: vi.fn(async () => ({ error: { message: "For security purposes, you can only request this after 30 seconds." } })),
+    });
+    expect(await pedirNovaSenha(auth, "a@b.com", "https://cb", env)).toMatchObject({ ok: false, code: "recovery_failed" });
+  });
+});
+
+describe("veioDeUmLink", () => {
+  const agora = 1_800_000_000;
+
+  it("is a session an email link opened in the last 15 minutes", () => {
+    expect(veioDeUmLink([{ method: "recovery", timestamp: agora - 60 }], agora)).toBe(true);
+    expect(veioDeUmLink([{ method: "otp", timestamp: agora - 14 * 60 }], agora)).toBe(true);
+  });
+
+  it("isn't a password sign-in, an old link, or a session with no amr", () => {
+    expect(veioDeUmLink([{ method: "password", timestamp: agora - 60 }], agora)).toBe(false);
+    expect(veioDeUmLink([{ method: "otp", timestamp: agora - 16 * 60 }], agora)).toBe(false);
+    expect(veioDeUmLink(undefined, agora)).toBe(false);
+    expect(veioDeUmLink(["otp"], agora)).toBe(false);
+  });
+
+  it("goes by the latest method: a password sign-in after the link wins", () => {
+    const amr = [
+      { method: "otp", timestamp: agora - 120 },
+      { method: "password", timestamp: agora - 60 },
+    ];
+    expect(veioDeUmLink(amr, agora)).toBe(false);
+  });
+});
+
+describe("definirNovaSenha", () => {
+  const env = { url: "u", key: "k" };
+  const AGORA = 1_800_000_000_000;
+  const comAmr = (method: string) =>
+    createFakeAuth({
+      getClaims: vi.fn(async () => ({ data: { claims: { amr: [{ method, timestamp: AGORA / 1000 - 60 }] } }, error: null })),
+    });
+  const comSessao = () => comAmr("recovery");
+
+  it("refuses a session that signed in with a password, as on an unlocked phone", async () => {
+    const auth = comAmr("password");
+    expect(await definirNovaSenha(auth, { newPassword: "nova-123", confirmPassword: "nova-123" }, env, AGORA)).toEqual({
+      ok: false,
+      code: "recovery_required",
+    });
+    expect(auth.updateUser).not.toHaveBeenCalled();
+  });
+
+  it("sets the password for the session the recovery link opened, with no current password", async () => {
+    const auth = comSessao();
+    expect(await definirNovaSenha(auth, { newPassword: "nova-123", confirmPassword: "nova-123" }, env, AGORA)).toEqual({ ok: true, code: "password_set" });
+    expect(auth.updateUser).toHaveBeenCalledWith({ password: "nova-123" });
+    expect(auth.signInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it("checks the two fields before calling auth", async () => {
+    const auth = comSessao();
+    expect(await definirNovaSenha(auth, { newPassword: "nova-123", confirmPassword: "outra-123" }, env, AGORA)).toEqual({ ok: false, code: "password_mismatch" });
+    expect(await definirNovaSenha(auth, { newPassword: "curta", confirmPassword: "curta" }, env, AGORA)).toEqual({ ok: false, code: "password_too_short" });
+    expect(auth.updateUser).not.toHaveBeenCalled();
+  });
+
+  it("refuses with no session, as when the page is opened without the link", async () => {
+    const auth = createFakeAuth();
+    expect(await definirNovaSenha(auth, { newPassword: "nova-123", confirmPassword: "nova-123" }, env, AGORA)).toEqual({ ok: false, code: "no_session" });
+    expect(auth.updateUser).not.toHaveBeenCalled();
+  });
+
+  it("passes on what Supabase refused", async () => {
+    const auth = comSessao();
+    vi.mocked(auth.updateUser).mockResolvedValueOnce({ error: { message: "New password should be different from the old password." } });
+    expect(await definirNovaSenha(auth, { newPassword: "nova-123", confirmPassword: "nova-123" }, env, AGORA)).toMatchObject({
+      ok: false,
+      code: "password_set_failed",
+    });
+  });
+});
+
+describe("concluirConfirmacao, for a password recovery link", () => {
+  /** The link the recovery email carries (supabase/templates/recovery.html). */
+  const linkDeRecuperacao = (extra = "") => new URL(`${ORIGEM}/auth/confirm?token_hash=abc&type=recovery${extra}`);
+
+  it("verifies the recovery token and always goes to the new-password page", async () => {
+    const auth = createFakeAuth();
+    const { destino, aviso } = await concluirConfirmacao(auth, linkDeRecuperacao(`&next=${encodeURIComponent(`${ORIGEM}/convite/x`)}`));
+    expect(auth.verifyOtp).toHaveBeenCalledWith({ token_hash: "abc", type: "recovery" });
+    expect(destino).toBe(NOVA_SENHA);
+    expect(aviso).toEqual({ variant: "success", title: "Agora é só criar a senha nova." });
+  });
+
+  it("Supabase's default email, back through /auth/callback with a PKCE code, also ends there", async () => {
+    const auth = createFakeAuth();
+    const { destino, aviso } = await concluirConfirmacao(auth, new URL(`${ORIGEM}${RETORNO_DA_RECUPERACAO}&code=xyz`));
+    expect(auth.exchangeCodeForSession).toHaveBeenCalledWith("xyz");
+    expect(destino).toBe(NOVA_SENHA);
+    expect(aviso?.title).toBe("Agora é só criar a senha nova.");
+  });
+
+  it("a used or old link goes to sign-in, saying to ask for another", async () => {
+    const auth = createFakeAuth({ verifyOtp: vi.fn(async () => ({ error: { message: "Email link is invalid or has expired" } })) });
+    const { destino, aviso } = await concluirConfirmacao(auth, linkDeRecuperacao());
+    expect(destino).toBe("/auth");
+    expect(aviso).toMatchObject({ variant: "error", title: "Esse link não vale mais" });
+  });
+
+  it("a sign-up link still confirms and goes to its next", async () => {
+    const { destino, aviso } = await concluirConfirmacao(createFakeAuth(), linkDoEmail(`${ORIGEM}/convite/x`));
+    expect(destino).toBe("/convite/x");
+    expect(aviso?.title).toBe("Email confirmado! Você entrou.");
   });
 });
 
