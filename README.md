@@ -188,6 +188,26 @@ The full glossary is in [`CONTEXT.md`](CONTEXT.md), and the design decisions are
 
 These were left out on purpose: notifications, payments, players rating each other, a native mobile app, UI translations (the UI is Portuguese only), match scores, and email invites (invites are links).
 
+## Known limitations
+
+Found by read-only audits of the schema and of these docs, and by the PR reviews. Each one has an issue:
+
+- **Realtime delete events aren't filtered by RLS.** A subscriber can get the primary key (uuids) of rows deleted in other groups ([#83](https://github.com/dev-nilo/nextjs-squadra/issues/83)).
+- **Player input rules live in the Server Action only.** Name length, position, nationality and the photo's origin aren't table constraints, so an owner or admin calling the API directly can skip them ([#84](https://github.com/dev-nilo/nextjs-squadra/issues/84)).
+- **Group slugs reveal name clashes, and the API allows unlimited group creation** ([#85](https://github.com/dev-nilo/nextjs-squadra/issues/85)).
+- **Game functions lock the row before checking membership**, so an outsider who knows a game's id can hold its lock briefly before being refused ([#86](https://github.com/dev-nilo/nextjs-squadra/issues/86)).
+- **A cancelled game can be reopened through the API**, though no screen does it ([#87](https://github.com/dev-nilo/nextjs-squadra/issues/87)).
+- **Moving a player in the quick draw loses keyboard focus** ([#88](https://github.com/dev-nilo/nextjs-squadra/issues/88)).
+- **Removing someone while they leave can deadlock.** Postgres aborts one of the two and nothing breaks, but that person sees a generic error ([#91](https://github.com/dev-nilo/nextjs-squadra/issues/91)).
+- **Two tabs saving one card with photos at different paths could delete the photo in use.** It almost can't happen today: uploads are re-encoded to the same `.jpg` path, unless the browser can't draw them ([#89](https://github.com/dev-nilo/nextjs-squadra/issues/89)).
+
+And by design, for now:
+
+- **Player photos are public by URL.** Only a group's members can list them, but anyone holding a photo's URL can load it.
+- **Deploy compatibility is reasoned, not tested.** The expand/contract migrations say why the deploy before them still works; CI never runs the old code on the new schema.
+- **The last-spot test proves correctness, not load.** Nobody has measured the row lock with hundreds of people on one game.
+- **Realtime isn't covered by tests.**
+
 ## More docs
 
 - [`docs/staging.md`](docs/staging.md): environments, secrets, and how migrations reach each one.
