@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { addJogador, addMembro, anon, newUser, removeUsers, type TestUser } from "./support";
+import { addJogador, addMembro, admin, anon, newUser, removeUsers, type TestUser } from "./support";
 
 let users: TestUser[] = [];
 const user = async (label: string) => {
@@ -200,6 +200,20 @@ describe("Jogadores and their Grupo", () => {
     const { data: proprio } = await addJogador(intruso, doIntruso.id, "Do Intruso");
     const movido = await intruso.client.from("players").update({ grupo_id: grupo.id }).eq("id", proprio!.id);
     expect(movido.error).not.toBeNull();
+  });
+
+  it("doesn't let someone who runs two Grupos move a Jogador from one to the other", async () => {
+    const nilo = await user("nilo");
+    const outro = await user("outro");
+    const meu = await criarGrupo(nilo, "Fut do Nilo");
+    const dele = await criarGrupo(outro, "Fut do Outro");
+    await addMembro(dele.id, nilo, "admin");
+    const { data: jogador } = await addJogador(outro, dele.id, "Do Outro");
+
+    const movido = await nilo.client.from("players").update({ grupo_id: meu.id }).eq("id", jogador!.id);
+    expect(movido.error).not.toBeNull();
+    const { data } = await admin().from("players").select("grupo_id").eq("id", jogador!.id).single();
+    expect(data?.grupo_id).toBe(dele.id);
   });
 
   it("refuses a membro planting a Jogador in the Grupo", async () => {

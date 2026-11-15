@@ -148,6 +148,19 @@ describe("the dono's rules", () => {
     expect(depois.error?.hint).toBe("sem-permissao");
   });
 
+  it("an admin leaving while the dono hands them the fut never leaves the fut without a dono", async () => {
+    // The two calls race from separate clients; whichever commits first, there's one dono after.
+    for (let rodada = 0; rodada < 5; rodada++) {
+      const grupo = await fut();
+      await Promise.all([
+        gente.dono.client.rpc("passar_posse", { grupo, pessoa: gente.outroAdmin.id }),
+        gente.outroAdmin.client.rpc("sair_do_grupo", { grupo }),
+      ]);
+      const { count } = await service().from("grupo_membros").select("*", { count: "exact", head: true }).eq("grupo_id", grupo).eq("papel", "dono");
+      expect(count).toBe(1);
+    }
+  });
+
   it("must hand the fut over before leaving", async () => {
     const grupo = await fut();
     const { error } = await gente.dono.client.rpc("sair_do_grupo", { grupo });
