@@ -46,6 +46,10 @@ export type SessaoAuth = {
     email: string,
     options?: { redirectTo?: string },
   ) => Promise<{ error: { message: string } | null }>;
+  getClaims: () => Promise<{
+    data: { claims: { amr?: unknown } } | null;
+    error: { message: string } | null;
+  }>;
   onAuthStateChange: (
     callback: (
       event: string,
@@ -67,6 +71,7 @@ export type CodigoOk =
   | "password_set";
 export type CodigoErro =
   | "not_configured"
+  | "recovery_required"
   | "recovery_failed"
   | "recovery_error"
   | "password_set_failed"
@@ -350,17 +355,40 @@ export async function pedirNovaSenha(
   }
 }
 
+/** How long after tapping an email link the new password can still be set without the current one. */
+const JANELA_DO_LINK_S = 15 * 60;
+
 /**
- * Sets a new password for whoever is signed in, without the current one:
- * tapping the recovery link is the proof. Supabase lets any signed-in session
- * change its password unless "secure password change" is on, so this adds no
- * power a session doesn't have; changePassword asks for the current password
- * because the screen in Você is for someone who still knows it.
+ * Whether the session was opened by an email link moments ago: its latest
+ * authentication method (the JWT's `amr`) is the recovery or the one-time
+ * token, less than JANELA_DO_LINK_S ago. A session that signed in with a
+ * password, as on someone's unlocked phone, isn't one: it keeps the Você
+ * screen, which asks for the current password.
+ */
+export function veioDeUmLink(amr: unknown, agoraEmSegundos: number): boolean {
+  if (!Array.isArray(amr)) return false;
+  const entradas = amr.filter(
+    (e): e is { method: string; timestamp: number } =>
+      typeof e === "object" && e !== null && typeof e.method === "string" && typeof e.timestamp === "number",
+  );
+  if (entradas.length === 0) return false;
+  const ultima = entradas.reduce((a, b) => (b.timestamp > a.timestamp ? b : a));
+  return (ultima.method === "recovery" || ultima.method === "otp") && agoraEmSegundos - ultima.timestamp <= JANELA_DO_LINK_S;
+}
+
+/**
+ * Sets a new password without the current one, only for a session the
+ * recovery link opened moments ago (veioDeUmLink): tapping it is the proof.
+ * Anything else is refused with recovery_required, and changePassword in Você
+ * stays the way to change a known password. This guards the screens: the Auth
+ * API itself lets a session change its password unless Supabase's "secure
+ * password change" is on.
  */
 export async function definirNovaSenha(
   auth: SessaoAuth,
   input: { newPassword: string; confirmPassword: string },
   env: SupabaseEnv = readSupabaseEnv(),
+  agora: number = Date.now(),
 ): Promise<SessaoResult> {
   if (!isSupabaseConfigured(env)) {
     return { ok: false, code: "not_configured" };
@@ -373,9 +401,12 @@ export async function definirNovaSenha(
   }
 
   try {
-    const { data, error: sessionError } = await auth.getSession();
-    if (sessionError || !data.session) {
+    const { data, error: claimsError } = await auth.getClaims();
+    if (claimsError || !data) {
       return { ok: false, code: "no_session" };
+    }
+    if (!veioDeUmLink(data.claims.amr, Math.floor(agora / 1000))) {
+      return { ok: false, code: "recovery_required" };
     }
     const { error } = await auth.updateUser({ password: input.newPassword });
     if (error) {
@@ -409,6 +440,9 @@ export function caminhoSeguro(next: string | null | undefined, origem: string): 
     const url = new URL(next, origem);
     if (url.origin !== origem) return "/";
     if (url.pathname === CALLBACK_ANTIGO) return "/";
+    // "/.//evil.com" parses on this origin but keeps a pathname of
+    // "//evil.com", which a router reads as another site.
+    if (url.pathname.startsWith("//")) return "/";
     return `${url.pathname}${url.search}${url.hash}` || "/";
   } catch {
     return "/";
@@ -446,7 +480,13 @@ async function confirmar(auth: SessaoAuth, url: URL, recuperacao: boolean): Prom
     const code = url.searchParams.get("code");
     if (code) {
       const { error } = await auth.exchangeCodeForSession(code);
-      if (error) return { ok: false, code: "pkce_failed", message: error.message };
+      if (error) {
+        // The browser client exchanges a `code` in the URL on its own when it
+        // loads (detectSessionInUrl), so ours can fail on a used verifier
+        // even though it worked. A session means it did.
+        const { data } = await auth.getSession();
+        if (!data.session) return { ok: false, code: "pkce_failed", message: error.message };
+      }
       return { ok: true, code: confirmado, via: "pkce" };
     }
 
@@ -565,6 +605,13 @@ export function sessaoToast(
       return { variant: "error", title: "Não deu pra salvar a senha", description: result.message };
     case "password_set_error":
       return { variant: "error", title: "Erro ao salvar a senha", description: "Algo deu errado. Tente novamente." };
+    case "recovery_required":
+      return {
+        variant: "error",
+        title: "Abra o link de recuperação",
+        description: "Sem a senha atual, só pelo link de Esqueci minha senha. Sabendo a atual, troque em Você.",
+        duration: 8000,
+      };
     case "not_configured":
       return {
         variant: "error",

@@ -108,3 +108,10 @@ test("someone who forgot the password gets a link by email, sets a new one and s
     if (data.user) await service.auth.admin.deleteUser(data.user.id);
   }
 });
+
+test("someone signed in with a password can't set a new one there without the current one", async ({ page }) => {
+  await signIn(page, DEV_USER);
+  await page.goto("/auth/nova-senha");
+  await expect(page.getByText("Essa página abre pelo link de recuperação.")).toBeVisible();
+  await expect(page.getByLabel("Senha nova", { exact: true })).toHaveCount(0);
+});

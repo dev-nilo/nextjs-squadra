@@ -9,12 +9,13 @@ import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/full-screen-loader";
 import { PasswordInput } from "@/components/ui/password-input";
 import { createClient } from "@/lib/supabase/client";
-import { applySessaoToast, definirNovaSenha, toSessaoAuth } from "@/lib/sessao";
+import { applySessaoToast, definirNovaSenha, toSessaoAuth, veioDeUmLink } from "@/lib/sessao";
 
 /**
  * Where a password recovery link always ends. Tapping Continuar on
  * /auth/confirm signed the person in, so the new password needs no current
- * one. Opened any other way, with no session, it says how to get here.
+ * one. Any other session (one that signed in with a password, say) gets the
+ * way to the link instead, as does no session at all.
  */
 export default function NovaSenhaPage() {
   const router = useRouter();
@@ -25,10 +26,10 @@ export default function NovaSenhaPage() {
 
   useEffect(() => {
     let ativo = true;
-    void createClient()
-      .auth.getSession()
+    void toSessaoAuth(createClient())
+      .getClaims()
       .then(({ data }) => {
-        if (ativo) setTemSessao(Boolean(data.session));
+        if (ativo) setTemSessao(Boolean(data) && veioDeUmLink(data?.claims.amr, Math.floor(Date.now() / 1000)));
       });
     return () => {
       ativo = false;
@@ -42,7 +43,7 @@ export default function NovaSenhaPage() {
       const resultado = await definirNovaSenha(toSessaoAuth(createClient()), { newPassword: senha, confirmPassword: confirmacao });
       applySessaoToast(resultado, "recovery", toast);
       if (resultado.ok) router.replace("/");
-      else if (resultado.code === "no_session") setTemSessao(false);
+      else if (resultado.code === "no_session" || resultado.code === "recovery_required") setTemSessao(false);
     } finally {
       setSalvando(false);
     }
@@ -91,7 +92,7 @@ export default function NovaSenhaPage() {
       ) : (
         <div className="flex flex-col gap-4">
           <Alert tone="warning">
-            Essa página abre pelo link de recuperação. Peça um em Esqueci minha senha e abra o mais recente.
+            Essa página abre pelo link de recuperação. Peça um em Esqueci minha senha e abra o mais recente. Sabendo a senha atual, troque em Você.
           </Alert>
           <Button variant="flat" className="w-full" onClick={() => router.push("/auth")}>
             Voltar ao login
