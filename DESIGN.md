@@ -152,6 +152,7 @@ The **only exception** is the Jogador card (`PlayerCard`): its radii are in `cqw
 - Focus: `focus-visible:ring-2 ring-primary` on every interactive element.
 - Selection: `ring-2 ring-primary` plus a `primary/10` tint.
 - Hover on rows: border shifts toward `primary/40–50`. Hover is a desktop extra, never the only way to reach an action. Cards don't scale on hover.
+- Dragging is a desktop extra too. A Jogador moves between Times with a select beside their name ("Mover <nome>"), in the Partida's Sorteio and in the quick one; the quick one also lets a mouse drag the row.
 - Motion: `transition-colors` / `transition-opacity`; `animate-scale-in` for elements that pop in (selection badge); `animate-coin-toss` only for the loader mark.
 
 ## Export (Times Sorteados PNG)
@@ -159,7 +160,7 @@ The **only exception** is the Jogador card (`PlayerCard`): its radii are in `cqw
 The exported image follows the active theme: its background is read from the `--background` token at export time, never a hardcoded color.
 
 - **Layout is a team sheet (súmula)**: header with the lockup, date, player count and the **difference between the highest and lowest average** (the point of a balanced Sorteio). Each Time is one `bg-content1` surface: crest (`team-N` circle with the letter) + name + count, the average as a big `.text-numeral`, then a hairline-divided list (`divide-divider`), no card per row and no numbering (the order is alphabetical, not a sequence). Avatars without a photo show initials.
-- Individual ratings are on screen only (`data-export-ignore`); the PNG shows names, positions and team averages. Players are listed **alphabetically**, never in Sorteio order (strongest first), so the list never ranks people.
+- Individual ratings and the move selects are on screen only (`data-export-ignore`); the PNG shows names, positions and team averages. Players are listed **alphabetically**, never in Sorteio order (strongest first), so the list never ranks people.
 - `html-to-image` copies the computed style of an `<svg>` root but not of its children, so SVGs inside the export area keep their colors on the root (`color` + inherited `fill`) and children use `currentColor`/inheritance. `Logo` follows this.
 
 ## Checklist for a UI change
