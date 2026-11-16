@@ -2,7 +2,8 @@
  * Shared Sentry init options for the browser, Node and edge runtimes.
  *
  * Previews run against the staging Supabase project, so they report as "staging".
- * No DSN (local dev, CI) leaves the SDK inert.
+ * No DSN (CI, `npm run test:local`, a local .env.local without one) leaves the SDK inert.
+ * A .env.local pulled from Vercel does carry the DSN, so local runs report as "development".
  */
 export type SentryEnvironment = "production" | "staging" | "development";
 

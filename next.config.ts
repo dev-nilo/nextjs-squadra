@@ -10,7 +10,8 @@ const nextConfig: NextConfig = {
 export default withSentryConfig(nextConfig, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
-  // Source maps upload only when the token is set (Vercel builds). Local and CI builds skip it.
+  // Source maps upload only when the token is set: Vercel builds, and a local build whose
+  // .env.local was pulled from Vercel. CI and `npm run test:local` leave it empty and skip it.
   authToken: process.env.SENTRY_AUTH_TOKEN,
   silent: !process.env.CI,
   widenClientFileUpload: true,
