@@ -10,12 +10,12 @@ import { withSentryConfig } from "@sentry/nextjs/config";
  * render (forcing every page dynamic) and the Supabase, Sentry and Vercel
  * origins listed; that's a separate change.
  */
-export const CABECALHOS_DE_SEGURANCA = [
+const CABECALHOS_DE_SEGURANCA = [
   { key: "Content-Security-Policy", value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'" },
   // frame-ancestors for browsers that predate it.
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
-  // Invite links carry their token in the path: other sites get the origin only.
+  // Most browsers' default already; said here so it can't drift. Invite links carry their token in the path.
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   // Nothing here uses them. A photo comes from a file input, which this doesn't govern.
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },

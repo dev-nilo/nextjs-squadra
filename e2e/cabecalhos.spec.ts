@@ -9,6 +9,6 @@ for (const caminho of ["/auth", "/", "/g/fut-do-dev", "/convite/qualquer"]) {
     expect(h["x-frame-options"]).toBe("DENY");
     expect(h["x-content-type-options"]).toBe("nosniff");
     expect(h["referrer-policy"]).toBe("strict-origin-when-cross-origin");
-    expect(h["permissions-policy"]).toContain("camera=()");
+    expect(h["permissions-policy"]).toBe("camera=(), microphone=(), geolocation=(), payment=(), usb=()");
   });
 }
