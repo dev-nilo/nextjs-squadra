@@ -15,7 +15,7 @@ Squadra runs a weekly pickup-football game, a *pelada*. It keeps the group's ros
 
 - **A multi-tenant Postgres database.** Every table is behind row-level security, with three roles (`dono`, `admin`, `membro`). Integration tests sign in as each role and check what it can read and change.
 - **A race-safe last spot.** Saying "I'm in" is one Postgres function that takes a row lock. When eight people tap at once for one spot, exactly one gets it, and the rest join the waitlist in the order Postgres applied their answers.
-- **A live presence list.** Supabase Realtime pushes changes, and an inserted or updated row only reaches a subscriber whose RLS lets them read it.
+- **A live presence list.** Supabase Realtime pushes changes, and an inserted or updated row only reaches a subscriber whose RLS lets them read it. Deletes aren't published at all, because Realtime can't check them against RLS.
 - **A server-side team draw.** Each player's rating is copied into the saved draw at draw time, so editing a player later doesn't rewrite past games.
 - **A zero-downtime schema change.** Moving from per-user rosters to shared groups took five expand/contract steps, one PR and one production deploy each; four of them carried a migration.
 - **A delivery pipeline.** Every PR runs against a throwaway local database in CI and gets a preview pointed at staging; a PR that adds migrations also pushes them to staging. `main` only takes PRs with green CI. After a merge, production waits for the owner's approval, then migrates, and only then deploys the app.
@@ -88,9 +88,9 @@ PR [#50](https://github.com/dev-nilo/nextjs-squadra/pull/50).
 
 - **No recursive policies.** Every table policy asks a single `security definer` helper, `papel_no_grupo()`, for the caller's role, so no policy has to query the membership table it protects.
 - **Column-level grants.** They keep fields like a player's author out of reach even for people allowed to edit the row.
-- **Realtime under the same rules.** Supabase checks each inserted and updated row against the subscriber's RLS before sending it, so a live list only shows the subscriber's group. Supabase can't apply RLS to delete events, which carry only the deleted row's key; here those only come from deleting a player or a group.
+- **Realtime under the same rules.** Supabase checks each inserted and updated row against the subscriber's RLS before sending it, so a live list only shows the subscriber's group. Supabase can't apply RLS to delete events, which carry only the deleted row's key, so the publication sends inserts and updates only. Here deletes only come from deleting a player or a group, and when a player on a game's list is deleted, a trigger touches the game so its open pages reload.
 
-The [integration tests](tests/integration) sign in as an owner, an admin, a member and an outsider, and check what each of them can read and change, including the outsider getting an empty result rather than an error. Realtime isn't covered by tests. [ADR 0003](docs/adr/0003-elenco-belongs-to-a-grupo.md), PRs [#43](https://github.com/dev-nilo/nextjs-squadra/pull/43) and [#45](https://github.com/dev-nilo/nextjs-squadra/pull/45).
+The [integration tests](tests/integration) sign in as an owner, an admin, a member and an outsider, and check what each of them can read and change, including the outsider getting an empty result rather than an error. [`realtime.test.ts`](tests/integration/realtime.test.ts) subscribes like the game page does and checks what arrives, and what doesn't arrive in another group. [ADR 0003](docs/adr/0003-elenco-belongs-to-a-grupo.md), PRs [#43](https://github.com/dev-nilo/nextjs-squadra/pull/43) and [#45](https://github.com/dev-nilo/nextjs-squadra/pull/45).
 
 ### Changing who owns the data, without downtime
 
@@ -195,7 +195,6 @@ These were left out on purpose: notifications, payments, players rating each oth
 
 Found by read-only audits of the schema and of these docs, and by the PR reviews. Each one has an issue:
 
-- **Realtime delete events aren't filtered by RLS.** A subscriber can get the primary key (uuids) of rows deleted in other groups ([#83](https://github.com/dev-nilo/nextjs-squadra/issues/83)).
 - **Player input rules live in the Server Action only.** Name length, position, nationality and the photo's origin aren't table constraints, so an owner or admin calling the API directly can skip them ([#84](https://github.com/dev-nilo/nextjs-squadra/issues/84)).
 - **Group slugs reveal name clashes, and the API allows unlimited group creation** ([#85](https://github.com/dev-nilo/nextjs-squadra/issues/85)).
 - **Deleting a player while someone answers for them can deadlock.** Postgres aborts one of the two and nothing breaks, but that person sees a generic error ([#108](https://github.com/dev-nilo/nextjs-squadra/issues/108)).
@@ -207,7 +206,6 @@ And by design, for now:
 - **Player photos are public by URL.** Only a group's members can list them, but anyone holding a photo's URL can load it.
 - **Deploy compatibility is reasoned, not tested.** The expand/contract migrations say why the deploy before them still works; CI never runs the old code on the new schema.
 - **The last-spot test proves correctness, not load.** Nobody has measured the row lock with hundreds of people on one game.
-- **Realtime isn't covered by tests.**
 
 ## More docs
 

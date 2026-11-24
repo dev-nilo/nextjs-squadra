@@ -183,3 +183,17 @@ describe("every people function takes the Grupo's lock first (#91)", () => {
     }
   });
 });
+
+describe("a deleted Jogador's Partidas are touched without waiting for their locks (#83)", () => {
+  it("deleting a Jogador who said não vou doesn't queue behind a locked Partida", async () => {
+    const { partida, jogador } = await fut();
+    await membro.client.rpc("responder_presenca", { partida, jogador, vou: false }).throwOnError();
+    // Whoever holds the Partida (responder_presenca, a Sorteio function) writes to it and
+    // sends its own event. Waiting for it could deadlock, as in #108.
+    await db.query("begin");
+    await db.query("select 1 from public.partidas where id = $1 for update", [partida]);
+
+    const { error } = await semEsperar(dono.client.from("players").delete().eq("id", jogador));
+    expect(error).toBeNull();
+  });
+});
