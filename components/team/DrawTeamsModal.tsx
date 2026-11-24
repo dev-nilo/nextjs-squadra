@@ -138,7 +138,10 @@ export const DrawTeamsModal = ({
                         </Button>
                         <Button
                             color="secondary"
-                            onClick={onRedraw}
+                            onClick={() => {
+                                foco.soltar();
+                                onRedraw();
+                            }}
                             startContent={<Shuffle size={16} />}
                             size="sm"
                             className="w-full sm:w-auto"

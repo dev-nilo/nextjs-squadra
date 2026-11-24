@@ -102,7 +102,10 @@ export function SorteioDaPartida({
             startContent={<Shuffle size={16} />}
             isLoading={pendente}
             isDisabled={!cabeNoSorteio(confirmados.length, Number(numTimes))}
-            onClick={() => executar(() => sortearDaPartida(slug, partidaId, Number(numTimes)), "Times sorteados")}
+            onClick={() => {
+              foco.soltar();
+              executar(() => sortearDaPartida(slug, partidaId, Number(numTimes)), "Times sorteados");
+            }}
           >
             {sorteio ? "Sortear de novo" : "Sortear times"}
           </Button>
@@ -113,6 +116,7 @@ export function SorteioDaPartida({
               isDisabled={pendente || !emDia}
               onClick={() => {
                 if (!window.confirm("Publicar os times? Depois disso todo mundo vê e não dá mais pra mudar.")) return;
+                foco.soltar();
                 executar(() => publicarSorteio(slug, partidaId), "Times publicados");
               }}
             >
