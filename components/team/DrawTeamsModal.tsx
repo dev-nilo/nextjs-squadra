@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Modal, ModalHeader, ModalBody } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
+import { useFocoAoMover } from "@/hooks/use-foco-ao-mover";
 
 
 interface DrawTeamsModalProps {
@@ -35,6 +36,7 @@ export const DrawTeamsModal = ({
         fromTeam: number;
     } | null>(null);
     const [dragOverTeam, setDragOverTeam] = useState<number | null>(null);
+    const foco = useFocoAoMover();
 
     const handleDragStart = (playerId: string, fromTeam: number) => {
         setDraggedPlayer({ playerId, fromTeam });
@@ -271,10 +273,12 @@ export const DrawTeamsModal = ({
                                                     <select
                                                         data-export-ignore="true"
                                                         aria-label={`Mover ${player.name}`}
+                                                        ref={foco.refDo(player.id)}
                                                         value={idx}
-                                                        onChange={(e) =>
-                                                            onMover(player.id, idx, Number(e.target.value))
-                                                        }
+                                                        onChange={(e) => {
+                                                            foco.marcar(player.id);
+                                                            onMover(player.id, idx, Number(e.target.value));
+                                                        }}
                                                         className="shrink-0 rounded-lg border border-default-200 bg-default-100 px-1 py-0.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                                                     >
                                                         {generatedTeams.map((destino, i) => (

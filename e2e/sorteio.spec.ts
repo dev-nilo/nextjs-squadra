@@ -51,6 +51,8 @@ test("a Jogador moves to another Time with the select beside their name, no drag
 
   // Now listed in Time 2, with that Time selected.
   await expect(time2.getByRole("combobox", { name: `Mover ${quem}`, exact: true })).toHaveValue("1");
+  // The keyboard focus follows them to their new row (#88).
+  await expect(time2.getByRole("combobox", { name: `Mover ${quem}`, exact: true })).toBeFocused();
   expect(await nomes(time1)).toHaveLength(antes1.length - 1);
   expect((await nomes(time2)).sort()).toEqual([...antes2, quem].sort());
 });

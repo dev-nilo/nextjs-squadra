@@ -7,6 +7,7 @@ import { moverNoSorteio, publicarSorteio, sortearDaPartida } from "@/app/actions
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { useFocoAoMover } from "@/hooks/use-foco-ao-mover";
 import { getTeamPresentation } from "@/lib/constants";
 import { membrosPorNome } from "@/lib/sorteio";
 import {
@@ -42,6 +43,7 @@ export function SorteioDaPartida({
 }) {
   const [numTimes, setNumTimes] = useState(String(sorteio?.times.length ?? MIN_TIMES));
   const [pendente, startTransition] = useTransition();
+  const foco = useFocoAoMover();
 
   const publicado = !!sorteio?.publicado_em;
   const emDia = sorteio ? sorteioEstaEmDia(sorteio.times, confirmados) : true;
@@ -150,13 +152,15 @@ export function SorteioDaPartida({
                       {editavel && emDia && sorteio && (
                         <select
                           aria-label={`Mover ${jogador.name}`}
+                          ref={foco.refDo(jogador.id)}
                           value={indice}
                           disabled={pendente}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            foco.marcar(jogador.id);
                             executar(() =>
                               moverNoSorteio(slug, partidaId, jogador.id, Number(e.target.value), sorteio.sorteado_em),
-                            )
-                          }
+                            );
+                          }}
                           className="shrink-0 rounded-lg border border-default-200 bg-default-100 px-1 py-0.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                         >
                           {times.map((destino, i) => (
