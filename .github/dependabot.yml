@@ -1,6 +1,7 @@
 # Dependency updates as pull requests, through the same CI, staging preview and
 # review as any other change. Minor and patch bumps come grouped, one PR a week
 # per ecosystem; a major version comes on its own, since it may need code changes.
+# Not covered: the Vercel CLI pinned in ci.yml (`npx vercel@…`), bumped by hand.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -14,8 +15,9 @@ updates:
     groups:
       npm-minor-e-patch:
         update-types: [minor, patch]
-    commit-message:
-      prefix: "Bump"
+        # Still 0.x: their "minor" bumps may break, so each comes on its own
+        # instead of holding up the whole weekly group.
+        exclude-patterns: ["@supabase/ssr", "lucide-react"]
 
   - package-ecosystem: github-actions
     directory: /
@@ -27,5 +29,3 @@ updates:
     groups:
       actions:
         update-types: [minor, patch, major]
-    commit-message:
-      prefix: "Bump"
