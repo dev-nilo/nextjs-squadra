@@ -13,6 +13,13 @@ const importacaoSchema = z
 /** An id already taken by a Jogador of another Grupo (only a tampered request sends one). */
 const ID_DE_OUTRO_FUT = { "23505": "Esse jogador não é desse fut. Recarregue a página." };
 
+/**
+ * The database refuses a photo that isn't a file in the Grupo's folder
+ * (players_foto_do_grupo), for example when another tab already replaced it
+ * and deleted the old file.
+ */
+const MOTIVOS_DA_CARTA = { ...ID_DE_OUTRO_FUT, "foto-invalida": "Não deu pra usar essa foto. Envie de novo." };
+
 const urlDoSupabase = () => process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 
 /**
@@ -39,7 +46,7 @@ export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: un
   noGrupo(
     supabase,
     slug,
-    { acao: "salvarJogador", generica: "Não deu pra salvar a carta agora. Tenta de novo.", motivos: ID_DE_OUTRO_FUT },
+    { acao: "salvarJogador", generica: "Não deu pra salvar a carta agora. Tenta de novo.", motivos: MOTIVOS_DA_CARTA },
     async ({ user, grupo }) => {
       const jogador = validar(jogadorSchema, dados, "Confira os dados do jogador.");
 
