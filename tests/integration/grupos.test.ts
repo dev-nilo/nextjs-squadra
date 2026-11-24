@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { addJogador, addMembro, admin, anon, newUser, removeUsers, type TestUser } from "./support";
+import { addJogador, addMembro, admin, anon, chamarComo, conexaoDireta, newUser, removeUsers, type TestUser } from "./support";
 
 let users: TestUser[] = [];
 const user = async (label: string) => {
@@ -26,7 +26,7 @@ describe("criar_grupo", () => {
     const grupo = await criarGrupo(nilo, "Fut do Nilo");
 
     expect(grupo.nome).toBe("Fut do Nilo");
-    expect(grupo.slug).toMatch(/^fut-do-nilo(-\d+)?$/);
+    expect(grupo.slug).toMatch(/^fut-do-nilo(-[0-9a-f]{6})?$/);
     const { data: membros } = await nilo.client.from("grupo_membros").select("user_id, papel").eq("grupo_id", grupo.id);
     expect(membros).toEqual([{ user_id: nilo.id, papel: "dono" }]);
   });
@@ -74,11 +74,17 @@ describe("criar_grupo", () => {
     const doAmigo = await criarGrupo(amigo, "Fut do Amigo");
     await addMembro(doAmigo.id, nilo, "membro");
 
-    const tentativas = await Promise.all(
-      [4, 5, 6, 7].map((i) => nilo.client.rpc("criar_grupo", { nome_do_grupo: `Fut ${i}` })),
-    );
-    expect(tentativas.filter((t) => t.error === null)).toHaveLength(2);
-    expect(tentativas.filter((t) => t.error?.hint === "limite-de-grupos")).toHaveLength(2);
+    // Four direct connections, so the calls really overlap (the API may run them one by one).
+    const conexoes = await Promise.all([4, 5, 6, 7].map(() => conexaoDireta()));
+    try {
+      const tentativas = await Promise.all(
+        conexoes.map((db, i) => chamarComo(db, nilo, "select public.criar_grupo($1)", [`Fut ${i + 4}`])),
+      );
+      expect(tentativas.filter((t) => t.error === null)).toHaveLength(2);
+      expect(tentativas.filter((t) => t.error?.hint === "limite-de-grupos")).toHaveLength(2);
+    } finally {
+      await Promise.all(conexoes.map((db) => db.end()));
+    }
   });
 
   it("strips accents and symbols from the slug", async () => {

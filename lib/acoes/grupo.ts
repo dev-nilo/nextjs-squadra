@@ -3,19 +3,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { validarNomeDoGrupo, type Participacao } from "@/lib/grupo";
 import { comSessao, exigir, recusar } from "./executar";
 
+/** criar_grupo refuses an account that is already dono of 5 Grupos (only a direct API call gets there). */
+const MOTIVOS = { "limite-de-grupos": "Você já organiza 5 futs, o limite por conta." };
+
 /**
  * First access: the user names their Grupo. `criar_grupo` makes them its dono
  * and moves their Jogadores that have no Grupo into it, in one transaction.
  */
 export const criarGrupo = (supabase: SupabaseClient, nome: string) =>
-  comSessao(
-    supabase,
-    {
-      acao: "criarGrupo",
-      generica: "Não deu pra criar o fut agora. Tenta de novo.",
-      motivos: { "limite-de-grupos": "Você já organiza 5 futs, o limite por conta." },
-    },
-    async ({ user }): Promise<Participacao> => {
+  comSessao(supabase, { acao: "criarGrupo", generica: "Não deu pra criar o fut agora. Tenta de novo.", motivos: MOTIVOS }, async ({ user }): Promise<Participacao> => {
     const validacao = validarNomeDoGrupo(nome);
     if (!validacao.ok) recusar(validacao.message);
 
