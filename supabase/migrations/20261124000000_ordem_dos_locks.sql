@@ -7,18 +7,22 @@
 -- that pass the WHERE, so an outsider finds nothing and locks nothing. The checks
 -- after the lock stay, because a role can change while the caller waits for it.
 --
--- #91: every function that changes the people of a Grupo now locks the grupos row
--- first, after checking that the caller is its dono. sair_do_grupo and passar_posse
--- already locked it; remover_do_grupo and mudar_papel locked the person's
--- grupo_membros row and then players, the reverse of sair_do_grupo, so removing
--- someone while they left could deadlock (40P01). passar_posse also checks the
--- caller before taking the lock now, for the same reason as #86.
+-- #91: every function that changes the people of a Grupo, or the Grupo itself,
+-- now checks that the caller is in it, locks the grupos row first, and checks the
+-- caller's papel again after the lock (the fut may have changed hands while it
+-- waited). sair_do_grupo and passar_posse already locked it; remover_do_grupo
+-- and mudar_papel locked the person's grupo_membros row and then players, the
+-- reverse of sair_do_grupo, so removing someone while they left could deadlock
+-- (40P01). passar_posse now checks membership before its lock, for the same
+-- reason as #86. excluir_grupo didn't check again after its lock, and
+-- renomear_grupo took none, so a dono who had just handed the fut over could
+-- still delete or rename it.
 --
 -- Bodies are today's definitions with only those lines changed.
 
 -- responder_presenca
 CREATE OR REPLACE FUNCTION public.responder_presenca(partida uuid, jogador uuid, vou boolean)
- RETURNS presencas
+ RETURNS public.presencas
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
@@ -115,7 +119,7 @@ $function$;
 
 -- salvar_sorteio
 CREATE OR REPLACE FUNCTION public.salvar_sorteio(partida uuid, times jsonb)
- RETURNS sorteios
+ RETURNS public.sorteios
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
@@ -220,7 +224,7 @@ $function$;
 
 -- mover_no_sorteio
 CREATE OR REPLACE FUNCTION public.mover_no_sorteio(partida uuid, jogador uuid, para_time integer, sorteado_em timestamp with time zone)
- RETURNS sorteios
+ RETURNS public.sorteios
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
@@ -317,7 +321,7 @@ $function$;
 
 -- publicar_sorteio
 CREATE OR REPLACE FUNCTION public.publicar_sorteio(partida uuid)
- RETURNS sorteios
+ RETURNS public.sorteios
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
@@ -372,7 +376,7 @@ $function$;
 
 -- vincular_jogador
 CREATE OR REPLACE FUNCTION public.vincular_jogador(jogador uuid)
- RETURNS players
+ RETURNS public.players
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
@@ -409,7 +413,7 @@ $function$;
 
 -- desvincular_jogador
 CREATE OR REPLACE FUNCTION public.desvincular_jogador(jogador uuid)
- RETURNS players
+ RETURNS public.players
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
@@ -422,8 +426,9 @@ begin
     raise exception 'desvincular_jogador requires a signed-in user' using errcode = '28000';
   end if;
 
-  -- Someone's own Jogador is always in a Grupo they belong to: leaving the
-  -- Grupo unlinks it.
+  -- Leaving or being removed unlinks someone's Jogador, so their own Jogador is
+  -- normally in a Grupo they belong to. (A link that races a removal can break
+  -- that; a dono or admin can still unlink it.)
   select * into alvo from public.players p
   where p.id = jogador and public.papel_no_grupo(p.grupo_id) is not null
   for update;
@@ -479,8 +484,8 @@ end;
 $function$;
 
 -- mudar_papel
-CREATE OR REPLACE FUNCTION public.mudar_papel(grupo uuid, pessoa uuid, novo papel_grupo)
- RETURNS grupo_membros
+CREATE OR REPLACE FUNCTION public.mudar_papel(grupo uuid, pessoa uuid, novo public.papel_grupo)
+ RETURNS public.grupo_membros
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
@@ -554,3 +559,54 @@ begin
 end;
 $function$;
 
+-- excluir_grupo
+CREATE OR REPLACE FUNCTION public.excluir_grupo(grupo uuid, confirmacao text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  atual text;
+begin
+  if public.exigir_papel(grupo) <> 'dono' then
+    raise exception 'Só o dono exclui o fut' using hint = 'sem-permissao';
+  end if;
+  select g.nome into atual from public.grupos g where g.id = grupo for update;
+  -- Still the dono after waiting for the lock (see remover_do_grupo).
+  if public.exigir_papel(grupo) <> 'dono' then
+    raise exception 'Só o dono exclui o fut' using hint = 'sem-permissao';
+  end if;
+  if lower(btrim(coalesce(confirmacao, ''))) <> lower(btrim(atual)) then
+    raise exception 'O nome não confere' using hint = 'nome-nao-confere';
+  end if;
+  delete from public.grupos g where g.id = grupo;
+end;
+$function$;
+
+-- renomear_grupo
+CREATE OR REPLACE FUNCTION public.renomear_grupo(grupo uuid, nome text)
+ RETURNS public.grupos
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  limpo text := btrim(coalesce(nome, ''));
+  atualizado public.grupos;
+begin
+  if public.exigir_papel(grupo) <> 'dono' then
+    raise exception 'Só o dono renomeia o fut' using hint = 'sem-permissao';
+  end if;
+  if char_length(limpo) not between 1 and 60 then
+    raise exception 'O nome do fut precisa ter entre 1 e 60 caracteres' using errcode = '22023';
+  end if;
+  -- The grupos row first, then check again (see remover_do_grupo).
+  perform 1 from public.grupos g where g.id = grupo for update;
+  if public.exigir_papel(grupo) <> 'dono' then
+    raise exception 'Só o dono renomeia o fut' using hint = 'sem-permissao';
+  end if;
+  update public.grupos g set nome = limpo where g.id = grupo returning * into atualizado;
+  return atualizado;
+end;
+$function$;

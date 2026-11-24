@@ -198,6 +198,8 @@ Found by read-only audits of the schema and of these docs, and by the PR reviews
 - **Realtime delete events aren't filtered by RLS.** A subscriber can get the primary key (uuids) of rows deleted in other groups ([#83](https://github.com/dev-nilo/nextjs-squadra/issues/83)).
 - **Player input rules live in the Server Action only.** Name length, position, nationality and the photo's origin aren't table constraints, so an owner or admin calling the API directly can skip them ([#84](https://github.com/dev-nilo/nextjs-squadra/issues/84)).
 - **Group slugs reveal name clashes, and the API allows unlimited group creation** ([#85](https://github.com/dev-nilo/nextjs-squadra/issues/85)).
+- **Deleting a player while someone answers for them can deadlock.** Postgres aborts one of the two and nothing breaks, but that person sees a generic error ([#108](https://github.com/dev-nilo/nextjs-squadra/issues/108)).
+- **Linking a player while being removed from the group can leave it linked to someone outside.** An owner or admin can unlink it ([#109](https://github.com/dev-nilo/nextjs-squadra/issues/109)).
 - **A cancelled game can be reopened through the API**, though no screen does it ([#87](https://github.com/dev-nilo/nextjs-squadra/issues/87)).
 - **Two tabs saving one card with photos at different paths could delete the photo in use.** It almost can't happen today: uploads are re-encoded to the same `.jpg` path, unless the browser can't draw them ([#89](https://github.com/dev-nilo/nextjs-squadra/issues/89)).
 

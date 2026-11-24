@@ -32,18 +32,32 @@ export async function conexaoDireta(): Promise<pg.Client> {
   return client;
 }
 
+/** The server process behind a direct connection, to tell its locks from anyone else's. */
+export async function pidDe(db: pg.Client): Promise<number> {
+  const { rows } = await db.query<{ pid: number }>("select pg_backend_pid() as pid");
+  return rows[0].pid;
+}
+
 /**
- * Calls a database function on a direct connection as `user`, the way the API
- * does: role authenticated and their JWT claims, in one transaction. Two calls
+ * Opens a transaction on a direct connection as `user`, the way the API runs a
+ * call: role authenticated and their JWT claims. It stays open, holding
+ * whatever it locks, until the test commits or rolls it back.
+ */
+export async function abrirComo(db: pg.Client, user: TestUser) {
+  await db.query("begin");
+  await db.query("select set_config('role', 'authenticated', true), set_config('request.jwt.claims', $1, true)", [
+    JSON.stringify({ sub: user.id, role: "authenticated" }),
+  ]);
+}
+
+/**
+ * One call as `user` on a direct connection, in its own transaction. Two calls
  * that must run at the same time go this way, because a fresh API has a single
  * connection to the database and would run them one after the other.
  */
 export async function chamarComo(db: pg.Client, user: TestUser, sql: string, params: unknown[] = []) {
-  await db.query("begin");
   try {
-    await db.query("select set_config('role', 'authenticated', true), set_config('request.jwt.claims', $1, true)", [
-      JSON.stringify({ sub: user.id, role: "authenticated" }),
-    ]);
+    await abrirComo(db, user);
     await db.query(sql, params);
     await db.query("commit");
     return { error: null };
@@ -53,15 +67,22 @@ export async function chamarComo(db: pg.Client, user: TestUser, sql: string, par
   }
 }
 
-/** Resolves once `n` sessions are waiting for a row lock, or fails after `ms`. */
-export async function esperarTravados(db: pg.Client, n: number, ms = 5_000) {
+/**
+ * Resolves once `n` sessions are waiting for a lock that one of the `por`
+ * processes holds, or fails after `ms`. Only those processes count, so
+ * another test run on the same local database can't satisfy the wait.
+ */
+export async function esperarTravados(db: pg.Client, por: number[], n = 1, ms = 5_000) {
   const ate = Date.now() + ms;
   for (;;) {
+    // A new snapshot of the activity on every poll, even inside a transaction.
+    await db.query("select pg_stat_clear_snapshot()");
     const { rows } = await db.query<{ n: number }>(
-      "select count(*)::int as n from pg_stat_activity where wait_event_type = 'Lock' and datname = current_database()",
+      "select count(*)::int as n from pg_stat_activity where pg_blocking_pids(pid) && $1::int[]",
+      [por],
     );
     if (rows[0].n >= n) return;
-    if (Date.now() > ate) throw new Error(`Expected ${n} sessions waiting for a lock, saw ${rows[0].n}`);
+    if (Date.now() > ate) throw new Error(`Expected ${n} sessions waiting on ${por.join(", ")}, saw ${rows[0].n}`);
     await new Promise((r) => setTimeout(r, 50));
   }
 }

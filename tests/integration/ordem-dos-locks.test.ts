@@ -1,6 +1,18 @@
 import type pg from "pg";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { addJogador, addMembro, admin as service, chamarComo, conexaoDireta, esperarTravados, newUser, removeUsers, type TestUser } from "./support";
+import {
+  abrirComo,
+  addJogador,
+  addMembro,
+  admin as service,
+  chamarComo,
+  conexaoDireta,
+  esperarTravados,
+  newUser,
+  pidDe,
+  removeUsers,
+  type TestUser,
+} from "./support";
 
 /*
  * Lock order (20261124000000_ordem_dos_locks.sql). A direct connection holds a
@@ -9,13 +21,16 @@ import { addJogador, addMembro, admin as service, chamarComo, conexaoDireta, esp
  */
 
 let dono: TestUser;
+let admin: TestUser;
 let membro: TestUser;
 let deFora: TestUser;
 let db: pg.Client;
+let segura: number;
 
 beforeAll(async () => {
-  [dono, membro, deFora] = await Promise.all(["dono", "membro", "fora"].map((l) => newUser(`locks-${l}`)));
+  [dono, admin, membro, deFora] = await Promise.all(["dono", "admin", "membro", "fora"].map((l) => newUser(`locks-${l}`)));
   db = await conexaoDireta();
+  segura = await pidDe(db);
 });
 
 afterEach(async () => {
@@ -25,13 +40,14 @@ afterEach(async () => {
 
 afterAll(async () => {
   await db.end();
-  await removeUsers(dono, membro, deFora);
+  await removeUsers(dono, admin, membro, deFora);
 });
 
-/** A Grupo with `membro` in it and a Jogador of theirs, and a Partida tomorrow. */
+/** A Grupo with an admin and a membro, the membro's Jogador, and a Partida tomorrow. */
 async function fut() {
   const { data: grupo, error } = await dono.client.rpc("criar_grupo", { nome_do_grupo: "Fut dos Locks" });
   if (error) throw error;
+  await addMembro(grupo.id, admin, "admin");
   await addMembro(grupo.id, membro, "membro");
   const { data: jogador } = await addJogador(dono, grupo.id, "Travado");
   await service().from("players").update({ conta_id: membro.id }).eq("id", jogador!.id).throwOnError();
@@ -93,7 +109,7 @@ describe("someone outside the fut never queues for its locks (#86)", () => {
     await db.query("select 1 from public.partidas where id = $1 for update", [partida]);
 
     const resposta = agora(membro.client.rpc("responder_presenca", { partida, jogador, vou: true }));
-    await esperarTravados(db, 1);
+    await esperarTravados(db, [segura]);
     await db.query("commit");
     expect((await resposta).error).toBeNull();
   });
@@ -106,16 +122,18 @@ describe("every people function takes the Grupo's lock first (#91)", () => {
     await db.query("begin");
     await db.query("select 1 from public.players where id = $1 for update", [jogador]);
 
-    // Leaving locks the Grupo, then waits for the Jogador.
     const [comoMembro, comoDono] = await Promise.all([conexaoDireta(), conexaoDireta()]);
+    // Before the calls: a connection busy waiting can't answer anything else.
+    const quemSai = await pidDe(comoMembro);
     try {
+      // Leaving locks the Grupo, then waits for the Jogador.
       const sai = chamarComo(comoMembro, membro, "select public.sair_do_grupo($1)", [grupo]);
-      await esperarTravados(db, 1);
-      // Removing waits for the Grupo. Before #91 it locked the person's membership
-      // row and waited for the Jogador instead, and when the lock below was released
-      // the two waited for each other until Postgres aborted one (40P01).
+      await esperarTravados(db, [segura]);
+      // Removing waits for the Grupo, which leaving holds. Before #91 it locked the
+      // person's membership row and waited for the Jogador instead, and when the lock
+      // below was released the two waited for each other until Postgres aborted one (40P01).
       const remove = chamarComo(comoDono, dono, "select public.remover_do_grupo($1, $2)", [grupo, membro.id]);
-      await esperarTravados(db, 2);
+      await esperarTravados(db, [quemSai, segura], 2);
       await db.query("commit");
 
       const [saiu, removido] = await Promise.all([sai, remove]);
@@ -137,8 +155,31 @@ describe("every people function takes the Grupo's lock first (#91)", () => {
     await db.query("select 1 from public.grupos where id = $1 for update", [grupo]);
 
     const muda = agora(dono.client.rpc("mudar_papel", { grupo, pessoa: membro.id, novo: "admin" }));
-    await esperarTravados(db, 1);
+    await esperarTravados(db, [segura]);
     await db.query("commit");
     expect((await muda).error).toBeNull();
+  });
+
+  it("a dono who handed the fut over while their call waited is refused once it gets the lock", async () => {
+    const chamadas = {
+      remover_do_grupo: (grupo: string) => dono.client.rpc("remover_do_grupo", { grupo, pessoa: membro.id }),
+      mudar_papel: (grupo: string) => dono.client.rpc("mudar_papel", { grupo, pessoa: membro.id, novo: "admin" }),
+      renomear_grupo: (grupo: string) => dono.client.rpc("renomear_grupo", { grupo, nome: "Outro nome" }),
+      // Before this PR, excluir_grupo deleted a Grupo its caller no longer owned.
+      excluir_grupo: (grupo: string) => dono.client.rpc("excluir_grupo", { grupo, confirmacao: "Fut dos Locks" }),
+    };
+    for (const [nome, chama] of Object.entries(chamadas)) {
+      const { grupo } = await fut();
+      // The handover, not yet committed: it holds the Grupo's lock.
+      await abrirComo(db, dono);
+      await db.query("select public.passar_posse($1, $2)", [grupo, admin.id]);
+
+      // Still the dono as far as this call can see, so it gets to the lock and waits.
+      const chamada = agora(chama(grupo));
+      await esperarTravados(db, [segura]);
+      await db.query("commit");
+
+      expect((await chamada).error?.hint, nome).toBe("sem-permissao");
+    }
   });
 });
