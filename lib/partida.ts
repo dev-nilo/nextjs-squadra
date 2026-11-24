@@ -59,6 +59,39 @@ export function oQueVouFaz(lista: ListaDePresenca): "confirma" | "entra-na-esper
   return lista.lotada ? "entra-na-espera" : "confirma";
 }
 
+/** "faltam 2", "falta 1" or "lotada": what's left, in the words of the list and of the shared text. */
+export function quantoFalta(lista: Pick<ListaDePresenca, "vagasLivres">): string {
+  if (lista.vagasLivres === 0) return "lotada";
+  return lista.vagasLivres === 1 ? "falta 1" : `faltam ${lista.vagasLivres}`;
+}
+
+/**
+ * The Partida as a message for the group chat: the numbered list the pelada
+ * used to keep by hand, then the link to answer. It reads on its own, so it
+ * works for whoever isn't in the app yet. `*x*` is bold in WhatsApp.
+ */
+export function textoDaPartida({
+  partida,
+  lista,
+  nome,
+  link,
+}: {
+  partida: Pick<Partida, "inicio" | "local" | "vagas">;
+  lista: ListaDePresenca;
+  nome: (jogadorId: string) => string;
+  link: string;
+}): string {
+  const quando = formatarInicio(partida.inicio);
+  const numerada = (presencas: readonly Presenca[]) => presencas.map((p, i) => `${i + 1}. ${nome(p.jogador_id)}`);
+  const blocos = [
+    [`*${quando.charAt(0).toUpperCase()}${quando.slice(1)}*`, partida.local, `${lista.confirmados.length} de ${partida.vagas} vagas, ${quantoFalta(lista)}`],
+    lista.confirmados.length > 0 ? numerada(lista.confirmados) : ["Ninguém confirmou ainda."],
+    ...(lista.espera.length > 0 ? [["Lista de espera", ...numerada(lista.espera)]] : []),
+    [`Responda pelo Squadra: ${link}`],
+  ];
+  return blocos.map((linhas) => linhas.join("\n")).join("\n\n");
+}
+
 export type EstadoDaPartida = "cancelada" | "encerrada" | "aberta";
 
 export function estadoDaPartida(partida: Pick<Partida, "inicio" | "cancelada_em">, agora: Date): EstadoDaPartida {
