@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type pg from "pg";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -43,21 +44,30 @@ afterAll(async () => {
   await removeUsers(dono, admin, membro, deFora);
 });
 
-/** A Grupo with an admin and a membro, the membro's Jogador, and a Partida tomorrow. */
+/**
+ * A Grupo with an admin and a membro, the membro's Jogador, and a Partida
+ * tomorrow. Arranged with the service role: one dono creates a Grupo per test,
+ * more than the 5 criar_grupo allows an account.
+ */
 async function fut() {
-  const { data: grupo, error } = await dono.client.rpc("criar_grupo", { nome_do_grupo: "Fut dos Locks" });
-  if (error) throw error;
-  await addMembro(grupo.id, admin, "admin");
-  await addMembro(grupo.id, membro, "membro");
-  const { data: jogador } = await addJogador(dono, grupo.id, "Travado");
-  await service().from("players").update({ conta_id: membro.id }).eq("id", jogador!.id).throwOnError();
-  const { data: partida } = await dono.client
-    .from("partidas")
-    .insert({ grupo_id: grupo.id, inicio: new Date(Date.now() + 86_400_000).toISOString(), local: "Quadra", vagas: 10 })
+  const { data: grupo } = await service()
+    .from("grupos")
+    .insert({ slug: `locks-${randomUUID().slice(0, 8)}`, nome: "Fut dos Locks", criado_por: dono.id })
     .select("id")
     .single()
     .throwOnError();
-  return { grupo: grupo.id as string, jogador: jogador!.id as string, partida: partida!.id as string };
+  await service().from("grupo_membros").insert({ grupo_id: grupo!.id, user_id: dono.id, papel: "dono" }).throwOnError();
+  await addMembro(grupo!.id, admin, "admin");
+  await addMembro(grupo!.id, membro, "membro");
+  const { data: jogador } = await addJogador(dono, grupo!.id, "Travado");
+  await service().from("players").update({ conta_id: membro.id }).eq("id", jogador!.id).throwOnError();
+  const { data: partida } = await dono.client
+    .from("partidas")
+    .insert({ grupo_id: grupo!.id, inicio: new Date(Date.now() + 86_400_000).toISOString(), local: "Quadra", vagas: 10 })
+    .select("id")
+    .single()
+    .throwOnError();
+  return { grupo: grupo!.id as string, jogador: jogador!.id as string, partida: partida!.id as string };
 }
 
 /** Sends the call now: a supabase-js query only goes out once something awaits it. */

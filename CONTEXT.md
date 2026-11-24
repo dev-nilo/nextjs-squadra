@@ -15,7 +15,7 @@ The full set of Jogadores of a Grupo. Every Membro sees it; the `dono` and admin
 _Avoid_: Roster (when meaning the whole collection), squad (ambiguous with Time), a per-user Elenco, guest local-only mode
 
 **Grupo** _(en: group)_:
-The people who play together and share one Elenco, like a weekly pelada. Named by whoever creates it, who becomes its `dono`. Reached at `/g/<slug>`; the slug is fixed at creation.
+The people who play together and share one Elenco, like a weekly pelada. Named by whoever creates it, who becomes its `dono`. Reached at `/g/<slug>`; the slug is fixed at creation, and gets a random suffix when another Grupo already has it. An account that is already dono of 5 Grupos can't create another; being handed one still works.
 _Avoid_: Team (that's a Time), league, club. "Fut" is the UI's word for a Grupo; code mirrors it only in names tied to the UI (`sairDoFut`, `gereFut`), and tables and database functions say grupo.
 
 **Membro** _(en: member)_:

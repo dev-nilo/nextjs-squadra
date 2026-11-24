@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { addJogador, addMembro, admin, anon, newUser, removeUsers, type TestUser } from "./support";
+import { addJogador, addMembro, admin, anon, chamarComo, conexaoDireta, newUser, removeUsers, type TestUser } from "./support";
 
 let users: TestUser[] = [];
 const user = async (label: string) => {
@@ -26,7 +26,7 @@ describe("criar_grupo", () => {
     const grupo = await criarGrupo(nilo, "Fut do Nilo");
 
     expect(grupo.nome).toBe("Fut do Nilo");
-    expect(grupo.slug).toMatch(/^fut-do-nilo(-\d+)?$/);
+    expect(grupo.slug).toMatch(/^fut-do-nilo(-[0-9a-f]{6})?$/);
     const { data: membros } = await nilo.client.from("grupo_membros").select("user_id, papel").eq("grupo_id", grupo.id);
     expect(membros).toEqual([{ user_id: nilo.id, papel: "dono" }]);
   });
@@ -44,12 +44,47 @@ describe("criar_grupo", () => {
     expect(data?.grupo_id).toBe(primeiro.id);
   });
 
-  it("keeps slugs unique when two Grupos share a name", async () => {
+  it("keeps slugs unique when Grupos share a name, without telling how many do (#85)", async () => {
     const nilo = await user("nilo");
     const nome = `Pelada ${Date.now()}`;
     const a = await criarGrupo(nilo, nome);
     const b = await criarGrupo(nilo, nome);
-    expect(b.slug).toBe(`${a.slug}-2`);
+    const c = await criarGrupo(nilo, nome);
+    // A random suffix, not -2 and -3.
+    for (const outro of [b, c]) expect(outro.slug).toMatch(new RegExp(`^${a.slug}-[0-9a-f]{6}$`));
+    expect(new Set([a.slug, b.slug, c.slug]).size).toBe(3);
+  });
+
+  it("lets an account create at most 5 Grupos (#85)", async () => {
+    const nilo = await user("nilo");
+    for (let i = 1; i <= 5; i++) await criarGrupo(nilo, `Fut ${i}`);
+    const { error } = await nilo.client.rpc("criar_grupo", { nome_do_grupo: "Fut 6" });
+    expect(error?.hint).toBe("limite-de-grupos");
+
+    // Someone else is unaffected.
+    const outro = await user("outro");
+    await criarGrupo(outro, "Fut do Outro");
+  });
+
+  it("counts only the Grupos the account is dono of, and holds the limit under concurrent calls", async () => {
+    const nilo = await user("nilo");
+    const amigo = await user("amigo");
+    for (let i = 1; i <= 3; i++) await criarGrupo(nilo, `Fut ${i}`);
+    // Being a membro of someone else's Grupo doesn't count.
+    const doAmigo = await criarGrupo(amigo, "Fut do Amigo");
+    await addMembro(doAmigo.id, nilo, "membro");
+
+    // Four direct connections, so the calls really overlap (the API may run them one by one).
+    const conexoes = await Promise.all([4, 5, 6, 7].map(() => conexaoDireta()));
+    try {
+      const tentativas = await Promise.all(
+        conexoes.map((db, i) => chamarComo(db, nilo, "select public.criar_grupo($1)", [`Fut ${i + 4}`])),
+      );
+      expect(tentativas.filter((t) => t.error === null)).toHaveLength(2);
+      expect(tentativas.filter((t) => t.error?.hint === "limite-de-grupos")).toHaveLength(2);
+    } finally {
+      await Promise.all(conexoes.map((db) => db.end()));
+    }
   });
 
   it("strips accents and symbols from the slug", async () => {
