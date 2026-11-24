@@ -36,8 +36,11 @@ test("the next Partida and the Elenco stay readable with no signal", { tag: "@mo
     await context.setOffline(false);
   }
 
+  // Back online, the offline page reloads by itself into the real Você. Waiting
+  // for that, not navigating over it: a goto raced that reload and was cut off.
+  await expect(page.getByRole("button", { name: "Sair", exact: true })).toBeVisible();
+
   // Signing out forgets the saved pages.
-  await page.goto("/g/fut-do-dev/voce");
   await page.getByRole("button", { name: "Sair", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Bora pro jogo!" })).toBeVisible();
   await expect.poll(() => salva(page, "/g/fut-do-dev")).toBe(false);
