@@ -158,7 +158,15 @@ describe("textoDaPartida", () => {
     const texto = textoDaPartida({ partida, lista, nome, link });
     const [cabecalho, ...resto] = texto.split("\n\n");
     expect(cabecalho).toMatch(/^\*Qui\., 12\/11, 20:00\*\nQuadra do Zé\n2 de 2 vagas, lotada$/);
-    expect(resto).toEqual(["1. Paredão\n2. Xerife", "Lista de espera\n1. Foguete", `Responda pelo Squadra: ${link}`]);
+    expect(resto).toEqual(["1. Paredão\n2. Xerife", "Lista de espera\n1. Foguete", `Quem já está no fut responde aqui: ${link}`]);
+  });
+
+  it("keeps every name and the place on one line, so nobody can add lines to the list", () => {
+    const lista = organizarPresencas([p("c1", "confirmado", 1)], 2);
+    const texto = textoDaPartida({ partida: { ...partida, local: "Quadra\ndo Zé" }, lista, nome: () => "X\n2. Falso", link });
+    expect(texto).toContain("\nQuadra do Zé\n");
+    expect(texto).toContain("1. X 2. Falso");
+    expect(texto).not.toMatch(/^2\. Falso/m);
   });
 
   it("says nobody confirmed yet, and leaves out an empty lista de espera", () => {
