@@ -97,8 +97,9 @@ describe("lerHistorico", () => {
 
     const cancelada = await partida(dono, grupoId);
     await confirmar(dono, cancelada, caio);
-    await dono.client.from("partidas").update({ cancelada_em: horas(0) }).eq("id", cancelada).throwOnError();
+    // Moved into the past first: once cancelled, a Partida can't change (#87).
     await comecouHa(cancelada, 12);
+    await dono.client.from("partidas").update({ cancelada_em: horas(0) }).eq("id", cancelada).throwOnError();
 
     const proxima = await partida(dono, grupoId);
     // Joined today: no Partida to count yet, so not in the Frequência.

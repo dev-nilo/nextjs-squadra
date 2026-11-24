@@ -32,7 +32,7 @@ A link a Grupo's `dono` or `admin` shares (`/convite/<token>`). Whoever opens it
 _Avoid_: Invitation code, magic link (it doesn't sign anyone in)
 
 **Partida** _(en: game)_:
-One game of the Grupo: a start (date and time), a place and a number of vagas. The `dono` and admins create, edit and cancel it; every Membro sees it. A cancelled Partida keeps its presence list but takes no more answers.
+One game of the Grupo: a start (date and time), a place and a number of vagas. The `dono` and admins create, edit and cancel it; every Membro sees it. Cancelling is final: a cancelled Partida keeps its presence list, takes no more answers, and can't be reopened or edited. If the game happens after all, it's a new Partida.
 _Avoid_: Jogo (ambiguous with the app), match, event
 
 **Presença** _(en: attendance answer, RSVP)_:
