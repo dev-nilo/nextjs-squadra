@@ -280,6 +280,44 @@ describe("changing the vagas", () => {
   });
 });
 
+describe("cancelling is final (#87)", () => {
+  it("a cancelled Partida can't be reopened or edited, even through the API", async () => {
+    const dono = await user("dono");
+    const grupoId = await grupoCom(dono);
+    const [a, b, c] = await Promise.all(["a", "b", "c"].map((n) => membroComJogador(grupoId, n)));
+    const id = await partida(dono, grupoId, 2);
+    for (const m of [a, b, c]) await responder(m.u, id, m.jogadorId, true);
+    const cancelada = new Date().toISOString();
+    await dono.client.from("partidas").update({ cancelada_em: cancelada }).eq("id", id).throwOnError();
+    const antes = await lista(id);
+
+    for (const [campo, valor] of [
+      ["cancelada_em", null],
+      ["cancelada_em", new Date(Date.now() + 1000).toISOString()],
+      ["inicio", new Date(Date.now() + 2 * 86_400_000).toISOString()],
+      ["local", "Outra quadra"],
+      ["vagas", 3],
+    ] as const) {
+      const { error } = await dono.client.from("partidas").update({ [campo]: valor }).eq("id", id);
+      expect(error?.hint, campo).toBe("cancelada");
+    }
+
+    const { data } = await service().from("partidas").select("cancelada_em, local, vagas").eq("id", id).single();
+    expect(new Date(data!.cancelada_em).getTime()).toBe(new Date(cancelada).getTime());
+    expect(data).toMatchObject({ local: "Quadra do Zé", vagas: 2 });
+    // More vagas would have promoted the lista de espera of a game that isn't happening.
+    expect(await lista(id)).toEqual(antes);
+  });
+
+  it("an open Partida still edits as before", async () => {
+    const dono = await user("dono");
+    const grupoId = await grupoCom(dono);
+    const id = await partida(dono, grupoId, 10);
+    await dono.client.from("partidas").update({ local: "Outra quadra", vagas: 12 }).eq("id", id).throwOnError();
+    await dono.client.from("partidas").update({ cancelada_em: new Date().toISOString() }).eq("id", id).throwOnError();
+  });
+});
+
 describe("the last vaga, under concurrency", () => {
   it("N simultaneous confirmations for one free vaga: exactly one gets it, the rest wait in order", async () => {
     const N = 8;
