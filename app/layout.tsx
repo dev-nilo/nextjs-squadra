@@ -19,8 +19,12 @@ export const metadata: Metadata = {
   applicationName: "Squadra",
   // Added to the iPhone home screen it opens full screen, like the installed app on Android.
   appleWebApp: { capable: true, title: "Squadra", statusBarStyle: "default" },
-  description:
-    "Sistema de gerenciamento de cartas de jogadores e sorteio de times balanceados",
+  // Also the preview under a Squadra link pasted in WhatsApp, which reads og:description.
+  description: "A lista do fut: quem vai, a lista de espera e os times sorteados.",
+  openGraph: {
+    siteName: "Squadra",
+    description: "A lista do fut: quem vai, a lista de espera e os times sorteados.",
+  },
   icons: {
     icon: [
       {

@@ -20,8 +20,8 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -35,8 +35,8 @@ jobs:
     name: Database, RLS and E2E
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -79,7 +79,7 @@ jobs:
         run: npm run test:e2e
       - name: Upload Playwright report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: |
@@ -104,7 +104,7 @@ jobs:
     steps:
       # The PR checkout is a merge commit whose first parent is the base, so
       # two commits are enough to see what this PR adds.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 2
       # Staging is shared by every open PR. A PR that adds no migration has
@@ -128,7 +128,7 @@ jobs:
             echo "$novas"
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         if: steps.gate.outputs.ready == 'true'
         with:
           node-version-file: .nvmrc
@@ -165,9 +165,9 @@ jobs:
             echo "::notice::Production secrets are not set, skipping. See docs/staging.md."
             echo "ready=false" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         if: steps.gate.outputs.ready == 'true'
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         if: steps.gate.outputs.ready == 'true'
         with:
           node-version-file: .nvmrc
@@ -214,8 +214,8 @@ jobs:
             echo "::error::Set the VERCEL_TOKEN secret. Production only deploys from this job. See docs/staging.md."
             exit 1
           }
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
       - name: Deploy to production

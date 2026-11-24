@@ -69,6 +69,14 @@ test("the dono creates a Partida, and a second browser sees presence change live
   await outro.getByText(/^1 não vai/).click();
   await expect(secao(outro, "Não vão").getByText("Paredão")).toBeVisible();
   await expect(secao(outro, "Lista de espera")).toHaveCount(0);
+
+  // Anyone shares the list with the group chat. Without a touch screen (desktop) it's copied.
+  await outro.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await outro.getByRole("button", { name: "Compartilhar partida" }).click();
+  await expect(outro.getByText("Lista copiada")).toBeVisible();
+  const copiado = await outro.evaluate(() => navigator.clipboard.readText());
+  expect(copiado).toContain(`${local}\n2 de 2 vagas, lotada\n\n1. Xerife\n2. Foguete`);
+  expect(copiado).toContain(`Quem já está no fut responde aqui: ${page.url()}`);
 });
 
 test("a membro answers for their own Jogador only", { tag: "@mobile" }, async ({ page }) => {

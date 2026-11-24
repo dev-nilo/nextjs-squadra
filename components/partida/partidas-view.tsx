@@ -117,12 +117,13 @@ function ItemDaPartida({
     <li aria-label={`Partida de ${formatarInicio(partida.inicio)}`} className="flex flex-col gap-2">
       <Link
         href={`/g/${slug}/partidas/${partida.id}`}
-        className={`flex items-center justify-between gap-3 rounded-2xl border border-divider bg-content1 p-4 transition-colors hover:border-primary/50 ${
-          estado === "cancelada" ? "opacity-60" : ""
-        }`}
+        className="flex items-center justify-between gap-3 rounded-2xl border border-divider bg-content1 p-4 transition-colors hover:border-primary/50"
       >
         <span className="flex min-w-0 flex-col gap-1">
-          <span className="font-bold capitalize text-foreground">{formatarInicio(partida.inicio)}</span>
+          {/* Cancelled: the date struck through and the "Cancelada" pill, no fading, so every line keeps AA contrast. */}
+          <span className={`font-bold capitalize text-foreground ${estado === "cancelada" ? "line-through" : ""}`}>
+            {formatarInicio(partida.inicio)}
+          </span>
           <span className="flex items-center gap-1 truncate text-sm text-default-500">
             <MapPin size={14} aria-hidden="true" className="shrink-0" />
             {partida.local}
