@@ -40,7 +40,8 @@ try {
 const url = local?.API_URL;
 const anon = local?.ANON_KEY ?? local?.PUBLISHABLE_KEY;
 const service = local?.SERVICE_ROLE_KEY ?? local?.SECRET_KEY;
-if (status.status !== 0 || !url || !anon || !service) {
+const db = local?.DB_URL;
+if (status.status !== 0 || !url || !anon || !service || !db) {
   console.error("The local Supabase isn't running. Start it with `npm run db:start` (it needs Docker).");
   process.exit(1);
 }
@@ -57,6 +58,7 @@ const env = {
   SUPABASE_URL: url,
   SUPABASE_ANON_KEY: anon,
   SUPABASE_SERVICE_ROLE_KEY: service,
+  SUPABASE_DB_URL: db,
   NEXT_PUBLIC_SUPABASE_URL: url,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: anon,
   SENTRY_AUTH_TOKEN: "",

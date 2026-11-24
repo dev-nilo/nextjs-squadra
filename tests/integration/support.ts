@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
+import pg from "pg";
 
 /**
  * Integration tests run against the local Supabase (`npm run db:start`).
@@ -20,6 +21,71 @@ const noSession = { auth: { persistSession: false, autoRefreshToken: false } } a
 export const admin = (): SupabaseClient => createClient(url(), env("SUPABASE_SERVICE_ROLE_KEY"), noSession);
 
 export const anon = (): SupabaseClient => createClient(url(), env("SUPABASE_ANON_KEY"), noSession);
+
+/**
+ * A direct Postgres connection as the superuser. An RPC through the API is one
+ * transaction, so this is how a test holds a row lock while other calls run.
+ */
+export async function conexaoDireta(): Promise<pg.Client> {
+  const client = new pg.Client({ connectionString: env("SUPABASE_DB_URL") });
+  await client.connect();
+  return client;
+}
+
+/** The server process behind a direct connection, to tell its locks from anyone else's. */
+export async function pidDe(db: pg.Client): Promise<number> {
+  const { rows } = await db.query<{ pid: number }>("select pg_backend_pid() as pid");
+  return rows[0].pid;
+}
+
+/**
+ * Opens a transaction on a direct connection as `user`, the way the API runs a
+ * call: role authenticated and their JWT claims. It stays open, holding
+ * whatever it locks, until the test commits or rolls it back.
+ */
+export async function abrirComo(db: pg.Client, user: TestUser) {
+  await db.query("begin");
+  await db.query("select set_config('role', 'authenticated', true), set_config('request.jwt.claims', $1, true)", [
+    JSON.stringify({ sub: user.id, role: "authenticated" }),
+  ]);
+}
+
+/**
+ * One call as `user` on a direct connection, in its own transaction. Two calls
+ * that must run at the same time go this way, because a fresh API has a single
+ * connection to the database and would run them one after the other.
+ */
+export async function chamarComo(db: pg.Client, user: TestUser, sql: string, params: unknown[] = []) {
+  try {
+    await abrirComo(db, user);
+    await db.query(sql, params);
+    await db.query("commit");
+    return { error: null };
+  } catch (e) {
+    await db.query("rollback");
+    return { error: e as pg.DatabaseError };
+  }
+}
+
+/**
+ * Resolves once `n` sessions are waiting for a lock that one of the `por`
+ * processes holds, or fails after `ms`. Only those processes count, so
+ * another test run on the same local database can't satisfy the wait.
+ */
+export async function esperarTravados(db: pg.Client, por: number[], n = 1, ms = 5_000) {
+  const ate = Date.now() + ms;
+  for (;;) {
+    // A new snapshot of the activity on every poll, even inside a transaction.
+    await db.query("select pg_stat_clear_snapshot()");
+    const { rows } = await db.query<{ n: number }>(
+      "select count(*)::int as n from pg_stat_activity where pg_blocking_pids(pid) && $1::int[]",
+      [por],
+    );
+    if (rows[0].n >= n) return;
+    if (Date.now() > ate) throw new Error(`Expected ${n} sessions waiting on ${por.join(", ")}, saw ${rows[0].n}`);
+    await new Promise((r) => setTimeout(r, 50));
+  }
+}
 
 export type TestUser = { id: string; email: string; client: SupabaseClient };
 

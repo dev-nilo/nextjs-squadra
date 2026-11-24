@@ -9,6 +9,8 @@ Changing someone's papel, removing them, leaving, handing the Grupo over, renami
 
 A policy also says only "no rows", where a function can say why. And with the rules spread over policies, nothing tied them to what the screens show.
 
+**Lock order:** each of these six functions checks that the caller is in the Grupo, then locks its `grupos` row before touching `grupo_membros`, `players` or the Grupo itself, and checks the papel again after the lock, since the Grupo may have changed hands while it waited. With one lock taken first, two of them on the same Grupo run one after the other and can't deadlock (#91, `20261124000000_ordem_dos_locks.sql`). `tests/integration/ordem-dos-locks.test.ts` lines up "remove" and "leave" behind a held lock to prove it.
+
 **How it stays honest:** `tests/integration/pessoas.test.ts` runs the seven people and fut actions as the dono, an admin and a membro, and checks that the database accepts exactly what `capacidades()` (`lib/capacidades.ts`) says for `gerePessoas`, `gereFut` and `saiDoFut`, and returns emails exactly when `veEmails` says so. The other capabilities have their own papel tests, which don't read `capacidades()` yet. A new rule changes the function, `capacidades()` and that matrix together.
 
 Rejected:

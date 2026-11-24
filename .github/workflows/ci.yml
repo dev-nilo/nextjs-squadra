@@ -63,9 +63,11 @@ jobs:
           url=$(jq -r '.API_URL' "$RUNNER_TEMP/supabase.json")
           anon=$(jq -r '.ANON_KEY // .PUBLISHABLE_KEY' "$RUNNER_TEMP/supabase.json")
           service=$(jq -r '.SERVICE_ROLE_KEY // .SECRET_KEY' "$RUNNER_TEMP/supabase.json")
-          for v in "$url" "$anon" "$service"; do test -n "$v" && test "$v" != null; done
+          db=$(jq -r '.DB_URL' "$RUNNER_TEMP/supabase.json")
+          for v in "$url" "$anon" "$service" "$db"; do test -n "$v" && test "$v" != null; done
           {
             echo "SUPABASE_URL=$url"
+            echo "SUPABASE_DB_URL=$db"
             echo "SUPABASE_ANON_KEY=$anon"
             echo "SUPABASE_SERVICE_ROLE_KEY=$service"
             echo "NEXT_PUBLIC_SUPABASE_URL=$url"
