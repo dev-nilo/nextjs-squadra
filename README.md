@@ -195,13 +195,13 @@ These were left out on purpose: notifications, payments, players rating each oth
 
 Found by read-only audits of the schema and of these docs, and by the PR reviews. Each one has an issue:
 
-- **Player input rules live in the Server Action only.** Name length, position, nationality and the photo's origin aren't table constraints, so an owner or admin calling the API directly can skip them ([#84](https://github.com/dev-nilo/nextjs-squadra/issues/84)).
 - **Deleting a player while someone answers for them can deadlock.** Postgres aborts one of the two and nothing breaks, but that person sees a generic error ([#108](https://github.com/dev-nilo/nextjs-squadra/issues/108)).
 - **Linking a player while being removed from the group can leave it linked to someone outside.** An owner or admin can unlink it ([#109](https://github.com/dev-nilo/nextjs-squadra/issues/109)).
-- **Two tabs saving one card with photos at different paths could delete the photo in use.** It almost can't happen today: uploads are re-encoded to the same `.jpg` path, unless the browser can't draw them ([#89](https://github.com/dev-nilo/nextjs-squadra/issues/89)).
+- **Two tabs saving one card with photos at different paths could, in a short window, delete the photo in use.** Uploads are re-encoded to the same `.jpg` path unless the browser can't draw them, and the database refuses a photo whose file is already gone, so only the moment between one tab's save and its cleanup is left ([#89](https://github.com/dev-nilo/nextjs-squadra/issues/89)).
 
 And by design, for now:
 
+- **The database doesn't know its own address.** It checks that a player's photo is a file that exists in the group's folder, and the server action also checks that the URL points at this project.
 - **Player photos are public by URL.** Only a group's members can list them, but anyone holding a photo's URL can load it.
 - **Deploy compatibility is reasoned, not tested.** The expand/contract migrations say why the deploy before them still works; CI never runs the old code on the new schema.
 - **The last-spot test proves correctness, not load.** Nobody has measured the row lock with hundreds of people on one game.
