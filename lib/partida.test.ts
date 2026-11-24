@@ -8,7 +8,9 @@ import {
   organizarPresencas,
   paraCampoDeData,
   partidaSchema,
+  quantoFalta,
   situacaoDoJogador,
+  textoDaPartida,
   type Presenca,
 } from "./partida";
 
@@ -134,5 +136,42 @@ describe("dates in Brasília time", () => {
 
   it("formats the start the same way whatever the machine's timezone", () => {
     expect(formatarInicio("2026-11-12T23:00:00.000Z")).toMatch(/12\/11.*20:00/);
+  });
+});
+
+describe("quantoFalta", () => {
+  it("says what's left the way the list says it", () => {
+    expect(quantoFalta({ vagasLivres: 0 })).toBe("lotada");
+    expect(quantoFalta({ vagasLivres: 1 })).toBe("falta 1");
+    expect(quantoFalta({ vagasLivres: 4 })).toBe("faltam 4");
+  });
+});
+
+describe("textoDaPartida", () => {
+  const partida = { inicio: "2026-11-12T23:00:00.000Z", local: "Quadra do Zé", vagas: 2 };
+  const nomes: Record<string, string> = { c1: "Paredão", c2: "Xerife", e1: "Foguete" };
+  const nome = (id: string) => nomes[id] ?? "Jogador";
+  const link = "https://squadra.test/g/fut/partidas/1";
+
+  it("is the group chat's numbered list, with the lista de espera and the link", () => {
+    const lista = organizarPresencas([p("c2", "confirmado", 2), p("e1", "espera", 5), p("c1", "confirmado", 1)], 2);
+    const texto = textoDaPartida({ partida, lista, nome, link });
+    const [cabecalho, ...resto] = texto.split("\n\n");
+    expect(cabecalho).toMatch(/^\*Qui\., 12\/11, 20:00\*\nQuadra do Zé\n2 de 2 vagas, lotada$/);
+    expect(resto).toEqual(["1. Paredão\n2. Xerife", "Lista de espera\n1. Foguete", `Quem já está no fut responde aqui: ${link}`]);
+  });
+
+  it("keeps every name and the place on one line, so nobody can add lines to the list", () => {
+    const lista = organizarPresencas([p("c1", "confirmado", 1)], 2);
+    const texto = textoDaPartida({ partida: { ...partida, local: "Quadra\ndo Zé" }, lista, nome: () => "X\n2. Falso", link });
+    expect(texto).toContain("\nQuadra do Zé\n");
+    expect(texto).toContain("1. X 2. Falso");
+    expect(texto).not.toMatch(/^2\. Falso/m);
+  });
+
+  it("says nobody confirmed yet, and leaves out an empty lista de espera", () => {
+    const texto = textoDaPartida({ partida, lista: organizarPresencas([p("n1", "nao_vou")], 2), nome, link });
+    expect(texto).toContain("0 de 2 vagas, faltam 2\n\nNinguém confirmou ainda.");
+    expect(texto).not.toContain("Lista de espera");
   });
 });

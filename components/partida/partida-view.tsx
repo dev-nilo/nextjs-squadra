@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Check, ChevronRight, Clock, MapPin, Pencil, UserCheck, Users, X, XCircle } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Clock, MapPin, Pencil, Share2, UserCheck, Users, X, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { cancelarPartida, editarPartida, responderPresenca } from "@/app/actions/partida";
 import { PartidaForm } from "@/components/partida/partida-form";
@@ -17,7 +17,16 @@ import { capacidades, SO_LEITURA } from "@/lib/capacidades";
 import { useSemConexao } from "@/lib/pwa/conexao";
 import { deveOferecerInstalacao, instalar, INSTRUCOES_IOS, comoInstalar } from "@/lib/pwa/instalar";
 import type { JogadorDaLista, PartidaAoVivo } from "@/lib/leitura-da-partida";
-import { formatarInicio, oQueVouFaz, organizarPresencas, situacaoDoJogador, type ListaDePresenca } from "@/lib/partida";
+import { compartilharTexto } from "@/lib/compartilhar";
+import {
+  formatarInicio,
+  oQueVouFaz,
+  organizarPresencas,
+  quantoFalta,
+  situacaoDoJogador,
+  textoDaPartida,
+  type ListaDePresenca,
+} from "@/lib/partida";
 
 /** Answers for a Jogador; true when it went through. */
 type Responder = (jogadorId: string, vou: boolean) => Promise<boolean>;
@@ -98,6 +107,13 @@ export function PartidaView({
 
   const nome = (jogadorId: string) => porId.get(jogadorId)?.name ?? "Jogador";
   const fut = `/g/${encodeURIComponent(grupo.slug)}`;
+
+  const compartilhar = async () => {
+    const link = `${window.location.origin}${fut}/partidas/${id}`;
+    const como = await compartilharTexto(textoDaPartida({ partida, lista, nome, link }));
+    if (como === "copiou") toast.success("Lista copiada", { description: "É só colar no grupo." });
+    if (como === "falhou") toast.error("Não deu pra compartilhar");
+  };
   // Members only get a Sorteio once it's published; before that the Times column has nothing to show them.
   const temTimes = pode.gerePartidas || !!sorteio;
 
@@ -121,18 +137,25 @@ export function PartidaView({
                   <MapPin size={16} aria-hidden="true" /> {partida.local}
                 </p>
               </div>
-              {podeGerir && (
-                <MenuDeAcoes
-                  nome="Gerenciar partida"
-                  acoes={[
-                    ...(estado === "aberta"
-                      ? [{ rotulo: "Responder por alguém", icone: <Users size={16} />, onSelect: () => setRespondendoPorOutros(true) }]
-                      : []),
-                    { rotulo: "Editar", icone: <Pencil size={16} />, onSelect: () => setEditando(true) },
-                    { rotulo: "Cancelar partida", icone: <XCircle size={16} />, onSelect: cancelar, perigo: true },
-                  ]}
-                />
-              )}
+              <div className="flex shrink-0 items-center gap-1">
+                {estado === "aberta" && (
+                  <Button isIconOnly variant="flat" size="sm" aria-label="Compartilhar partida" onClick={compartilhar}>
+                    <Share2 size={18} />
+                  </Button>
+                )}
+                {podeGerir && (
+                  <MenuDeAcoes
+                    nome="Gerenciar partida"
+                    acoes={[
+                      ...(estado === "aberta"
+                        ? [{ rotulo: "Responder por alguém", icone: <Users size={16} />, onSelect: () => setRespondendoPorOutros(true) }]
+                        : []),
+                      { rotulo: "Editar", icone: <Pencil size={16} />, onSelect: () => setEditando(true) },
+                      { rotulo: "Cancelar partida", icone: <XCircle size={16} />, onSelect: cancelar, perigo: true },
+                    ]}
+                  />
+                )}
+              </div>
             </div>
 
             {estado === "cancelada" && <p className="font-semibold text-danger">Partida cancelada.</p>}
@@ -370,8 +393,7 @@ function QuemVai({
           <span className="font-semibold tabular-nums text-foreground">
             {confirmados} de {vagas}
           </span>{" "}
-          vagas
-          {lista.vagasLivres > 0 ? `, ${lista.vagasLivres === 1 ? "falta 1" : `faltam ${lista.vagasLivres}`}` : ", lotada"}
+          vagas, {quantoFalta(lista)}
         </p>
         <div className="h-2 overflow-hidden rounded-full bg-default-100" aria-hidden="true">
           <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${Math.min(100, (confirmados / Math.max(1, vagas)) * 100)}%` }} />
