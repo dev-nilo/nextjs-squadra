@@ -21,6 +21,13 @@
 -- updated_at on any update, and partidas_cancelada_e_final (#87) lets that
 -- through on a cancelled Partida. When the Partida itself is being deleted its
 -- row is already gone, and the update finds nothing.
+--
+-- The touch skips a Partida that another transaction has locked
+-- (skip locked). That one is responder_presenca or a Sorteio function, which
+-- writes to the Partida's list and sends its own event, so the page reloads
+-- anyway. Waiting for it instead could deadlock: responder_presenca holds the
+-- Partida and waits for the Jogador this delete holds (see #108). Partidas
+-- are taken in id order.
 -- ---------------------------------------------------------------------------
 
 alter publication supabase_realtime set (publish = 'insert, update');
@@ -34,7 +41,12 @@ as $$
 begin
   update public.partidas p
   set updated_at = now()
-  where p.id in (select distinct r.partida_id from removidas r);
+  where p.id in (
+    select l.id from public.partidas l
+    where l.id in (select r.partida_id from removidas r)
+    order by l.id
+    for update skip locked
+  );
   return null;
 end;
 $$;

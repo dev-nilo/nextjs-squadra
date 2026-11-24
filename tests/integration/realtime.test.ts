@@ -122,6 +122,7 @@ describe("Realtime", { timeout: 60_000 }, () => {
     const membro = await user("pagina-membro");
     await addMembro(aqui.grupo, membro, "membro");
     const ouvidos = await ouvir(membro, "pagina", daPagina(aqui.partida));
+    await jaOuve(ouvidos, (vez) => aqui.dono.client.from("partidas").update({ local: `Quadra ${vez}` }).eq("id", aqui.partida).throwOnError());
 
     await aqui.dono.client.from("players").delete().eq("id", aqui.jogador).throwOnError();
 
