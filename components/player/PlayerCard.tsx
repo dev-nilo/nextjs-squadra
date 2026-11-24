@@ -85,7 +85,7 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
   const label = `Carta de ${player.name}, ${player.position}, rating ${player.rating}${isSelected ? ", selecionado" : ""}${isMine ? ", você" : player.conta_id ? ", com conta" : ""}`;
 
   const posicao = (
-    <span className="flex items-center gap-[2cqw] text-[6cqw] font-semibold text-paper-foreground/60">
+    <span className="flex items-center gap-[2cqw] text-[6cqw] font-semibold text-paper-foreground/70">
       <img
         src={getFlagUrl(countryCode)}
         alt={getCountryName(countryCode)}
@@ -109,8 +109,8 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
         const forte = fortes.has(chave);
         return (
           <div key={chave} className="flex items-baseline justify-between py-[0.5cqw]">
-            <dt className="text-[5.5cqw] font-medium text-paper-foreground/55">{labels[chave].toLowerCase()}</dt>
-            <dd className={`text-[7cqw] tabular-nums ${forte ? "font-extrabold text-paper-foreground" : "font-medium text-paper-foreground/55"}`}>
+            <dt className="text-[5.5cqw] font-medium text-paper-foreground/70">{labels[chave].toLowerCase()}</dt>
+            <dd className={`text-[7cqw] tabular-nums ${forte ? "font-extrabold text-paper-foreground" : "font-medium text-paper-foreground/70"}`}>
               {player.attributes[chave]}
             </dd>
           </div>
