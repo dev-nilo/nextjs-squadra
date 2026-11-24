@@ -73,7 +73,7 @@ flowchart LR
 
 A game has, say, 14 spots. When the 14th and 15th person tap "Vou" at the same moment, one has to get the spot and the other has to join the waitlist. Neither can be lost, and nobody can end up confirmed twice.
 
-[`responder_presenca`](supabase/migrations/20261112220000_presenca_depois_do_inicio.sql) (first written in `20261110234500_partidas.sql`) takes the game's row lock (`SELECT … FOR UPDATE`) before counting, so overlapping calls queue up in Postgres. Each call stamps its request with `clock_timestamp()` *after* taking the lock, so the waitlist order is the order the answers were actually applied. When someone drops out, the first in line is promoted in the same transaction.
+[`responder_presenca`](supabase/migrations/20261124000000_ordem_dos_locks.sql) (first written in `20261110234500_partidas.sql`) takes the game's row lock (`SELECT … FOR UPDATE`) before counting, so overlapping calls queue up in Postgres. The locking query only matches a game in one of the caller's groups, so someone outside never joins that queue. Each call stamps its request with `clock_timestamp()` *after* taking the lock, so the waitlist order is the order the answers were actually applied. When someone drops out, the first in line is promoted in the same transaction.
 
 [The test](tests/integration/partidas.test.ts) fires eight separate clients at one free spot. It checks four things:
 
@@ -160,7 +160,7 @@ Then run `npm run dev` and open http://localhost:3000. The seed users all use th
 | --- | --- |
 | `npm test` | Unit tests |
 | `npm run test:local` | What the CI's database job runs, against the local Supabase: RLS and integration tests, then a production build and Playwright. `-- integration` or `-- e2e` runs one half |
-| `npm run test:integration` / `npm run test:e2e` | The same halves without the setup: export `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and the two `NEXT_PUBLIC_` ones from `npx supabase status` yourself, and run `npm run build` before E2E |
+| `npm run test:integration` / `npm run test:e2e` | The same halves without the setup: export `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL` (integration only) and the two `NEXT_PUBLIC_` ones from `npx supabase status` yourself, and run `npm run build` before E2E |
 | `npm run lint` / `npm run typecheck` | |
 | `npm run db:reset` | Rebuild the local database from migrations and seed |
 
@@ -198,9 +198,7 @@ Found by read-only audits of the schema and of these docs, and by the PR reviews
 - **Realtime delete events aren't filtered by RLS.** A subscriber can get the primary key (uuids) of rows deleted in other groups ([#83](https://github.com/dev-nilo/nextjs-squadra/issues/83)).
 - **Player input rules live in the Server Action only.** Name length, position, nationality and the photo's origin aren't table constraints, so an owner or admin calling the API directly can skip them ([#84](https://github.com/dev-nilo/nextjs-squadra/issues/84)).
 - **Group slugs reveal name clashes, and the API allows unlimited group creation** ([#85](https://github.com/dev-nilo/nextjs-squadra/issues/85)).
-- **Game functions lock the row before checking membership**, so an outsider who knows a game's id can hold its lock briefly before being refused ([#86](https://github.com/dev-nilo/nextjs-squadra/issues/86)).
 - **A cancelled game can be reopened through the API**, though no screen does it ([#87](https://github.com/dev-nilo/nextjs-squadra/issues/87)).
-- **Removing someone while they leave can deadlock.** Postgres aborts one of the two and nothing breaks, but that person sees a generic error ([#91](https://github.com/dev-nilo/nextjs-squadra/issues/91)).
 - **Two tabs saving one card with photos at different paths could delete the photo in use.** It almost can't happen today: uploads are re-encoded to the same `.jpg` path, unless the browser can't draw them ([#89](https://github.com/dev-nilo/nextjs-squadra/issues/89)).
 
 And by design, for now:

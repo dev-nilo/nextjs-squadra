@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
+import pg from "pg";
 
 /**
  * Integration tests run against the local Supabase (`npm run db:start`).
@@ -20,6 +21,50 @@ const noSession = { auth: { persistSession: false, autoRefreshToken: false } } a
 export const admin = (): SupabaseClient => createClient(url(), env("SUPABASE_SERVICE_ROLE_KEY"), noSession);
 
 export const anon = (): SupabaseClient => createClient(url(), env("SUPABASE_ANON_KEY"), noSession);
+
+/**
+ * A direct Postgres connection as the superuser. An RPC through the API is one
+ * transaction, so this is how a test holds a row lock while other calls run.
+ */
+export async function conexaoDireta(): Promise<pg.Client> {
+  const client = new pg.Client({ connectionString: env("SUPABASE_DB_URL") });
+  await client.connect();
+  return client;
+}
+
+/**
+ * Calls a database function on a direct connection as `user`, the way the API
+ * does: role authenticated and their JWT claims, in one transaction. Two calls
+ * that must run at the same time go this way, because a fresh API has a single
+ * connection to the database and would run them one after the other.
+ */
+export async function chamarComo(db: pg.Client, user: TestUser, sql: string, params: unknown[] = []) {
+  await db.query("begin");
+  try {
+    await db.query("select set_config('role', 'authenticated', true), set_config('request.jwt.claims', $1, true)", [
+      JSON.stringify({ sub: user.id, role: "authenticated" }),
+    ]);
+    await db.query(sql, params);
+    await db.query("commit");
+    return { error: null };
+  } catch (e) {
+    await db.query("rollback");
+    return { error: e as pg.DatabaseError };
+  }
+}
+
+/** Resolves once `n` sessions are waiting for a row lock, or fails after `ms`. */
+export async function esperarTravados(db: pg.Client, n: number, ms = 5_000) {
+  const ate = Date.now() + ms;
+  for (;;) {
+    const { rows } = await db.query<{ n: number }>(
+      "select count(*)::int as n from pg_stat_activity where wait_event_type = 'Lock' and datname = current_database()",
+    );
+    if (rows[0].n >= n) return;
+    if (Date.now() > ate) throw new Error(`Expected ${n} sessions waiting for a lock, saw ${rows[0].n}`);
+    await new Promise((r) => setTimeout(r, 50));
+  }
+}
 
 export type TestUser = { id: string; email: string; client: SupabaseClient };
 
