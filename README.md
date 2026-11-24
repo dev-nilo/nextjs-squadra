@@ -18,7 +18,7 @@ Squadra runs a weekly pickup-football game, a *pelada*. It keeps the group's ros
 - **A live presence list.** Supabase Realtime pushes changes, and an inserted or updated row only reaches a subscriber whose RLS lets them read it.
 - **A server-side team draw.** Each player's rating is copied into the saved draw at draw time, so editing a player later doesn't rewrite past games.
 - **A zero-downtime schema change.** Moving from per-user rosters to shared groups took five expand/contract steps, one PR and one production deploy each; four of them carried a migration.
-- **A delivery pipeline.** Every PR runs against a throwaway local database in CI and gets a preview pointed at staging; a PR that adds migrations also pushes them to staging. Merging to `main` migrates production first, and only then deploys the app.
+- **A delivery pipeline.** Every PR runs against a throwaway local database in CI and gets a preview pointed at staging; a PR that adds migrations also pushes them to staging. `main` only takes PRs with green CI. After a merge, production waits for the owner's approval, then migrates, and only then deploys the app.
 
 ## Architecture
 
@@ -63,8 +63,8 @@ flowchart LR
   PR[Pull request] --> CI["CI: lint, typecheck, unit tests, build<br/>+ local Supabase: schema lint, RLS and<br/>integration tests, Playwright E2E"]
   PR --> PRV[Vercel preview<br/>pointed at staging]
   CI --> STG[Migrate staging<br/>if the PR adds migrations]
-  CI --> MERGE[Merge to main]
-  MERGE --> MP[Migrate production] --> DP[Deploy production<br/>from CI]
+  CI --> MERGE[Merge to main<br/>PR only, CI required]
+  MERGE --> OK[Owner approves<br/>supabase-production] --> MP[Migrate production] --> DP[Deploy production<br/>from CI]
 ```
 
 ## Interesting problems
@@ -119,6 +119,7 @@ Attendance, in turn, is a `security_invoker` view, `frequencia_jogadores`, so it
 ### Migrations before code
 
 - **Production order.** Vercel's own Git deploy is off for `main` ([`vercel.json`](vercel.json)). CI pushes the migrations to production, and only then deploys the app, so new code never goes live before the schema it needs. If a migration fails, the previous deploy keeps serving.
+- **Gates.** `main` is protected: changes arrive only through a PR whose two CI jobs passed, for admins too, with no force-push. The `supabase-production` environment has the owner as required reviewer, with no admin bypass and protected branches only, so nothing reaches the production database or app before one click on the run. That holds for every merge, migration or not, because the deploy waits for the migrate job.
 - **Pull requests.** Every PR runs the whole stack in CI: a local Supabase started from the migrations and a deterministic seed, the RLS and integration tests, and Playwright against a production build. Tests never touch staging or production.
 - **Staging.** A PR that adds migrations pushes them to staging, and its Vercel preview runs against them. A PR without migrations skips that step, so it doesn't trip over another open PR's migration.
 

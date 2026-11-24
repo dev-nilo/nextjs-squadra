@@ -40,7 +40,10 @@ Repo → Settings → Secrets and variables → **Actions**:
 | `PROD_PROJECT_REF` | production's project ref (Project Settings → General) |
 | `VERCEL_TOKEN` | a Vercel token scoped to the `ayanno-team` team (Vercel → Account Settings → Tokens). Production deploys only through it |
 
-Optional: Settings → Environments → `supabase-production` → add yourself as a **required reviewer**, so every production migration waits for one click.
+Then the two gates (set on 2026-11-24):
+
+- Settings → Environments → `supabase-production`: you as **required reviewer**, "Allow administrators to bypass" off, deployment branches **protected branches only**. Every run on `main` then waits for your approval (Actions → the run → Review deployments) before it migrates production; the deploy waits on that job, so it waits too. Self-review stays allowed: merges come from your own account.
+- Settings → Branches → `main`: require a pull request (0 approvals, since GitHub won't let you approve your own PR), require the `Lint, test, build, typecheck` and `Database, RLS and E2E` checks from GitHub Actions, include administrators, no force-push or deletion. Not "up to date before merging": CI runs again on `main` after the merge, and production only moves once that run passes.
 
 ### 4. Fill staging
 
