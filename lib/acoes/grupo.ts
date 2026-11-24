@@ -8,7 +8,14 @@ import { comSessao, exigir, recusar } from "./executar";
  * and moves their Jogadores that have no Grupo into it, in one transaction.
  */
 export const criarGrupo = (supabase: SupabaseClient, nome: string) =>
-  comSessao(supabase, { acao: "criarGrupo", generica: "Não deu pra criar o fut agora. Tenta de novo." }, async ({ user }): Promise<Participacao> => {
+  comSessao(
+    supabase,
+    {
+      acao: "criarGrupo",
+      generica: "Não deu pra criar o fut agora. Tenta de novo.",
+      motivos: { "limite-de-grupos": "Você já organiza 5 futs, o limite por conta." },
+    },
+    async ({ user }): Promise<Participacao> => {
     const validacao = validarNomeDoGrupo(nome);
     if (!validacao.ok) recusar(validacao.message);
 

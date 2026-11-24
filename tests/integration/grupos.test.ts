@@ -44,12 +44,41 @@ describe("criar_grupo", () => {
     expect(data?.grupo_id).toBe(primeiro.id);
   });
 
-  it("keeps slugs unique when two Grupos share a name", async () => {
+  it("keeps slugs unique when Grupos share a name, without telling how many do (#85)", async () => {
     const nilo = await user("nilo");
     const nome = `Pelada ${Date.now()}`;
     const a = await criarGrupo(nilo, nome);
     const b = await criarGrupo(nilo, nome);
-    expect(b.slug).toBe(`${a.slug}-2`);
+    const c = await criarGrupo(nilo, nome);
+    // A random suffix, not -2 and -3.
+    for (const outro of [b, c]) expect(outro.slug).toMatch(new RegExp(`^${a.slug}-[0-9a-f]{6}$`));
+    expect(new Set([a.slug, b.slug, c.slug]).size).toBe(3);
+  });
+
+  it("lets an account create at most 5 Grupos (#85)", async () => {
+    const nilo = await user("nilo");
+    for (let i = 1; i <= 5; i++) await criarGrupo(nilo, `Fut ${i}`);
+    const { error } = await nilo.client.rpc("criar_grupo", { nome_do_grupo: "Fut 6" });
+    expect(error?.hint).toBe("limite-de-grupos");
+
+    // Someone else is unaffected.
+    const outro = await user("outro");
+    await criarGrupo(outro, "Fut do Outro");
+  });
+
+  it("counts only the Grupos the account is dono of, and holds the limit under concurrent calls", async () => {
+    const nilo = await user("nilo");
+    const amigo = await user("amigo");
+    for (let i = 1; i <= 3; i++) await criarGrupo(nilo, `Fut ${i}`);
+    // Being a membro of someone else's Grupo doesn't count.
+    const doAmigo = await criarGrupo(amigo, "Fut do Amigo");
+    await addMembro(doAmigo.id, nilo, "membro");
+
+    const tentativas = await Promise.all(
+      [4, 5, 6, 7].map((i) => nilo.client.rpc("criar_grupo", { nome_do_grupo: `Fut ${i}` })),
+    );
+    expect(tentativas.filter((t) => t.error === null)).toHaveLength(2);
+    expect(tentativas.filter((t) => t.error?.hint === "limite-de-grupos")).toHaveLength(2);
   });
 
   it("strips accents and symbols from the slug", async () => {
