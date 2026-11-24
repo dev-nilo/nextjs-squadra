@@ -199,7 +199,6 @@ Found by read-only audits of the schema and of these docs, and by the PR reviews
 - **Group slugs reveal name clashes, and the API allows unlimited group creation** ([#85](https://github.com/dev-nilo/nextjs-squadra/issues/85)).
 - **Game functions lock the row before checking membership**, so an outsider who knows a game's id can hold its lock briefly before being refused ([#86](https://github.com/dev-nilo/nextjs-squadra/issues/86)).
 - **A cancelled game can be reopened through the API**, though no screen does it ([#87](https://github.com/dev-nilo/nextjs-squadra/issues/87)).
-- **Moving a player in the quick draw loses keyboard focus** ([#88](https://github.com/dev-nilo/nextjs-squadra/issues/88)).
 - **Removing someone while they leave can deadlock.** Postgres aborts one of the two and nothing breaks, but that person sees a generic error ([#91](https://github.com/dev-nilo/nextjs-squadra/issues/91)).
 - **Two tabs saving one card with photos at different paths could delete the photo in use.** It almost can't happen today: uploads are re-encoded to the same `.jpg` path, unless the browser can't draw them ([#89](https://github.com/dev-nilo/nextjs-squadra/issues/89)).
 
