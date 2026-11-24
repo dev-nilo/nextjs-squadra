@@ -47,10 +47,23 @@ test("a Jogador moves to another Time with the select beside their name, no drag
   const antes2 = await nomes(time2);
   const quem = antes1[0];
 
-  await time1.getByRole("combobox", { name: `Mover ${quem}`, exact: true }).selectOption({ label: "→ Time 2" });
+  // As someone using it would: on the select (selectOption alone doesn't focus it).
+  const mover = time1.getByRole("combobox", { name: `Mover ${quem}`, exact: true });
+  await mover.focus();
+  await mover.selectOption({ label: "→ Time 2" });
 
   // Now listed in Time 2, with that Time selected.
   await expect(time2.getByRole("combobox", { name: `Mover ${quem}`, exact: true })).toHaveValue("1");
+  // The keyboard focus follows them to their new row (#88).
+  await expect(time2.getByRole("combobox", { name: `Mover ${quem}`, exact: true })).toBeFocused();
   expect(await nomes(time1)).toHaveLength(antes1.length - 1);
   expect((await nomes(time2)).sort()).toEqual([...antes2, quem].sort());
+
+  // Focus somewhere else is left alone: only lost focus comes back.
+  const outro = (await nomes(time1))[0];
+  const baixar = result.getByRole("button", { name: "Baixar PNG" });
+  await baixar.focus();
+  await time1.getByRole("combobox", { name: `Mover ${outro}`, exact: true }).selectOption({ label: "→ Time 2" });
+  await expect(time2.getByRole("combobox", { name: `Mover ${outro}`, exact: true })).toHaveValue("1");
+  await expect(baixar).toBeFocused();
 });
