@@ -62,8 +62,11 @@ test("the dono draws and publishes the Times; a membro sees them appear, read-on
     // Move Paredão to the other Time.
     const time1 = sorteio.getByRole("list", { name: "Jogadores do Time 1" });
     const destino = (await time1.getByText("Paredão").count()) ? "1" : "0";
+    await sorteio.getByLabel("Mover Paredão").focus();
     await sorteio.getByLabel("Mover Paredão").selectOption(destino);
     await expect(sorteio.getByRole("list", { name: `Jogadores do Time ${Number(destino) + 1}` }).getByText("Paredão")).toBeVisible();
+    // Once the server has moved him, the focus is back on his select, in the new Time (#88).
+    await expect(sorteio.getByLabel("Mover Paredão")).toBeFocused();
 
     page.once("dialog", (d) => d.accept());
     await sorteio.getByRole("button", { name: "Publicar times" }).click();

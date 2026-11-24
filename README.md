@@ -18,7 +18,7 @@ Squadra runs a weekly pickup-football game, a *pelada*. It keeps the group's ros
 - **A live presence list.** Supabase Realtime pushes changes, and an inserted or updated row only reaches a subscriber whose RLS lets them read it.
 - **A server-side team draw.** Each player's rating is copied into the saved draw at draw time, so editing a player later doesn't rewrite past games.
 - **A zero-downtime schema change.** Moving from per-user rosters to shared groups took five expand/contract steps, one PR and one production deploy each; four of them carried a migration.
-- **A delivery pipeline.** Every PR runs against a throwaway local database in CI and gets a preview pointed at staging; a PR that adds migrations also pushes them to staging. Merging to `main` migrates production first, and only then deploys the app.
+- **A delivery pipeline.** Every PR runs against a throwaway local database in CI and gets a preview pointed at staging; a PR that adds migrations also pushes them to staging. `main` only takes PRs with green CI. After a merge, production waits for the owner's approval, then migrates, and only then deploys the app.
 
 ## Architecture
 
@@ -63,8 +63,8 @@ flowchart LR
   PR[Pull request] --> CI["CI: lint, typecheck, unit tests, build<br/>+ local Supabase: schema lint, RLS and<br/>integration tests, Playwright E2E"]
   PR --> PRV[Vercel preview<br/>pointed at staging]
   CI --> STG[Migrate staging<br/>if the PR adds migrations]
-  CI --> MERGE[Merge to main]
-  MERGE --> MP[Migrate production] --> DP[Deploy production<br/>from CI]
+  CI --> MERGE[Merge to main<br/>PR only, CI required]
+  MERGE --> OK[Owner approves<br/>supabase-production] --> MP[Migrate production] --> DP[Deploy production<br/>from CI]
 ```
 
 ## Interesting problems
@@ -119,6 +119,7 @@ Attendance, in turn, is a `security_invoker` view, `frequencia_jogadores`, so it
 ### Migrations before code
 
 - **Production order.** Vercel's own Git deploy is off for `main` ([`vercel.json`](vercel.json)). CI pushes the migrations to production, and only then deploys the app, so new code never goes live before the schema it needs. If a migration fails, the previous deploy keeps serving.
+- **Gates.** `main` is protected: changes arrive only through a PR whose two CI jobs passed, for admins too, with no force-push. The `supabase-production` environment has the owner as required reviewer, with no admin bypass and protected branches only, so nothing reaches the production database or app before one click on the run. That holds for every merge, migration or not, because the deploy waits for the migrate job.
 - **Pull requests.** Every PR runs the whole stack in CI: a local Supabase started from the migrations and a deterministic seed, the RLS and integration tests, and Playwright against a production build. Tests never touch staging or production.
 - **Staging.** A PR that adds migrations pushes them to staging, and its Vercel preview runs against them. A PR without migrations skips that step, so it doesn't trip over another open PR's migration.
 
@@ -158,10 +159,12 @@ Then run `npm run dev` and open http://localhost:3000. The seed users all use th
 | Command | |
 | --- | --- |
 | `npm test` | Unit tests |
-| `npm run test:integration` | RLS and database tests. Set `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` from `npx supabase status` |
-| `npm run test:e2e` | Playwright against `next start` and the local database (run `npm run build` first) |
+| `npm run test:local` | What the CI's database job runs, against the local Supabase: RLS and integration tests, then a production build and Playwright. `-- integration` or `-- e2e` runs one half |
+| `npm run test:integration` / `npm run test:e2e` | The same halves without the setup: export `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and the two `NEXT_PUBLIC_` ones from `npx supabase status` yourself, and run `npm run build` before E2E |
 | `npm run lint` / `npm run typecheck` | |
 | `npm run db:reset` | Rebuild the local database from migrations and seed |
+
+`test:local` reads the URL and keys from `supabase status` and blanks the Sentry variables. That matters if your `.env.local` came from `vercel env pull`: it then holds the real Sentry token and DSN, so a plain `npm run build` uploads source maps and a plain E2E run reports its errors to Sentry, tagged `development`. Next never overrides a variable that is already set, even an empty one, so the script's values win over `.env.local`.
 
 Schema changes are always a new migration (`npx supabase migration new <name>`), never SQL run by hand on a dashboard.
 
@@ -187,6 +190,25 @@ The full glossary is in [`CONTEXT.md`](CONTEXT.md), and the design decisions are
 ## Not in scope
 
 These were left out on purpose: notifications, payments, players rating each other, a native mobile app, UI translations (the UI is Portuguese only), match scores, and email invites (invites are links).
+
+## Known limitations
+
+Found by read-only audits of the schema and of these docs, and by the PR reviews. Each one has an issue:
+
+- **Realtime delete events aren't filtered by RLS.** A subscriber can get the primary key (uuids) of rows deleted in other groups ([#83](https://github.com/dev-nilo/nextjs-squadra/issues/83)).
+- **Player input rules live in the Server Action only.** Name length, position, nationality and the photo's origin aren't table constraints, so an owner or admin calling the API directly can skip them ([#84](https://github.com/dev-nilo/nextjs-squadra/issues/84)).
+- **Group slugs reveal name clashes, and the API allows unlimited group creation** ([#85](https://github.com/dev-nilo/nextjs-squadra/issues/85)).
+- **Game functions lock the row before checking membership**, so an outsider who knows a game's id can hold its lock briefly before being refused ([#86](https://github.com/dev-nilo/nextjs-squadra/issues/86)).
+- **A cancelled game can be reopened through the API**, though no screen does it ([#87](https://github.com/dev-nilo/nextjs-squadra/issues/87)).
+- **Removing someone while they leave can deadlock.** Postgres aborts one of the two and nothing breaks, but that person sees a generic error ([#91](https://github.com/dev-nilo/nextjs-squadra/issues/91)).
+- **Two tabs saving one card with photos at different paths could delete the photo in use.** It almost can't happen today: uploads are re-encoded to the same `.jpg` path, unless the browser can't draw them ([#89](https://github.com/dev-nilo/nextjs-squadra/issues/89)).
+
+And by design, for now:
+
+- **Player photos are public by URL.** Only a group's members can list them, but anyone holding a photo's URL can load it.
+- **Deploy compatibility is reasoned, not tested.** The expand/contract migrations say why the deploy before them still works; CI never runs the old code on the new schema.
+- **The last-spot test proves correctness, not load.** Nobody has measured the row lock with hundreds of people on one game.
+- **Realtime isn't covered by tests.**
 
 ## More docs
 
