@@ -50,7 +50,7 @@ export function PessoasView({ grupo, pessoas, userId }: { grupo: Participacao; p
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
       <div className="flex flex-col gap-3">
-        <Link href={caminhoDaAba(grupo.slug, "voce")} className="flex w-fit items-center gap-1 text-sm font-medium text-default-500 hover:text-foreground">
+        <Link href={caminhoDaAba(grupo.slug, "voce")} className="flex w-fit items-center gap-1 text-sm font-medium text-default-500 hover:text-foreground area-de-toque rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
           <ArrowLeft size={16} aria-hidden="true" /> Você
         </Link>
         <h1 className="text-title">

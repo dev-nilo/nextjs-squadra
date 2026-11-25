@@ -12,7 +12,7 @@ export function LoadingState({ label = "Carregando..." }: { label?: string }) {
 
 export function FullScreenLoader({ label }: { label?: string }) {
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-background px-4">
+    <div className="flex min-h-dvh w-full items-center justify-center bg-background px-4">
       <LoadingState label={label} />
     </div>
   );

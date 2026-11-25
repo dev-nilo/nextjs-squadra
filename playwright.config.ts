@@ -24,7 +24,10 @@ export default defineConfig({
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     // Mobile-first: the flows people do on their phone, against the bottom tab bar
     // and the docked controls. Tag a test `@mobile` to run it here too.
-    { name: "mobile", use: { ...devices["Pixel 7"] }, grep: /@mobile/ },
+    { name: "mobile", use: { ...devices["Pixel 7"] }, grep: /@mobile|@telas/ },
+    // Every screen: a phone on its side (360px tall) and a tablet. Tag a test `@telas`.
+    { name: "landscape", use: { ...devices["Pixel 7 landscape"] }, grep: /@telas/ },
+    { name: "tablet", use: { ...devices["Galaxy Tab S4"] }, grep: /@telas/ },
   ],
   webServer: {
     command: `npm run start -- -p ${PORT}`,

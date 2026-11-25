@@ -8,6 +8,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { useFocoAoMover } from "@/hooks/use-foco-ao-mover";
+import { MoverJogador } from "@/components/team/mover-jogador";
 import { getTeamPresentation } from "@/lib/constants";
 import { membrosPorNome } from "@/lib/sorteio";
 import {
@@ -154,25 +155,17 @@ export function SorteioDaPartida({
                         {jogador.name} <span className="text-default-500">{jogador.position}</span>
                       </span>
                       {editavel && emDia && sorteio && (
-                        <select
-                          aria-label={`Mover ${jogador.name}`}
+                        <MoverJogador
                           ref={foco.refDo(jogador.id)}
-                          value={indice}
+                          nome={jogador.name}
+                          indice={indice}
+                          times={times}
                           disabled={pendente}
-                          onChange={(e) => {
+                          onMover={(destino) => {
                             foco.marcar(jogador.id);
-                            executar(() =>
-                              moverNoSorteio(slug, partidaId, jogador.id, Number(e.target.value), sorteio.sorteado_em),
-                            );
+                            executar(() => moverNoSorteio(slug, partidaId, jogador.id, destino, sorteio.sorteado_em));
                           }}
-                          className="shrink-0 rounded-lg border border-default-200 bg-default-100 px-1 py-0.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                        >
-                          {times.map((destino, i) => (
-                            <option key={destino.name} value={i}>
-                              {i === indice ? destino.name : `→ ${destino.name}`}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       )}
                     </li>
                   ))}

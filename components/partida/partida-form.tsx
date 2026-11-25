@@ -46,36 +46,34 @@ export function PartidaForm({
   };
 
   return (
-    <Modal isOpen onClose={onClose} className="max-w-md">
-      <form onSubmit={enviar} noValidate>
-        <ModalHeader className="flex flex-col gap-1">
-          <h2 className="text-title">{titulo}</h2>
-          <p className="text-muted">Horário de Brasília.</p>
-        </ModalHeader>
-        <ModalBody className="flex flex-col gap-4">
-          {erro && <Alert tone="danger">{erro}</Alert>}
-          <Input label="Dia e hora" type="datetime-local" value={inicio} onChange={(e) => setInicio(e.target.value)} isRequired />
-          <Input label="Local" value={local} onChange={(e) => setLocal(e.target.value)} maxLength={80} isRequired />
-          <Input
-            label="Vagas"
-            type="number"
-            inputMode="numeric"
-            min={2}
-            max={60}
-            value={vagas}
-            onChange={(e) => setVagas(e.target.value)}
-            isRequired
-          />
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="flat" onClick={onClose}>
-            Voltar
-          </Button>
-          <Button type="submit" color="primary" isLoading={salvando}>
-            {acao}
-          </Button>
-        </ModalFooter>
-      </form>
+    <Modal isOpen onClose={onClose} className="max-w-md" onSubmit={enviar} noValidate>
+      <ModalHeader className="flex flex-col gap-1">
+        <h2 className="text-title">{titulo}</h2>
+        <p className="text-muted">Horário de Brasília.</p>
+      </ModalHeader>
+      <ModalBody className="flex flex-col gap-4">
+        {erro && <Alert tone="danger">{erro}</Alert>}
+        <Input label="Dia e hora" type="datetime-local" value={inicio} onChange={(e) => setInicio(e.target.value)} isRequired />
+        <Input label="Local" value={local} onChange={(e) => setLocal(e.target.value)} maxLength={80} isRequired />
+        <Input
+          label="Vagas"
+          type="number"
+          inputMode="numeric"
+          min={2}
+          max={60}
+          value={vagas}
+          onChange={(e) => setVagas(e.target.value)}
+          isRequired
+        />
+      </ModalBody>
+      <ModalFooter>
+        <Button variant="flat" onClick={onClose}>
+          Voltar
+        </Button>
+        <Button type="submit" color="primary" isLoading={salvando}>
+          {acao}
+        </Button>
+      </ModalFooter>
     </Modal>
   );
 }

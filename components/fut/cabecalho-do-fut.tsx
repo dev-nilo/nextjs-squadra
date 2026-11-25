@@ -19,8 +19,8 @@ export function CabecalhoDoFut({ grupo, participacoes }: { grupo: Participacao; 
   const trocar = useCallback((slug: string) => router.push(caminhoNoOutroFut(pathname, slug)), [router, pathname]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-divider bg-content1/95 pt-[env(safe-area-inset-top)] backdrop-blur-sm">
-      <div className="mx-auto flex h-14 max-w-5xl items-center gap-2 px-3 sm:gap-3 sm:px-6">
+    <header className="sticky top-0 z-40 select-none border-b border-divider bg-content1/95 pt-[env(safe-area-inset-top)] backdrop-blur-sm [-webkit-touch-callout:none]">
+      <div className="margem-lateral mx-auto flex h-14 max-w-5xl items-center gap-2 sm:gap-3">
         <Link
           href={`/g/${encodeURIComponent(grupo.slug)}`}
           aria-label="Squadra, próxima partida"

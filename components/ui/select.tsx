@@ -30,7 +30,8 @@ export function Select({
         <select
           id={selectId}
           className={`w-full appearance-none rounded-xl border border-default-200 bg-default-100 pl-3 pr-8 text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50 ${
-            size === "sm" ? "h-8 text-sm" : "h-10 text-sm"
+            // 16px under a finger, or iOS zooms in on focus (see Input).
+            size === "sm" ? "h-8 text-base mouse:text-sm" : "h-10 text-base mouse:text-sm"
           }`}
           {...props}
         >

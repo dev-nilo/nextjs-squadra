@@ -1,5 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 const config = {
+  // Hover styles only where there's a mouse: on a phone they'd stick after a tap.
+  future: { hoverOnlyWhenSupported: true },
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -7,6 +9,10 @@ const config = {
   ],
   theme: {
     extend: {
+      screens: {
+        // A mouse or trackpad (desktop, a laptop's touchpad), not a finger: `mouse:text-sm`.
+        mouse: { raw: "(pointer: fine)" },
+      },
       fontFamily: {
         sans: ["var(--font-sans)"],
       },

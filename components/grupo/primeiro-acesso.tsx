@@ -35,7 +35,7 @@ export function PrimeiroAcesso() {
 export function ErroAoAbrirFut() {
   const router = useRouter();
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-background flex items-center justify-center p-4">
       <Surface className="max-w-md flex flex-col gap-4">
         <div>
           <h1 className="text-title">Não deu pra abrir seu fut</h1>
