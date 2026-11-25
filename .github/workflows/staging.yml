@@ -20,13 +20,12 @@ jobs:
     name: ${{ inputs.reset && 'Reset staging' || 'Keep staging awake' }}
     runs-on: ubuntu-latest
     env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      PROJECT_REF: ${{ secrets.STAGING_PROJECT_REF }}
+      DB_URL: ${{ secrets.STAGING_DB_URL }}
     steps:
       - name: Check staging is configured
         id: gate
         run: |
-          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$PROJECT_REF" ]; then
+          if [ -n "$DB_URL" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "::notice::Staging secrets are not set, skipping. See docs/staging.md."
@@ -43,7 +42,7 @@ jobs:
         if: steps.gate.outputs.ready == 'true'
       - name: Touch the database
         if: steps.gate.outputs.ready == 'true' && !inputs.reset
-        run: npx supabase migration list --remote="$PROJECT_REF"
+        run: npx supabase migration list --remote="$DB_URL"
       - name: Reset staging (migrations + seed)
         if: steps.gate.outputs.ready == 'true' && inputs.reset
-        run: npx supabase db reset --remote="$PROJECT_REF" --yes
+        run: npx supabase db reset --remote="$DB_URL" --yes
