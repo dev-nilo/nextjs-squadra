@@ -96,8 +96,9 @@ export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: un
           if (!agora) recusar(CARTA_EXCLUIDA);
           recusar(agora.versao !== atual.versao ? CARTA_MUDOU : SEM_PERMISSAO);
         }
-        // Compared by path, not URL: a new photo uploaded over the same file
-        // only changes the URL's ?v=, and that file is the one now in use.
+        // Compared by path, not URL: a photo from before #116 could be uploaded
+        // over the same file, changing only the URL's ?v=, and that file is the
+        // one now in use. Since #116 every upload is a new path.
         const antiga = caminhoDaFotoDoJogador(atual.image_url, grupo.id, jogador.id, supabaseUrl);
         if (antiga && antiga !== caminhoDaFoto(jogador.image, grupo.id, supabaseUrl)) await apagarFoto(supabase, antiga);
       } else {

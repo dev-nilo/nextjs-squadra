@@ -16,7 +16,12 @@ import { resolverGrupo } from "@/lib/grupo-server";
  * get a `Resultado`.
  */
 
-export type Resultado<T = null> = { ok: true; valor: T } | { ok: false; message: string };
+/**
+ * `inesperado` marks a failure nobody expected (a network error, a timeout, a
+ * bug): whether the write happened is unknown. Without it, a refusal is
+ * certain and nothing was written.
+ */
+export type Resultado<T = null> = { ok: true; valor: T } | { ok: false; message: string; inesperado?: true };
 
 export type ContextoDaSessao = { supabase: SupabaseClient; user: User };
 export type ContextoDoGrupo = ContextoDaSessao & { grupo: Participacao };
@@ -91,7 +96,7 @@ export async function comSessao<T>(
     if (!user) return { ok: false, message: SESSAO_EXPIRADA };
     return { ok: true, valor: await corpo({ supabase, user }) };
   } catch (e) {
-    return { ok: false, message: traduzir(e, opcoes) };
+    return { ok: false, ...traduzir(e, opcoes) };
   }
 }
 
@@ -116,18 +121,18 @@ export async function noGrupo<T>(
 }
 
 /** The error table: one policy for every action. */
-function traduzir(e: unknown, { acao, generica, motivos = {} }: Opcoes): string {
-  if (e instanceof Recusa) return e.message;
+function traduzir(e: unknown, { acao, generica, motivos = {} }: Opcoes): { message: string; inesperado?: true } {
+  if (e instanceof Recusa) return { message: e.message };
   if (e instanceof FalhaDoBanco) {
     const { code, hint } = e.erro ?? {};
-    if (code === "28000" || code === "PGRST301") return SESSAO_EXPIRADA;
-    if (hint && motivos[hint]) return motivos[hint];
-    if (code && motivos[code]) return motivos[code];
+    if (code === "28000" || code === "PGRST301") return { message: SESSAO_EXPIRADA };
+    if (hint && motivos[hint]) return { message: motivos[hint] };
+    if (code && motivos[code]) return { message: motivos[code] };
     // RLS refused the row: a membro trying what only the dono and admins can.
-    if (code === "42501" || hint === "sem-permissao") return SEM_PERMISSAO;
+    if (code === "42501" || hint === "sem-permissao") return { message: SEM_PERMISSAO };
     Sentry.captureException(e.erro ?? new Error(`${acao} returned no row`), { tags: { action: acao } });
-    return generica;
+    return { message: generica, inesperado: true };
   }
   Sentry.captureException(e, { tags: { action: acao } });
-  return generica;
+  return { message: generica, inesperado: true };
 }
