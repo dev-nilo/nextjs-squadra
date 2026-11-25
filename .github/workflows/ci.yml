@@ -106,10 +106,6 @@ jobs:
     concurrency:
       group: supabase-staging
       cancel-in-progress: false
-    env:
-      # Staging's session pooler URL, with its password. Only staging: no
-      # account-wide Supabase token lives in GitHub (docs/staging.md).
-      DB_URL: ${{ secrets.STAGING_DB_URL }}
     steps:
       # The PR checkout is a merge commit whose first parent is the base, so
       # two commits are enough to see what this PR adds.
@@ -120,7 +116,12 @@ jobs:
       # nothing to push, and pushing anyway would fail whenever another open
       # PR's migration already reached staging ("remote migration versions
       # not found locally"), blocking app-only PRs for no reason.
+      # STAGING_DB_URL (staging's session pooler URL, with its password) goes to
+      # the steps that use it only. No account-wide Supabase token lives in
+      # GitHub (docs/staging.md).
       - name: Check staging is configured and this PR adds migrations
+        env:
+          DB_URL: ${{ secrets.STAGING_DB_URL }}
         id: gate
         run: |
           if [ -z "$DB_URL" ]; then
@@ -145,9 +146,13 @@ jobs:
       - run: npm ci
         if: steps.gate.outputs.ready == 'true'
       - name: Pending migrations
+        env:
+          DB_URL: ${{ secrets.STAGING_DB_URL }}
         if: steps.gate.outputs.ready == 'true'
         run: npx supabase db push --remote="$DB_URL" --dry-run --yes
       - name: Apply migrations to staging
+        env:
+          DB_URL: ${{ secrets.STAGING_DB_URL }}
         if: steps.gate.outputs.ready == 'true'
         run: npx supabase db push --remote="$DB_URL" --yes
 
@@ -162,43 +167,43 @@ jobs:
     concurrency:
       group: supabase-production
       cancel-in-progress: false
-    env:
-      # An environment secret of supabase-production: only a job in that
-      # environment, on a protected branch and after the approval, can read it.
-      DB_URL: ${{ secrets.PROD_DB_URL }}
     steps:
-      # No skip: the deploy waits on this job, so skipping would put the app
-      # live without its migrations.
+      # PROD_DB_URL is an environment secret of supabase-production: only a job
+      # in that environment, on a protected branch and after the approval, can
+      # read it. Each step that needs it gets it, and nothing else does (npm
+      # ci's install scripts don't). No skip when it's missing: the deploy waits
+      # on this job, so skipping would put the app live without its migrations.
       - name: Check production is configured
-        id: gate
+        env:
+          DB_URL: ${{ secrets.PROD_DB_URL }}
         run: |
           test -n "$DB_URL" || {
             echo "::error::Set PROD_DB_URL in the supabase-production environment. See docs/staging.md."
             exit 1
           }
-          echo "ready=true" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v7
-        if: steps.gate.outputs.ready == 'true'
       - uses: actions/setup-node@v7
-        if: steps.gate.outputs.ready == 'true'
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-        if: steps.gate.outputs.ready == 'true'
       # Production was built by hand before migrations existed. If its history
       # doesn't record the baseline, pushing would replay the whole schema on top
       # of the live one, so stop and ask for the one-time repair instead.
       - name: Pending migrations (refuse to replay the baseline)
-        if: steps.gate.outputs.ready == 'true'
+        env:
+          DB_URL: ${{ secrets.PROD_DB_URL }}
         run: |
+          # pipefail: a failed connection must fail here, not hide behind tee.
+          set -o pipefail
           npx supabase db push --remote="$DB_URL" --dry-run --yes 2>&1 | tee "$RUNNER_TEMP/pending.txt"
           if grep -q 20261109000000 "$RUNNER_TEMP/pending.txt"; then
             echo "::error::Production has no record of the baseline migration. Run the 'Production baseline' workflow (check, then repair) first. See docs/staging.md."
             exit 1
           fi
       - name: Apply migrations to production
-        if: steps.gate.outputs.ready == 'true'
+        env:
+          DB_URL: ${{ secrets.PROD_DB_URL }}
         run: npx supabase db push --remote="$DB_URL" --yes
 
   # Production deploys from here, not from Vercel's Git integration (vercel.json

@@ -19,10 +19,10 @@ jobs:
   staging:
     name: ${{ inputs.reset && 'Reset staging' || 'Keep staging awake' }}
     runs-on: ubuntu-latest
-    env:
-      DB_URL: ${{ secrets.STAGING_DB_URL }}
     steps:
       - name: Check staging is configured
+        env:
+          DB_URL: ${{ secrets.STAGING_DB_URL }}
         id: gate
         run: |
           if [ -n "$DB_URL" ]; then
@@ -41,8 +41,12 @@ jobs:
       - run: npm ci
         if: steps.gate.outputs.ready == 'true'
       - name: Touch the database
+        env:
+          DB_URL: ${{ secrets.STAGING_DB_URL }}
         if: steps.gate.outputs.ready == 'true' && !inputs.reset
         run: npx supabase migration list --remote="$DB_URL"
       - name: Reset staging (migrations + seed)
+        env:
+          DB_URL: ${{ secrets.STAGING_DB_URL }}
         if: steps.gate.outputs.ready == 'true' && inputs.reset
         run: npx supabase db reset --remote="$DB_URL" --yes

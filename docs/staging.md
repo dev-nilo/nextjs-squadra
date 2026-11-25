@@ -27,9 +27,11 @@ These steps need the owner's Supabase, GitHub and Vercel accounts.
 
 ### 2. Copy each database's URL
 
-For staging and for production: Supabase → the project → **Connect** → **Session pooler** → copy the URI. It looks like `postgresql://postgres.<ref>:[YOUR-PASSWORD]@aws-0-<region>.pooler.supabase.com:5432/postgres`. Put the database password in place of `[YOUR-PASSWORD]` (Project Settings → Database, where you can also reset it). If the password has `@ : / ? # %` in it, URL-encode those characters.
+For staging and for production: Supabase → the project → **Connect** → **Session pooler** → copy the URI. It looks like `postgresql://postgres.<ref>:[YOUR-PASSWORD]@aws-<n>-<region>.pooler.supabase.com:5432/postgres`. Put the database password in place of `[YOUR-PASSWORD]` (Project Settings → Database, where you can also reset it). A password of letters and digits needs no encoding. Any other character has to be URL-encoded: `python3 -c 'import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1],safe=""))' '<password>'`. The app doesn't use this password, but CI does: resetting it breaks the migration jobs until the secret is updated.
 
 Use the **session** pooler. The direct connection is IPv6 only, and GitHub's runners have no IPv6. The transaction pooler (port 6543) doesn't suit migrations.
+
+If Supabase bans a runner's IP after failed logins (a wrong password, for example), lift the ban in the dashboard (Project Settings → Database → Network bans): without a token, the CLI can't.
 
 The CLI takes this URL with `--remote=<url>` and needs no Supabase access token. That's on purpose: an access token reaches every project of the account, so a token any branch could read would reach production too.
 
@@ -43,7 +45,9 @@ Repo → Settings:
 | Environments → `supabase-production` | `PROD_DB_URL` | production's URL from step 2 |
 | Environments → `vercel-production` | `VERCEL_TOKEN` | a Vercel token scoped to the `ayanno-team` team (Vercel → Account Settings → Tokens). Production deploys only through it |
 
-Create `vercel-production` with deployment branches **protected branches only** and no reviewer: the approval stays on `supabase-production`, and `deploy-production` waits for it. An environment secret is only read by a job in that environment, on a branch its policy allows. So production's credentials can only be used from `main`, and `main` only changes through a pull request. Staging's URL stays a repository secret, because `migrate-staging` runs on pull requests.
+Create `vercel-production` with deployment branches **protected branches only** and no reviewer: the approval stays on `supabase-production`, and `deploy-production` waits for it. An environment secret is only read by a job in that environment, on a branch its policy allows. So production's credentials can only be used from `main`, and `main` only changes through a pull request. Staging's URL stays a repository secret, because `migrate-staging` runs on pull requests. Each URL only reaches the steps that call the CLI, so dependency install scripts never see it.
+
+What's left: anything holding the owner's GitHub credential still reaches production. That includes the `gh` login on the owner's machine, which the coding agents use. It can merge a pull request (no approval is required), approve the `supabase-production` deployment (self-review is allowed) and overwrite the environment secrets. The Vercel token is scoped to the team, so it reads every project's Production variables there: treat it as a production credential.
 
 Then the two gates (set on 2026-11-24):
 
