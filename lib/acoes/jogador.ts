@@ -91,12 +91,16 @@ export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: un
     },
   );
 
-/** Removes a Jogador from the Elenco, with their presences and their photo. RLS only lets the dono and admins. */
+/**
+ * Removes a Jogador from the Elenco, with their presences and their photo.
+ * Through excluir_jogador, which only lets the dono and admins, and takes the
+ * Jogador's Partidas before the Jogador so it can't deadlock with an answer.
+ */
 export const excluirJogador = (supabase: SupabaseClient, slug: unknown, jogadorId: unknown) =>
   noGrupo(supabase, slug, { acao: "excluirJogador", generica: "Não deu pra excluir a carta agora. Tenta de novo." }, async ({ grupo }) => {
     const id = validar(idSchema, jogadorId, "Jogador inválido.");
-    const [excluido] = exigirLinhas<{ image_url: string | null }>(
-      await supabase.from("players").delete().eq("id", id).eq("grupo_id", grupo.id).select("image_url"),
+    const excluido = exigir<{ image_url: string | null } | null>(
+      await supabase.rpc("excluir_jogador", { grupo: grupo.id, jogador: id }),
     );
     // Only once the row is gone, so a refused delete never touches Storage.
     const foto = caminhoDaFotoDoJogador(excluido.image_url, grupo.id, id, urlDoSupabase());
