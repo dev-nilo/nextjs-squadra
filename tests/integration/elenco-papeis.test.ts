@@ -83,6 +83,7 @@ describe("who writes a Grupo's Elenco", () => {
 
     const apagado = await membro.client.rpc("excluir_jogador", { grupo: grupo.id, jogador: jogadorId });
     expect(apagado.error?.hint).toBe("sem-permissao");
+    expect((await service().from("players").select("id").eq("id", jogadorId)).data).toHaveLength(1);
   });
 
   it("an admin made membro loses write access to the Jogadores they created", async () => {
