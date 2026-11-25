@@ -169,6 +169,8 @@ describe("caminhoDaFotoDoJogador", () => {
   it("is the Jogador's own file, named <jogador_id>.<ext> by the upload", () => {
     expect(caminhoDaFotoDoJogador(`${pasta}/${jogador}.jpg?v=9`, grupo, jogador, base)).toBe(`${grupo}/${jogador}.jpg`);
     expect(caminhoDaFotoDoJogador(`${pasta}/${jogador}.png`, grupo, jogador, base)).toBe(`${grupo}/${jogador}.png`);
+    // As uploads name it since #116: a file of its own per upload.
+    expect(caminhoDaFotoDoJogador(`${pasta}/${jogador}.a1b2c3d4e5f6.jpg`, grupo, jogador, base)).toBe(`${grupo}/${jogador}.a1b2c3d4e5f6.jpg`);
   });
 
   it("is null for another Jogador's file, even in the same Grupo", () => {
