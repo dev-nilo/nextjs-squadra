@@ -43,7 +43,7 @@ Repo → Settings → Secrets and variables → **Actions**:
 Then the two gates (set on 2026-11-24):
 
 - Settings → Environments → `supabase-production`: you as **required reviewer**, "Allow administrators to bypass" off, deployment branches **protected branches only**. Every run on `main` then waits for your approval (Actions → the run → Review deployments) before it migrates production; the deploy waits on that job, so it waits too. Self-review stays allowed: merges come from your own account.
-- Settings → Branches → `main`: require a pull request (0 approvals, since GitHub won't let you approve your own PR), require the `Lint, test, build, typecheck` and `Database, RLS and E2E` checks from GitHub Actions, include administrators, no force-push or deletion. Not "up to date before merging": CI runs again on `main` after the merge, and production only moves once that run passes.
+- Settings → Branches → `main`: require a pull request (0 approvals, since GitHub won't let you approve your own PR), require the `Lint, test, build, typecheck` and `Database, RLS and E2E` checks from GitHub Actions, include administrators, no force-push or deletion. Not "up to date before merging": CI runs again on `main` after the merge, and production only moves once that run passes. If a merge never started that run (an Actions outage can lose the push), run CI by hand on `main`: Actions → CI → Run workflow, with "Use workflow from" left on `main` (or `gh workflow run ci.yml --ref main`). It goes through the same checks and the same approval.
 
 ### 4. Fill staging
 

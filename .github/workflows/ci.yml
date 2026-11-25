@@ -4,11 +4,17 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Run by hand on main when a push never started a run (a GitHub Actions
+  # outage once lost the push of #118). It goes through the same checks and
+  # the same supabase-production approval as a push.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
-  # Superseded PR runs are cancelled; runs on main never are, so a production
-  # migration is never cut off by the next merge.
+  # Superseded PR runs are cancelled; a running run on main never is, so a
+  # production migration is never cut off by the next merge. (A run on main
+  # still waiting in the queue is replaced by a newer one, which deploys the
+  # newer main.)
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -144,10 +150,11 @@ jobs:
         if: steps.gate.outputs.ready == 'true'
         run: npx supabase db push --remote="$PROJECT_REF" --yes
 
-  # Production only changes here, after a merge to main and green checks.
+  # Production only changes here, after a merge to main (or a run by hand on
+  # main) and green checks.
   migrate-production:
     name: Migrate production
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs: [checks, database]
     runs-on: ubuntu-latest
     environment: supabase-production
@@ -196,7 +203,7 @@ jobs:
   # it depends on. Vercel still builds it, with the Production env vars it holds.
   deploy-production:
     name: Deploy production
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs: [migrate-production]
     runs-on: ubuntu-latest
     concurrency:
