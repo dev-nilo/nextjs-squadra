@@ -26,7 +26,7 @@ export const calculateOVR = (attrs: Attributes): number => {
 
 /** The players columns every read of a live Jogador selects. */
 export const COLUNAS_DO_JOGADOR =
-  "id, grupo_id, user_id, conta_id, name, position, nationality, image_url, ovr, velocidade, resistencia, chute, posicionamento, defesa, drible, passe, fisico";
+  "id, grupo_id, user_id, conta_id, name, position, nationality, image_url, ovr, versao, velocidade, resistencia, chute, posicionamento, defesa, drible, passe, fisico";
 
 /** A players row, as COLUNAS_DO_JOGADOR reads it. */
 export type LinhaDoJogador = Attributes & {
@@ -39,6 +39,7 @@ export type LinhaDoJogador = Attributes & {
   nationality: string;
   image_url: string | null;
   ovr: number;
+  versao: number;
 };
 
 /** A players row as the app's Jogador. The rating is the database's, never recomputed here. */
@@ -63,6 +64,7 @@ export function jogadorDaLinha(linha: LinhaDoJogador): Player {
     user_id: linha.user_id ?? undefined,
     grupo_id: linha.grupo_id,
     conta_id: linha.conta_id ?? undefined,
+    versao: linha.versao,
   };
 }
 
@@ -83,6 +85,8 @@ export const jogadorSchema = z.object({
   position: z.enum(["GOL", "FIX", "ALA", "ATA"], { message: "Escolha uma posição." }),
   nationality: z.string().regex(/^[A-Z]{2}$/, "País inválido."),
   image: z.string().max(2048).nullable(),
+  /** The card's version when it was read; a save of an older one is refused. None for a new card. */
+  versao: z.number().int().positive().optional(),
   attributes: z.object({
     velocidade: atributo,
     resistencia: atributo,

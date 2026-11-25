@@ -56,6 +56,7 @@ describe("jogadorDaLinha", () => {
     nationality: "BR",
     image_url: null,
     ovr: 62,
+    versao: 3,
     ...DEFAULT_ATTRIBUTES,
     defesa: 76,
   };
@@ -72,6 +73,7 @@ describe("jogadorDaLinha", () => {
       user_id: undefined,
       grupo_id: linha.grupo_id,
       conta_id: "conta-1",
+      versao: 3,
     });
   });
 

@@ -24,6 +24,8 @@ export interface Player {
     grupo_id?: string;
     /** The account of the person this Jogador is ("sou esse aqui"), if any. */
     conta_id?: string;
+    /** The card's version when it was read (players.versao), so a stale save can be refused. */
+    versao?: number;
 }
 
 /** Domain Time from a Sorteio — presentation tokens live in the UI. */

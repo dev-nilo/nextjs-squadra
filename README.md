@@ -195,7 +195,7 @@ These were left out on purpose: notifications, payments, players rating each oth
 
 Found by read-only audits of the schema and of these docs, and by the PR reviews. Each one has an issue:
 
-- **Two tabs saving one card with photos at different paths could, in a short window, delete the photo in use.** Uploads are re-encoded to the same `.jpg` path unless the browser can't draw them, and the database refuses a photo whose file is already gone, so only the moment between one tab's save and its cleanup is left ([#89](https://github.com/dev-nilo/nextjs-squadra/issues/89)).
+- **A save refused because the card changed in another tab still replaces the card's photo file, if that tab picked a new photo.** Saves only go through from the card's current version, so nothing is lost or deleted, but the card shows the refused tab's photo ([#116](https://github.com/dev-nilo/nextjs-squadra/issues/116)).
 
 And by design, for now:
 
