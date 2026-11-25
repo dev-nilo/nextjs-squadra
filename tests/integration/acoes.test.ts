@@ -4,12 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { aceitarConvite, criarConvite, revogarConvite } from "@/lib/acoes/convite";
 import { FUT_NAO_ENCONTRADO, SEM_PERMISSAO, SESSAO_EXPIRADA, type Resultado } from "@/lib/acoes/executar";
 import { criarGrupo } from "@/lib/acoes/grupo";
-import { excluirJogador, importarJogadores, salvarJogador } from "@/lib/acoes/jogador";
+import { CARTA_EXCLUIDA, CARTA_MUDOU, excluirJogador, importarJogadores, salvarJogador } from "@/lib/acoes/jogador";
 import { cancelarPartida, criarPartida, editarPartida, responderPresenca } from "@/lib/acoes/partida";
 import { excluirFut, mudarPapel, passarPosse, removerDoFut, renomearFut, sairDoFut } from "@/lib/acoes/pessoas";
 import { moverNoSorteio, publicarSorteio, sortearDaPartida } from "@/lib/acoes/sorteio";
 import { criarMeuJogador, desvincularJogador, vincularJogador } from "@/lib/acoes/vinculo";
-import { addMembro, admin as service, anon, newUser, removeUsers, type TestUser } from "./support";
+import { addMembro, admin as service, anon, conexaoDireta, esperarTravados, newUser, pidDe, removeUsers, type TestUser } from "./support";
 
 // The Server Actions' bodies, called the way the adapters in app/actions call
 // them, with a signed-in client against the local Supabase: the error table
@@ -46,6 +46,10 @@ const carta = (name: string, extra: Record<string, unknown> = {}) => ({
   attributes: attrs,
   ...extra,
 });
+/** The card's version now, as the Elenco page would read it before an edit. */
+const versaoDe = async (id: string) =>
+  ((await service().from("players").select("versao").eq("id", id).single().throwOnError()).data as { versao: number }).versao;
+
 const amanha = () => new Date(Date.now() + 86_400_000).toISOString();
 
 async function grupoDe(dono: TestUser, nome = "Fut das Ações") {
@@ -95,7 +99,12 @@ describe("the Elenco", () => {
 
     const nova = carta("Paredão");
     expect(valor(await salvarJogador(dono.client, grupo.slug, nova))).toEqual({ criado: true });
-    expect(valor(await salvarJogador(dono.client, grupo.slug, { ...nova, name: "Paredão II" }))).toEqual({ criado: false });
+    const editada = { ...nova, name: "Paredão II", versao: await versaoDe(nova.id) };
+    expect(valor(await salvarJogador(dono.client, grupo.slug, editada))).toEqual({ criado: false });
+    // A membro with the card's current version is refused by RLS, not told the card changed.
+    const doMembro = { ...editada, name: "Golpe", versao: await versaoDe(nova.id) };
+    expect(mensagem(await salvarJogador(membro.client, grupo.slug, doMembro))).toBe(SEM_PERMISSAO);
+    expect(await versaoDe(nova.id)).toBe(doMembro.versao);
     expect(valor(await importarJogadores(dono.client, grupo.slug, [carta("A"), carta("B")]))).toEqual({ total: 2 });
 
     expect(mensagem(await salvarJogador(membro.client, grupo.slug, carta("Do membro")))).toBe(SEM_PERMISSAO);
@@ -136,9 +145,9 @@ describe("the Elenco", () => {
       const outra = carta("Outra");
       const daOutra = `${grupo.id}/${outra.id}.jpg`;
       valor(await salvarJogador(dono.client, grupo.slug, { ...outra, image: await enviar(daOutra) }));
-      valor(await salvarJogador(dono.client, grupo.slug, { ...outra, image: await enviar(daOutra) }));
+      valor(await salvarJogador(dono.client, grupo.slug, { ...outra, image: await enviar(daOutra), versao: await versaoDe(outra.id) }));
       expect(await existe(daOutra)).toBe(true);
-      valor(await salvarJogador(dono.client, grupo.slug, { ...outra, image: null }));
+      valor(await salvarJogador(dono.client, grupo.slug, { ...outra, image: null, versao: await versaoDe(outra.id) }));
       expect(await existe(daOutra)).toBe(false);
 
       // A card pointing at another Jogador's photo (only a tampered request makes one) never takes it along.
@@ -154,6 +163,114 @@ describe("the Elenco", () => {
     } finally {
       await service().storage.from("player-images").remove(enviados);
     }
+  });
+
+  it("refuses a save from a card that changed since it was opened, before touching its photo (#89)", async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL ??= process.env.SUPABASE_URL;
+    const dono = await user("dono");
+    const grupo = await grupoDe(dono);
+    const fotos = dono.client.storage.from("player-images");
+    const enviados: string[] = [];
+    const enviar = async (caminho: string, tipo: string) => {
+      enviados.push(caminho);
+      const { error } = await fotos.upload(caminho, new Blob([new Uint8Array([1, 2, 3])], { type: tipo }), { upsert: true, contentType: tipo });
+      if (error) throw error;
+      return fotos.getPublicUrl(caminho).data.publicUrl;
+    };
+    const existe = async (caminho: string) => !(await service().storage.from("player-images").download(caminho)).error;
+
+    try {
+      const cartaInicial = carta("Duas Abas");
+      const antiga = `${grupo.id}/${cartaInicial.id}.jpg`;
+      const urlAntiga = await enviar(antiga, "image/jpeg");
+      valor(await salvarJogador(dono.client, grupo.slug, { ...cartaInicial, image: urlAntiga }));
+      // Both tabs open the card at the same version.
+      const aberta = { ...cartaInicial, image: urlAntiga, versao: await versaoDe(cartaInicial.id) };
+
+      // Tab A stores a photo at another path (a file the browser couldn't re-encode) and saves.
+      const nova = `${grupo.id}/${cartaInicial.id}.png`;
+      const urlNova = await enviar(nova, "image/png");
+      valor(await salvarJogador(dono.client, grupo.slug, { ...aberta, image: urlNova }));
+      expect(await existe(antiga)).toBe(false);
+
+      // Tab B still has the old card: its save is refused before it writes anything. (The
+      // save landing between A's update and A's cleanup is the "in between" test below.)
+      expect(mensagem(await salvarJogador(dono.client, grupo.slug, { ...aberta, name: "Aba B" }))).toBe(CARTA_MUDOU);
+      const { data } = await service().from("players").select("name, image_url").eq("id", cartaInicial.id).single();
+      expect(data).toEqual({ name: "Duas Abas", image_url: urlNova });
+      expect(await existe(nova)).toBe(true);
+
+      // A save that sends no version (a page from before this change) is refused too.
+      expect(mensagem(await salvarJogador(dono.client, grupo.slug, { ...aberta, image: urlNova, versao: undefined }))).toBe(CARTA_MUDOU);
+    } finally {
+      await service().storage.from("player-images").remove(enviados);
+    }
+  });
+
+  it("a save that lands between the read and the update is caught by the update itself", async () => {
+    const dono = await user("dono");
+    const grupo = await grupoDe(dono);
+    const cartaInicial = carta("No Meio");
+    valor(await salvarJogador(dono.client, grupo.slug, cartaInicial));
+    const aberta = { ...cartaInicial, name: "Esta Aba", versao: await versaoDe(cartaInicial.id) };
+
+    // Another save holds the row: this one reads the same version, passes the
+    // first check, and its update waits.
+    const outra = await conexaoDireta();
+    try {
+      await outra.query("begin");
+      await outra.query("update public.players set name = 'Outra Aba' where id = $1", [cartaInicial.id]);
+      const salvando = salvarJogador(dono.client, grupo.slug, aberta);
+      await esperarTravados(outra, [await pidDe(outra)]);
+      await outra.query("commit");
+
+      expect(mensagem(await salvando)).toBe(CARTA_MUDOU);
+      const { data } = await service().from("players").select("name").eq("id", cartaInicial.id).single();
+      expect(data?.name).toBe("Outra Aba");
+    } finally {
+      await outra.end();
+    }
+  });
+
+  it("a card deleted while it was open isn't brought back by saving it", async () => {
+    const dono = await user("dono");
+    const grupo = await grupoDe(dono);
+    const cartaInicial = carta("Excluída");
+    valor(await salvarJogador(dono.client, grupo.slug, cartaInicial));
+    const aberta = { ...cartaInicial, versao: await versaoDe(cartaInicial.id) };
+    valor(await excluirJogador(dono.client, grupo.slug, cartaInicial.id));
+
+    expect(mensagem(await salvarJogador(dono.client, grupo.slug, aberta))).toBe(CARTA_EXCLUIDA);
+    const { data } = await service().from("players").select("id").eq("id", cartaInicial.id);
+    expect(data).toEqual([]);
+  });
+
+  it("a client can't choose a card's version", async () => {
+    const dono = await user("dono");
+    const grupo = await grupoDe(dono);
+    const cartaInicial = carta("Forjada");
+    const { data } = await dono.client
+      .from("players")
+      .insert({ id: cartaInicial.id, grupo_id: grupo.id, user_id: dono.id, name: "Forjada", position: "ALA", nationality: "BR", versao: 0 })
+      .select("versao")
+      .single()
+      .throwOnError();
+    expect(data?.versao).toBe(1);
+  });
+
+  it("someone saying \"sou eu\" doesn't make an open card stale", async () => {
+    const dono = await user("dono");
+    const grupo = await grupoDe(dono);
+    const membro = await user("membro");
+    await addMembro(grupo.id, membro, "membro");
+    const cartaInicial = carta("Vinculado");
+    valor(await salvarJogador(dono.client, grupo.slug, cartaInicial));
+    const aberta = { ...cartaInicial, versao: await versaoDe(cartaInicial.id) };
+
+    await membro.client.rpc("vincular_jogador", { jogador: cartaInicial.id }).throwOnError();
+
+    expect(valor(await salvarJogador(dono.client, grupo.slug, { ...aberta, name: "Vinculado II" }))).toEqual({ criado: false });
+    expect(await versaoDe(cartaInicial.id)).toBe(aberta.versao + 1);
   });
 });
 

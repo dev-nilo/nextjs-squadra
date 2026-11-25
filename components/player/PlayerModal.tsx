@@ -88,6 +88,7 @@ export const PlayerModal = ({
             nationality,
             image,
             attributes: { ...attributes },
+            versao: initialData?.versao,
         };
 
         setSalvando(true);

@@ -34,6 +34,7 @@ const paraSalvar = (j: DadosDaCarta) => ({
   nationality: j.nationality,
   image: j.image,
   attributes: j.attributes,
+  versao: j.versao,
 });
 
 /**

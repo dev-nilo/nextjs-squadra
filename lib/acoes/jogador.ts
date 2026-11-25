@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { caminhoDaFoto, caminhoDaFotoDoJogador, ehFotoDoGrupo, jogadorParaLinha, jogadorSchema } from "@/lib/jogador";
 import { PLAYER_IMAGES_BUCKET } from "@/lib/player-image";
-import { exigir, exigirLinhas, idSchema, noGrupo, recusar, validar } from "./executar";
+import { exigir, idSchema, noGrupo, recusar, SEM_PERMISSAO, validar } from "./executar";
 
 const importacaoSchema = z
   .array(jogadorSchema.extend({ image: z.null() }))
@@ -19,6 +19,12 @@ const ID_DE_OUTRO_FUT = { "23505": "Esse jogador não é desse fut. Recarregue a
  * and deleted the old file.
  */
 const MOTIVOS_DA_CARTA = { ...ID_DE_OUTRO_FUT, "foto-invalida": "Não deu pra usar essa foto. Envie de novo." };
+
+/** Another tab, or another organizer, saved this card after it was opened. */
+export const CARTA_MUDOU = "Essa carta mudou desde que você abriu. Recarregue a página e edite de novo.";
+
+/** The card was deleted while it was open: saving it would bring it back as a new one. */
+export const CARTA_EXCLUIDA = "Essa carta foi excluída enquanto você editava. Recarregue a página.";
 
 const urlDoSupabase = () => process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 
@@ -41,6 +47,10 @@ async function apagarFoto(supabase: SupabaseClient, caminho: string) {
  * do either. The rating is computed by the database from the attributes, and
  * a new Jogador's author is whoever is signed in. A photo removed from the
  * card, or replaced by a file at another path, is deleted from Storage.
+ *
+ * An edit only goes through while the card still has the version it was read
+ * at (#89): a stale save is refused before it writes, so the photo cleanup
+ * only follows a save that replaced exactly the row it read.
  */
 export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: unknown) =>
   noGrupo(
@@ -52,11 +62,14 @@ export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: un
 
       const { data: atual, error } = await supabase
         .from("players")
-        .select("id, image_url")
+        .select("id, image_url, versao")
         .eq("id", jogador.id)
         .eq("grupo_id", grupo.id)
         .maybeSingle();
       if (error) exigir({ data: null, error });
+      // A version means an edit: with no row, the card was deleted meanwhile.
+      if (!atual && jogador.versao !== undefined) recusar(CARTA_EXCLUIDA);
+      if (atual && jogador.versao !== atual.versao) recusar(CARTA_MUDOU);
 
       // The photo stays as it was, is removed, or is one uploaded for this Grupo.
       const supabaseUrl = urlDoSupabase();
@@ -66,14 +79,23 @@ export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: un
 
       const linha = jogadorParaLinha(jogador);
       if (atual) {
-        exigirLinhas(
+        const salvo = exigir(
           await supabase
             .from("players")
             .update({ ...linha, updated_at: new Date().toISOString() })
             .eq("id", jogador.id)
             .eq("grupo_id", grupo.id)
+            .eq("versao", atual.versao)
             .select("id"),
         );
+        // No row: another save got in between the read and this update, or RLS
+        // refused (a membro can read the card but not write it).
+        if (salvo.length === 0) {
+          const { data: agora, error: erroAgora } = await supabase.from("players").select("versao").eq("id", jogador.id).maybeSingle();
+          if (erroAgora) exigir({ data: null, error: erroAgora });
+          if (!agora) recusar(CARTA_EXCLUIDA);
+          recusar(agora.versao !== atual.versao ? CARTA_MUDOU : SEM_PERMISSAO);
+        }
         // Compared by path, not URL: a new photo uploaded over the same file
         // only changes the URL's ?v=, and that file is the one now in use.
         const antiga = caminhoDaFotoDoJogador(atual.image_url, grupo.id, jogador.id, supabaseUrl);
