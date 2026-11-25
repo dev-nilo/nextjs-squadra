@@ -232,7 +232,7 @@ describe("dropping out", () => {
     const id = await partida(dono, grupoId, 2);
     for (const m of [a, b, c]) await responder(m.u, id, m.jogadorId, true);
 
-    expect((await dono.client.from("players").delete().eq("id", a.jogadorId).select("id")).data).toHaveLength(1);
+    await dono.client.rpc("excluir_jogador", { grupo: grupoId, jogador: a.jogadorId }).throwOnError();
     expect(await situacaoDe(id, c.jogadorId)).toBe("confirmado");
 
     // The vaga is taken, so a newcomer waits.
@@ -248,7 +248,7 @@ describe("dropping out", () => {
     for (const m of [a, b, c]) await responder(m.u, id, m.jogadorId, true);
     await service().from("partidas").update({ inicio: new Date(Date.now() - 3_600_000).toISOString() }).eq("id", id).throwOnError();
 
-    await dono.client.from("players").delete().eq("id", a.jogadorId).throwOnError();
+    await dono.client.rpc("excluir_jogador", { grupo: grupoId, jogador: a.jogadorId }).throwOnError();
     expect(await situacaoDe(id, c.jogadorId)).toBe("espera");
   });
 });

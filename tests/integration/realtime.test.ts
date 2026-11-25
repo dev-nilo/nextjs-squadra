@@ -110,7 +110,7 @@ describe("Realtime", { timeout: 60_000 }, () => {
     ]);
     await jaOuve(ouvidos, (vez) => outro.dono.client.from("partidas").update({ local: `Quadra ${vez}` }).eq("id", outro.partida).throwOnError());
 
-    await aqui.dono.client.from("players").delete().eq("id", aqui.jogador).throwOnError();
+    await aqui.dono.client.rpc("excluir_jogador", { grupo: aqui.grupo, jogador: aqui.jogador }).throwOnError();
 
     // Before #83 a DELETE with the presence's key arrived here within a second.
     await espera(3_000);
@@ -124,7 +124,7 @@ describe("Realtime", { timeout: 60_000 }, () => {
     const ouvidos = await ouvir(membro, "pagina", daPagina(aqui.partida));
     await jaOuve(ouvidos, (vez) => aqui.dono.client.from("partidas").update({ local: `Quadra ${vez}` }).eq("id", aqui.partida).throwOnError());
 
-    await aqui.dono.client.from("players").delete().eq("id", aqui.jogador).throwOnError();
+    await aqui.dono.client.rpc("excluir_jogador", { grupo: aqui.grupo, jogador: aqui.jogador }).throwOnError();
 
     expect(await chega(ouvidos)).toContainEqual({ table: "partidas", eventType: "UPDATE" });
   });

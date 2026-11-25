@@ -68,8 +68,8 @@ describe("who writes a Grupo's Elenco", () => {
     const editado = await admin.client.from("players").update({ name: "Editado pelo Admin" }).eq("id", jogadorId).select("name, user_id");
     expect(editado.data?.[0]?.name).toBe("Editado pelo Admin");
 
-    const apagado = await admin.client.from("players").delete().eq("id", jogadorId).select("id");
-    expect(apagado.data).toEqual([{ id: jogadorId }]);
+    const { data: apagado } = await admin.client.rpc("excluir_jogador", { grupo: grupo.id, jogador: jogadorId }).throwOnError();
+    expect(apagado?.id).toBe(jogadorId);
   });
 
   it("a membro reads but can't create, edit or delete", async () => {
@@ -81,8 +81,9 @@ describe("who writes a Grupo's Elenco", () => {
     const editado = await membro.client.from("players").update({ name: "Golpe" }).eq("id", jogadorId).select("id");
     expect(editado.data ?? []).toEqual([]);
 
-    const apagado = await membro.client.from("players").delete().eq("id", jogadorId).select("id");
-    expect(apagado.data).toEqual([]);
+    const apagado = await membro.client.rpc("excluir_jogador", { grupo: grupo.id, jogador: jogadorId });
+    expect(apagado.error?.hint).toBe("sem-permissao");
+    expect((await service().from("players").select("id").eq("id", jogadorId)).data).toHaveLength(1);
   });
 
   it("an admin made membro loses write access to the Jogadores they created", async () => {
@@ -91,10 +92,20 @@ describe("who writes a Grupo's Elenco", () => {
     await dono.client.rpc("mudar_papel", { grupo: grupo.id, pessoa: admin.id, novo: "membro" });
 
     await admin.client.from("players").update({ name: "Ainda Mando" }).eq("id", dele!.id);
-    await admin.client.from("players").delete().eq("id", dele!.id);
+    await admin.client.rpc("excluir_jogador", { grupo: grupo.id, jogador: dele!.id });
 
     const { data } = await service().from("players").select("name").eq("id", dele!.id).single();
     expect(data?.name).toBe("Do Ex-Admin");
+  });
+
+  it("nobody deletes a Jogador straight from the table, not even the dono (#108)", async () => {
+    const { dono, jogadorId } = await fut();
+
+    const { error } = await dono.client.from("players").delete().eq("id", jogadorId);
+    expect(error?.code).toBe("42501");
+
+    const { data } = await service().from("players").select("id").eq("id", jogadorId);
+    expect(data).toEqual([{ id: jogadorId }]);
   });
 
   it("nobody rewrites who created a Jogador", async () => {

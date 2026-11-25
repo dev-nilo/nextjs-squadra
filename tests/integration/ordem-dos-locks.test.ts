@@ -199,11 +199,12 @@ describe("a deleted Jogador's Partidas are touched without waiting for their loc
     const { partida, jogador } = await fut();
     await membro.client.rpc("responder_presenca", { partida, jogador, vou: false }).throwOnError();
     // Whoever holds the Partida (responder_presenca, a Sorteio function) writes to it and
-    // sends its own event. Waiting for it could deadlock, as in #108.
+    // sends its own event. excluir_jogador takes the Partida first (#108), but a delete
+    // outside it, such as the service role's, must not queue for it here.
     await db.query("begin");
     await db.query("select 1 from public.partidas where id = $1 for update", [partida]);
 
-    const { error } = await semEsperar(dono.client.from("players").delete().eq("id", jogador));
+    const { error } = await semEsperar(service().from("players").delete().eq("id", jogador));
     expect(error).toBeNull();
   });
 });
