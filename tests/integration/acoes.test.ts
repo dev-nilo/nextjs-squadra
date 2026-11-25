@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { aceitarConvite, criarConvite, revogarConvite } from "@/lib/acoes/convite";
 import { FUT_NAO_ENCONTRADO, SEM_PERMISSAO, SESSAO_EXPIRADA, type Resultado } from "@/lib/acoes/executar";
 import { criarGrupo } from "@/lib/acoes/grupo";
-import { CARTA_MUDOU, excluirJogador, importarJogadores, salvarJogador } from "@/lib/acoes/jogador";
+import { CARTA_EXCLUIDA, CARTA_MUDOU, excluirJogador, importarJogadores, salvarJogador } from "@/lib/acoes/jogador";
 import { cancelarPartida, criarPartida, editarPartida, responderPresenca } from "@/lib/acoes/partida";
 import { excluirFut, mudarPapel, passarPosse, removerDoFut, renomearFut, sairDoFut } from "@/lib/acoes/pessoas";
 import { moverNoSorteio, publicarSorteio, sortearDaPartida } from "@/lib/acoes/sorteio";
@@ -101,6 +101,10 @@ describe("the Elenco", () => {
     expect(valor(await salvarJogador(dono.client, grupo.slug, nova))).toEqual({ criado: true });
     const editada = { ...nova, name: "Paredão II", versao: await versaoDe(nova.id) };
     expect(valor(await salvarJogador(dono.client, grupo.slug, editada))).toEqual({ criado: false });
+    // A membro with the card's current version is refused by RLS, not told the card changed.
+    const doMembro = { ...editada, name: "Golpe", versao: await versaoDe(nova.id) };
+    expect(mensagem(await salvarJogador(membro.client, grupo.slug, doMembro))).toBe(SEM_PERMISSAO);
+    expect(await versaoDe(nova.id)).toBe(doMembro.versao);
     expect(valor(await importarJogadores(dono.client, grupo.slug, [carta("A"), carta("B")]))).toEqual({ total: 2 });
 
     expect(mensagem(await salvarJogador(membro.client, grupo.slug, carta("Do membro")))).toBe(SEM_PERMISSAO);
@@ -189,8 +193,8 @@ describe("the Elenco", () => {
       valor(await salvarJogador(dono.client, grupo.slug, { ...aberta, image: urlNova }));
       expect(await existe(antiga)).toBe(false);
 
-      // Tab B still has the old card. Before #89 this save went through and pointed the row
-      // back at a file that was being deleted; now it is refused and changes nothing.
+      // Tab B still has the old card: its save is refused before it writes anything. (The
+      // save landing between A's update and A's cleanup is the "in between" test below.)
       expect(mensagem(await salvarJogador(dono.client, grupo.slug, { ...aberta, name: "Aba B" }))).toBe(CARTA_MUDOU);
       const { data } = await service().from("players").select("name, image_url").eq("id", cartaInicial.id).single();
       expect(data).toEqual({ name: "Duas Abas", image_url: urlNova });
@@ -226,6 +230,32 @@ describe("the Elenco", () => {
     } finally {
       await outra.end();
     }
+  });
+
+  it("a card deleted while it was open isn't brought back by saving it", async () => {
+    const dono = await user("dono");
+    const grupo = await grupoDe(dono);
+    const cartaInicial = carta("Excluída");
+    valor(await salvarJogador(dono.client, grupo.slug, cartaInicial));
+    const aberta = { ...cartaInicial, versao: await versaoDe(cartaInicial.id) };
+    valor(await excluirJogador(dono.client, grupo.slug, cartaInicial.id));
+
+    expect(mensagem(await salvarJogador(dono.client, grupo.slug, aberta))).toBe(CARTA_EXCLUIDA);
+    const { data } = await service().from("players").select("id").eq("id", cartaInicial.id);
+    expect(data).toEqual([]);
+  });
+
+  it("a client can't choose a card's version", async () => {
+    const dono = await user("dono");
+    const grupo = await grupoDe(dono);
+    const cartaInicial = carta("Forjada");
+    const { data } = await dono.client
+      .from("players")
+      .insert({ id: cartaInicial.id, grupo_id: grupo.id, user_id: dono.id, name: "Forjada", position: "ALA", nationality: "BR", versao: 0 })
+      .select("versao")
+      .single()
+      .throwOnError();
+    expect(data?.versao).toBe(1);
   });
 
   it("someone saying \"sou eu\" doesn't make an open card stale", async () => {

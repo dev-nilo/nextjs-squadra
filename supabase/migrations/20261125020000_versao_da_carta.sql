@@ -12,8 +12,8 @@
 -- The version goes up only when something on the card changes (what a save
 -- writes). Linking or unlinking an account doesn't count, so a card being
 -- edited isn't refused because someone said "sou eu" meanwhile. Clients can't
--- write the column: authenticated only has column-level UPDATE on the card's
--- fields, and this trigger sets it on every update.
+-- write the column: this trigger sets it on every insert (to 1) and update,
+-- whatever the statement sent.
 
 alter table public.players add column versao bigint not null default 1;
 
@@ -23,6 +23,10 @@ language plpgsql
 set search_path = ''
 as $$
 begin
+  if tg_op = 'INSERT' then
+    new.versao := 1;
+    return new;
+  end if;
   if (new.name, new.position, new.nationality, new.image_url,
       new.velocidade, new.resistencia, new.chute, new.posicionamento,
       new.defesa, new.drible, new.passe, new.fisico)
@@ -40,7 +44,7 @@ end;
 $$;
 
 create trigger players_versao
-  before update on public.players
+  before insert or update on public.players
   for each row execute function public.players_versao();
 
 revoke execute on function public.players_versao() from public, anon, authenticated;

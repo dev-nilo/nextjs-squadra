@@ -23,6 +23,9 @@ const MOTIVOS_DA_CARTA = { ...ID_DE_OUTRO_FUT, "foto-invalida": "Não deu pra us
 /** Another tab, or another organizer, saved this card after it was opened. */
 export const CARTA_MUDOU = "Essa carta mudou desde que você abriu. Recarregue a página e edite de novo.";
 
+/** The card was deleted while it was open: saving it would bring it back as a new one. */
+export const CARTA_EXCLUIDA = "Essa carta foi excluída enquanto você editava. Recarregue a página.";
+
 const urlDoSupabase = () => process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 
 /**
@@ -64,6 +67,8 @@ export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: un
         .eq("grupo_id", grupo.id)
         .maybeSingle();
       if (error) exigir({ data: null, error });
+      // A version means an edit: with no row, the card was deleted meanwhile.
+      if (!atual && jogador.versao !== undefined) recusar(CARTA_EXCLUIDA);
       if (atual && jogador.versao !== atual.versao) recusar(CARTA_MUDOU);
 
       // The photo stays as it was, is removed, or is one uploaded for this Grupo.
@@ -86,8 +91,10 @@ export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: un
         // No row: another save got in between the read and this update, or RLS
         // refused (a membro can read the card but not write it).
         if (salvo.length === 0) {
-          const { data: agora } = await supabase.from("players").select("versao").eq("id", jogador.id).maybeSingle();
-          recusar(agora && agora.versao !== atual.versao ? CARTA_MUDOU : SEM_PERMISSAO);
+          const { data: agora, error: erroAgora } = await supabase.from("players").select("versao").eq("id", jogador.id).maybeSingle();
+          if (erroAgora) exigir({ data: null, error: erroAgora });
+          if (!agora) recusar(CARTA_EXCLUIDA);
+          recusar(agora.versao !== atual.versao ? CARTA_MUDOU : SEM_PERMISSAO);
         }
         // Compared by path, not URL: a new photo uploaded over the same file
         // only changes the URL's ?v=, and that file is the one now in use.
