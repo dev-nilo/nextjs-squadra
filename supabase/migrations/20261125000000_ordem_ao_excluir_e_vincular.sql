@@ -167,6 +167,7 @@ declare
   antes public.presencas;
   depois public.presencas;
   confirmados int;
+  travou boolean := false;
 begin
   if eu is null then
     raise exception 'responder_presenca requires a signed-in user' using errcode = '28000';
@@ -181,6 +182,7 @@ begin
   -- Only for a Jogador of a fut the caller is in (#86).
   if exists (select 1 from public.players j where j.id = jogador and public.papel_no_grupo(j.grupo_id) is not null) then
     perform pg_catalog.pg_advisory_xact_lock_shared(pg_catalog.hashtextextended('jogador:' || jogador::text, 0));
+    travou := true;
   end if;
 
   -- The Partida's row lock serializes every answer to this Partida: counting
@@ -198,6 +200,11 @@ begin
 
   select * into quem from public.players j where j.id = jogador;
   if quem.id is null or quem.grupo_id <> alvo.grupo_id then
+    raise exception 'Esse Jogador não é desse fut' using hint = 'jogador-de-fora';
+  end if;
+  -- The Jogador, or the caller's place in the fut, appeared after the check
+  -- above, so the answer has no Jogador lock: refuse rather than go on without it.
+  if not travou then
     raise exception 'Esse Jogador não é desse fut' using hint = 'jogador-de-fora';
   end if;
   if not (
