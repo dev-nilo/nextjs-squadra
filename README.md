@@ -193,11 +193,7 @@ These were left out on purpose: notifications, payments, players rating each oth
 
 ## Known limitations
 
-Found by read-only audits of the schema and of these docs, and by the PR reviews. Each one has an issue:
-
-- **A save refused because the card changed in another tab still replaces the card's photo file, if that tab picked a new photo.** Saves only go through from the card's current version, so nothing is lost or deleted, but the card shows the refused tab's photo ([#116](https://github.com/dev-nilo/nextjs-squadra/issues/116)).
-
-And by design, for now:
+The issues found by the read-only audits of the schema and of these docs, and by the PR reviews, are fixed. These stay by design, for now:
 
 - **The database doesn't know its own address.** It checks that a player's photo is a file that exists in the group's folder, and the server action also checks that the URL points at this project.
 - **Player photos are public by URL.** Only a group's members can list them, but anyone holding a photo's URL can load it.

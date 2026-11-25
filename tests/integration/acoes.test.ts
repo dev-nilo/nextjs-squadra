@@ -7,6 +7,7 @@ import { criarGrupo } from "@/lib/acoes/grupo";
 import { CARTA_EXCLUIDA, CARTA_MUDOU, excluirJogador, importarJogadores, salvarJogador } from "@/lib/acoes/jogador";
 import { cancelarPartida, criarPartida, editarPartida, responderPresenca } from "@/lib/acoes/partida";
 import { excluirFut, mudarPapel, passarPosse, removerDoFut, renomearFut, sairDoFut } from "@/lib/acoes/pessoas";
+import { apagarFotoEnviada, uploadPlayerImage } from "@/lib/player-image";
 import { moverNoSorteio, publicarSorteio, sortearDaPartida } from "@/lib/acoes/sorteio";
 import { criarMeuJogador, desvincularJogador, vincularJogador } from "@/lib/acoes/vinculo";
 import { addMembro, admin as service, anon, conexaoDireta, esperarTravados, newUser, pidDe, removeUsers, type TestUser } from "./support";
@@ -202,6 +203,50 @@ describe("the Elenco", () => {
 
       // A save that sends no version (a page from before this change) is refused too.
       expect(mensagem(await salvarJogador(dono.client, grupo.slug, { ...aberta, image: urlNova, versao: undefined }))).toBe(CARTA_MUDOU);
+    } finally {
+      await service().storage.from("player-images").remove(enviados);
+    }
+  });
+
+  it("a refused save's photo never replaces the one the card shows (#116)", async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL ??= process.env.SUPABASE_URL;
+    const dono = await user("dono");
+    const grupo = await grupoDe(dono);
+    const JPEG = `data:image/jpeg;base64,${Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1]).toString("base64")}`;
+    const OUTRA = `data:image/jpeg;base64,${Buffer.from([0xff, 0xd8, 0xff, 0xe0, 2]).toString("base64")}`;
+    const baixar = async (caminho: string) => {
+      const { data } = await service().storage.from("player-images").download(caminho);
+      return data ? Buffer.from(await data.arrayBuffer()).toString("base64") : null;
+    };
+    const enviados: string[] = [];
+    // As the Elenco screen does it: upload, then save with the URL.
+    const enviar = async (id: string, imagem: string) => {
+      const foto = await uploadPlayerImage(dono.client, grupo.id, id, imagem);
+      enviados.push(foto.caminho);
+      return foto;
+    };
+
+    try {
+      const cartaInicial = carta("Foto Disputada");
+      const primeira = await enviar(cartaInicial.id, JPEG);
+      valor(await salvarJogador(dono.client, grupo.slug, { ...cartaInicial, image: primeira.url }));
+      const aberta = { ...cartaInicial, image: primeira.url, versao: await versaoDe(cartaInicial.id) };
+
+      // Tab A renames the card; tab B, still at the old version, picks a new photo.
+      valor(await salvarJogador(dono.client, grupo.slug, { ...aberta, name: "Aba A" }));
+      const daAbaB = await enviar(cartaInicial.id, OUTRA);
+      expect(mensagem(await salvarJogador(dono.client, grupo.slug, { ...aberta, image: daAbaB.url }))).toBe(CARTA_MUDOU);
+      await apagarFotoEnviada(dono.client, daAbaB.caminho);
+
+      // Before #116 tab B's upload had replaced this very file.
+      expect(await baixar(primeira.caminho)).toBe(JPEG.split(",")[1]);
+      expect(await baixar(daAbaB.caminho)).toBeNull();
+
+      // A save that goes through with a new photo deletes the one it replaced.
+      const nova = await enviar(cartaInicial.id, OUTRA);
+      valor(await salvarJogador(dono.client, grupo.slug, { ...aberta, image: nova.url, versao: await versaoDe(cartaInicial.id) }));
+      expect(await baixar(primeira.caminho)).toBeNull();
+      expect(await baixar(nova.caminho)).toBe(OUTRA.split(",")[1]);
     } finally {
       await service().storage.from("player-images").remove(enviados);
     }

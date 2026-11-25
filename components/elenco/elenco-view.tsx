@@ -9,7 +9,7 @@ import { capacidades, SO_LEITURA } from "@/lib/capacidades";
 import { useSemConexao } from "@/lib/pwa/conexao";
 import { useSorteioRapido } from "@/hooks/use-sorteio-rapido";
 import type { Participacao } from "@/lib/grupo";
-import { isDataUrlImage, uploadPlayerImage } from "@/lib/player-image";
+import { apagarFotoEnviada, isDataUrlImage, uploadPlayerImage } from "@/lib/player-image";
 import { createClient } from "@/lib/supabase/client";
 import { meuJogador } from "@/lib/vinculo";
 import type { Player } from "@/types";
@@ -115,10 +115,13 @@ export function ElencoView({
   const salvar = useCallback(
     async (dados: DadosDaCarta): Promise<boolean> => {
       let image = dados.image;
+      let enviada: string | null = null;
       // A new photo (or one still stored inline) goes to Storage first; the action only takes its URL.
       if (image && isDataUrlImage(image)) {
         try {
-          image = await uploadPlayerImage(createClient(), grupo.id, dados.id, image);
+          const foto = await uploadPlayerImage(createClient(), grupo.id, dados.id, image);
+          image = foto.url;
+          enviada = foto.caminho;
         } catch (e) {
           console.error("[elenco] Photo upload failed:", e);
           toast.error("Não deu pra enviar a foto", { description: "Tente de novo, ou salve sem foto." });
@@ -127,6 +130,8 @@ export function ElencoView({
       }
       const resultado = await salvarJogador(grupo.slug, paraSalvar({ ...dados, image }));
       if (!resultado.ok) {
+        // The save was refused, so nothing points at the file just uploaded.
+        if (enviada) void apagarFotoEnviada(createClient(), enviada);
         toast.error("Não deu pra salvar a carta", { description: resultado.message });
         return false;
       }

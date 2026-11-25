@@ -142,7 +142,8 @@ export function ehFotoDoGrupo(url: string, grupoId: string, supabaseUrl: string)
 
 /**
  * The Jogador's own photo file, as the upload names it
- * (`<grupo_id>/<jogador_id>.<ext>`), or null. Only this file is ever deleted
+ * (`<grupo_id>/<jogador_id>.<token>.<ext>`, or `<grupo_id>/<jogador_id>.<ext>`
+ * before #116), or null. Only this file is ever deleted
  * along with the Jogador, so a card that points at someone else's photo (only
  * a tampered request makes one) can't take that photo with it.
  */
