@@ -10,7 +10,7 @@ const PNG = "data:image/png;base64,iVBORw0K";
 /** A Storage client that records uploads and removals. */
 function storage() {
   const upload = vi.fn(async (_caminho: string, _blob: Blob, _opcoes: Record<string, unknown>) => ({ error: null }));
-  const remove = vi.fn(async (_caminhos: string[]) => ({ error: null as Error | null }));
+  const remove = vi.fn(async (caminhos: string[]) => ({ data: caminhos.map((name) => ({ name })) as { name: string }[], error: null as Error | null }));
   const bucket = {
     upload,
     remove,
@@ -46,10 +46,13 @@ describe("apagarFotoEnviada", () => {
     await apagarFotoEnviada(supabase, `${GRUPO}/${JOGADOR}.abc.jpg`);
     expect(remove).toHaveBeenCalledWith([`${GRUPO}/${JOGADOR}.abc.jpg`]);
 
-    remove.mockResolvedValueOnce({ error: new Error("offline") });
     const erro = vi.spyOn(console, "error").mockImplementation(() => {});
+    remove.mockResolvedValueOnce({ data: [], error: new Error("offline") });
     await expect(apagarFotoEnviada(supabase, "x")).resolves.toBeUndefined();
-    expect(erro).toHaveBeenCalled();
+    // RLS filtering the file out isn't an error from Storage, but nothing was deleted.
+    remove.mockResolvedValueOnce({ data: [], error: null });
+    await expect(apagarFotoEnviada(supabase, "y")).resolves.toBeUndefined();
+    expect(erro).toHaveBeenCalledTimes(2);
     erro.mockRestore();
   });
 });

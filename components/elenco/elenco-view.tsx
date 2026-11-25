@@ -130,8 +130,10 @@ export function ElencoView({
       }
       const resultado = await salvarJogador(grupo.slug, paraSalvar({ ...dados, image }));
       if (!resultado.ok) {
-        // The save was refused, so nothing points at the file just uploaded.
-        if (enviada) void apagarFotoEnviada(createClient(), enviada);
+        // Only a certain refusal means the row didn't change. After an unexpected
+        // failure (a lost response, a timeout) the save may have gone through and
+        // the card may point at this file, so it stays: a leftover costs storage.
+        if (enviada && !resultado.inesperado) void apagarFotoEnviada(createClient(), enviada);
         toast.error("Não deu pra salvar a carta", { description: resultado.message });
         return false;
       }

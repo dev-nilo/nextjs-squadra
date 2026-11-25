@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { aceitarConvite, criarConvite, revogarConvite } from "@/lib/acoes/convite";
@@ -250,6 +251,36 @@ describe("the Elenco", () => {
     } finally {
       await service().storage.from("player-images").remove(enviados);
     }
+  });
+
+  it("a save whose response was lost is unexpected, not refused, so the screen keeps its photo", async () => {
+    const dono = await user("dono");
+    const grupo = await grupoDe(dono);
+    const cartaInicial = carta("Resposta Perdida");
+    valor(await salvarJogador(dono.client, grupo.slug, cartaInicial));
+    const aberta = { ...cartaInicial, name: "Salva Mesmo Assim", versao: await versaoDe(cartaInicial.id) };
+
+    // The update reaches the database and commits, and its response never arrives.
+    const { data: sessao } = await dono.client.auth.getSession();
+    const perde: typeof fetch = async (entrada, init) => {
+      const resposta = await fetch(entrada, init);
+      if (init?.method === "PATCH") throw new TypeError("fetch failed");
+      return resposta;
+    };
+    const cliente = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { fetch: perde },
+    });
+    await cliente.auth.setSession({ access_token: sessao.session!.access_token, refresh_token: sessao.session!.refresh_token });
+
+    const resultado = await salvarJogador(cliente, grupo.slug, aberta);
+    expect(resultado).toMatchObject({ ok: false, inesperado: true });
+    const { data } = await service().from("players").select("name").eq("id", cartaInicial.id).single();
+    expect(data?.name).toBe("Salva Mesmo Assim");
+
+    // A refusal is certain: nothing was written.
+    const recusada = await salvarJogador(dono.client, grupo.slug, aberta);
+    expect(recusada).toEqual({ ok: false, message: CARTA_MUDOU });
   });
 
   it("a save that lands between the read and the update is caught by the update itself", async () => {
