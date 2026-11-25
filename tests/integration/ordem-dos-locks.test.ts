@@ -207,3 +207,165 @@ describe("a deleted Jogador's Partidas are touched without waiting for their loc
     expect(error).toBeNull();
   });
 });
+
+/*
+ * 20261125000000_ordem_ao_excluir_e_vincular.sql. Two calls race here, so
+ * each runs on a direct connection of its own: they must reach Postgres at
+ * the same time, not queue behind each other in PostgREST.
+ */
+describe("a link can't land while its person is being removed (#109)", () => {
+  it("linking a Jogador waits for the removal and is then refused", async () => {
+    const { grupo } = await fut();
+    const { data: solto } = await addJogador(dono, grupo, "Solto");
+    // The removal, not yet committed: it holds the Grupo's lock.
+    await abrirComo(db, dono);
+    await db.query("select public.remover_do_grupo($1, $2)", [grupo, admin.id]);
+
+    const vinculo = agora(admin.client.rpc("vincular_jogador", { jogador: solto!.id }));
+    await esperarTravados(db, [segura]);
+    await db.query("commit");
+
+    expect((await vinculo).error?.hint).toBe("nao-membro");
+    const { data } = await service().from("players").select("conta_id").eq("id", solto!.id).single();
+    expect(data?.conta_id).toBeNull();
+  });
+
+  it("adding one's own Jogador waits for the removal and is then refused", async () => {
+    const { grupo } = await fut();
+    await abrirComo(db, dono);
+    await db.query("select public.remover_do_grupo($1, $2)", [grupo, admin.id]);
+
+    const criado = agora(admin.client.rpc("criar_meu_jogador", { grupo, nome: "Eu Mesmo", posicao: "ALA" }));
+    await esperarTravados(db, [segura]);
+    await db.query("commit");
+
+    expect((await criado).error?.hint).toBe("nao-membro");
+    const { data } = await service().from("players").select("id").eq("grupo_id", grupo).eq("conta_id", admin.id);
+    expect(data).toEqual([]);
+  });
+
+  it("a link made first is undone by the removal that waited for it", async () => {
+    const { grupo } = await fut();
+    const { data: solto } = await addJogador(dono, grupo, "Solto");
+    await abrirComo(db, admin);
+    await db.query("select public.vincular_jogador($1)", [solto!.id]);
+
+    const remocao = agora(dono.client.rpc("remover_do_grupo", { grupo, pessoa: admin.id }));
+    await esperarTravados(db, [segura]);
+    await db.query("commit");
+
+    expect((await remocao).error).toBeNull();
+    const { data } = await service().from("players").select("conta_id").eq("id", solto!.id).single();
+    expect(data?.conta_id).toBeNull();
+  });
+
+  it("someone outside the fut doesn't queue behind a locked Grupo", async () => {
+    const { grupo, jogador } = await fut();
+    await db.query("begin");
+    await db.query("select 1 from public.grupos where id = $1 for update", [grupo]);
+
+    expect((await semEsperar(deFora.client.rpc("vincular_jogador", { jogador }))).error?.hint).toBe("nao-membro");
+    const criado = await semEsperar(deFora.client.rpc("criar_meu_jogador", { grupo, nome: "Intruso", posicao: "ALA" }));
+    expect(criado.error?.hint).toBe("nao-membro");
+  });
+});
+
+describe("deleting a Jogador takes their Partidas before the Jogador (#108)", () => {
+  let um: pg.Client;
+  let outro: pg.Client;
+  let pidDoUm: number;
+
+  beforeAll(async () => {
+    [um, outro] = await Promise.all([conexaoDireta(), conexaoDireta()]);
+    pidDoUm = await pidDe(um);
+  });
+
+  afterAll(async () => {
+    await Promise.all([um.end(), outro.end()]);
+  });
+
+  /** The Partida locked by the test's own connection, so the calls line up behind it. */
+  async function travar(partida: string) {
+    await db.query("begin");
+    await db.query("select 1 from public.partidas where id = $1 for update", [partida]);
+  }
+
+  it("an answer that got there first finishes, then the delete", async () => {
+    const { grupo, partida, jogador } = await fut();
+    await membro.client.rpc("responder_presenca", { partida, jogador, vou: true }).throwOnError();
+    await travar(partida);
+
+    // Waits for the Partida. Before #108 it then waited for the Jogador's
+    // presence, which the delete held while it waited for the Partida.
+    const resposta = chamarComo(um, membro, "select public.responder_presenca($1, $2, false)", [partida, jogador]);
+    await esperarTravados(db, [segura]);
+    const exclusao = chamarComo(outro, dono, "select public.excluir_jogador($1, $2)", [grupo, jogador]);
+    await esperarTravados(db, [segura, pidDoUm], 2);
+    await db.query("commit");
+
+    expect((await resposta).error).toBeNull();
+    expect((await exclusao).error).toBeNull();
+    const { data } = await service().from("presencas").select("jogador_id").eq("partida_id", partida);
+    expect(data).toEqual([]);
+  });
+
+  it("a delete that got there first finishes, then the answer is told the Jogador is gone", async () => {
+    const { grupo, partida, jogador } = await fut();
+    await membro.client.rpc("responder_presenca", { partida, jogador, vou: true }).throwOnError();
+    await travar(partida);
+
+    const exclusao = chamarComo(um, dono, "select public.excluir_jogador($1, $2)", [grupo, jogador]);
+    await esperarTravados(db, [segura]);
+    const resposta = chamarComo(outro, membro, "select public.responder_presenca($1, $2, false)", [partida, jogador]);
+    await esperarTravados(db, [segura, pidDoUm], 2);
+    await db.query("commit");
+
+    expect((await exclusao).error).toBeNull();
+    expect((await resposta).error?.hint).toBe("jogador-de-fora");
+  });
+
+  it("the delete still frees the vaga for the first in line", async () => {
+    const { grupo, partida, jogador } = await fut();
+    await service().from("partidas").update({ vagas: 2 }).eq("id", partida).throwOnError();
+    const { data: confirmado } = await addJogador(dono, grupo, "Confirmado");
+    const { data: esperando } = await addJogador(dono, grupo, "Na Espera");
+    for (const quem of [jogador, confirmado!.id, esperando!.id]) {
+      await dono.client.rpc("responder_presenca", { partida, jogador: quem, vou: true }).throwOnError();
+    }
+
+    await dono.client.rpc("excluir_jogador", { grupo, jogador }).throwOnError();
+
+    const { data } = await service().from("presencas").select("situacao").eq("jogador_id", esperando!.id).single();
+    expect(data?.situacao).toBe("confirmado");
+  });
+
+  it("deleting the fut while someone answers doesn't deadlock either", async () => {
+    const { grupo, partida, jogador } = await fut();
+    await travar(partida);
+
+    const resposta = chamarComo(um, membro, "select public.responder_presenca($1, $2, true)", [partida, jogador]);
+    await esperarTravados(db, [segura]);
+    const exclusao = chamarComo(outro, dono, "select public.excluir_grupo($1, $2)", [grupo, "Fut dos Locks"]);
+    await esperarTravados(db, [segura, pidDoUm], 2);
+    await db.query("commit");
+
+    expect((await resposta).error).toBeNull();
+    expect((await exclusao).error).toBeNull();
+    const { data } = await service().from("grupos").select("id").eq("id", grupo);
+    expect(data).toEqual([]);
+  });
+
+  it("only the dono and admins delete, and only their own fut's Jogadores", async () => {
+    const { grupo, jogador } = await fut();
+    const outroFut = await fut();
+
+    expect((await membro.client.rpc("excluir_jogador", { grupo, jogador })).error?.hint).toBe("sem-permissao");
+    expect((await deFora.client.rpc("excluir_jogador", { grupo, jogador })).error?.hint).toBe("sem-permissao");
+    // The dono's own fut, a Jogador of another one.
+    const { error } = await dono.client.rpc("excluir_jogador", { grupo, jogador: outroFut.jogador });
+    expect(error?.hint).toBe("sem-permissao");
+
+    const { data: excluido } = await admin.client.rpc("excluir_jogador", { grupo, jogador }).throwOnError();
+    expect(excluido?.id).toBe(jogador);
+  });
+});
