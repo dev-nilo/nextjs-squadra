@@ -4,6 +4,10 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Run by hand on main when a push never started a run (a GitHub Actions
+  # outage once lost the push of #118). It goes through the same checks and
+  # the same supabase-production approval as a push.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -147,7 +151,7 @@ jobs:
   # Production only changes here, after a merge to main and green checks.
   migrate-production:
     name: Migrate production
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs: [checks, database]
     runs-on: ubuntu-latest
     environment: supabase-production
@@ -196,7 +200,7 @@ jobs:
   # it depends on. Vercel still builds it, with the Production env vars it holds.
   deploy-production:
     name: Deploy production
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs: [migrate-production]
     runs-on: ubuntu-latest
     concurrency:
