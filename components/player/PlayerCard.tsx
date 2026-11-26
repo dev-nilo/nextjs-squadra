@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Check } from "lucide-react";
 import { MenuDeAcoes, type AcaoDoMenu } from "@/components/ui/menu-de-acoes";
 import { GK_LABELS, OUTFIELD_LABELS } from "@/lib/constants";
@@ -33,6 +33,28 @@ const POSICAO_POR_EXTENSO: Record<PlayerPosition, string> = {
   ATA: "atacante",
 };
 
+/**
+ * Below this width (the 2-column album on a 280–340px phone) the attribute
+ * table would print at 7px: a card with no photo then shows only its face,
+ * and turns on a tap like a photo card. Keep in step with the
+ * `@container(max-width:160px)` classes below.
+ */
+const LARGURA_DE_CARTA_PEQUENA = 160;
+
+/** Whether the card is narrower than LARGURA_DE_CARTA_PEQUENA (watched, so turning the phone updates it). */
+function useCartaPequena() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [pequena, setPequena] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observador = new ResizeObserver(([entrada]) => setPequena(entrada.contentRect.width < LARGURA_DE_CARTA_PEQUENA));
+    observador.observe(el);
+    return () => observador.disconnect();
+  }, []);
+  return { ref, pequena };
+}
+
 /** The Jogador's two best attributes (the first ones in table order on a tie): what they're good at. */
 export function pontosFortes(atributos: Record<Atributo, number>): Set<Atributo> {
   return new Set([...ORDEM].sort((a, b) => atributos[b] - atributos[a]).slice(0, 2));
@@ -57,10 +79,13 @@ export function pontosFortes(atributos: Record<Atributo, number>): Set<Atributo>
  *   corner, a sibling of the card face so it's never a button in a button.
  *
  * Every size is in `cqw` (the card is its own container), so one card reads
- * the same in the 2-column album and in Você.
+ * the same in the 2-column album and in Você. A card narrower than 160px
+ * (the album on a very small phone) shows only its face and turns on a tap,
+ * photo or not, with its attributes in larger type on the back.
  */
 export const PlayerCard = ({ player, isMine = false, isSelected = false, selecting = false, onSelect, acoes = [], completa = false }: PlayerCardProps) => {
   const [virada, setVirada] = useState(false);
+  const { ref: cartaRef, pequena } = useCartaPequena();
   const labels = player.position === "GOL" ? GK_LABELS : OUTFIELD_LABELS;
   const countryCode = getCountryCode(player.nationality);
   const brilhante = player.rating >= OVR_BRILHANTE;
@@ -71,7 +96,7 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
 
   // What a tap does: tick it while selecting, turn it when it hides its attributes, nothing otherwise.
   const seleciona = selecting && !!onSelect;
-  const vira = !seleciona && comFoto && !completa;
+  const vira = !seleciona && !completa && (comFoto || pequena);
   const tocar = seleciona ? onSelect : vira ? () => setVirada((v) => !v) : undefined;
   const mostraNotas = virada && vira;
 
@@ -85,7 +110,7 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
   const label = `Carta de ${player.name}, ${player.position}, rating ${player.rating}${isSelected ? ", selecionado" : ""}${isMine ? ", você" : player.conta_id ? ", com conta" : ""}`;
 
   const posicao = (
-    <span className="flex items-center gap-[2cqw] text-[6cqw] font-semibold text-paper-foreground/70">
+    <span className="flex items-center gap-[2cqw] text-[6cqw] font-semibold text-paper-foreground/70 [@container(max-width:160px)]:text-[8cqw]">
       <img
         src={getFlagUrl(countryCode)}
         crossOrigin="anonymous"
@@ -106,14 +131,20 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
     </span>
   );
 
-  const atributos = (borda: boolean) => (
-    <dl className={`grid grid-cols-2 gap-x-[8cqw] ${borda ? `border-t-[0.6cqw] pt-[2cqw] ${regua}` : ""}`} aria-label="Atributos do jogador">
+  // `grande`: the back of a small card, in larger type, so it reads at 125px wide.
+  const atributos = (borda: boolean, grande = false) => (
+    <dl
+      className={`grid grid-cols-2 ${grande ? "gap-x-[7cqw] gap-y-[1.5cqw]" : "gap-x-[8cqw]"} ${borda ? `border-t-[0.6cqw] pt-[2cqw] ${regua}` : ""}`}
+      aria-label="Atributos do jogador"
+    >
       {ORDEM.map((chave) => {
         const forte = fortes.has(chave);
         return (
           <div key={chave} className="flex items-baseline justify-between py-[0.5cqw]">
-            <dt className="text-[5.5cqw] font-medium text-paper-foreground/70">{labels[chave].toLowerCase()}</dt>
-            <dd className={`text-[7cqw] tabular-nums ${forte ? "font-extrabold text-paper-foreground" : "font-medium text-paper-foreground/70"}`}>
+            <dt className={`${grande ? "text-[8cqw]" : "text-[5.5cqw]"} font-medium text-paper-foreground/70`}>{labels[chave].toLowerCase()}</dt>
+            <dd
+              className={`${grande ? "text-[9.5cqw]" : "text-[7cqw]"} tabular-nums ${forte ? "font-extrabold text-paper-foreground" : "font-medium text-paper-foreground/70"}`}
+            >
               {player.attributes[chave]}
             </dd>
           </div>
@@ -124,6 +155,7 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
 
   return (
     <div
+      ref={cartaRef}
       style={{ containerType: "inline-size" } as CSSProperties}
       className={`group relative mx-auto w-full max-w-[17rem] select-none sm:max-w-64 ${comFoto && completa ? "" : "aspect-[2/3]"}`}
     >
@@ -155,7 +187,7 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
                       mostraNotas ? "opacity-100" : "opacity-0"
                     }`}
                   >
-                    {atributos(false)}
+                    {atributos(false, pequena)}
                   </div>
                 )}
               </div>
@@ -181,7 +213,19 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
                 <p className="line-clamp-2 min-w-0 text-[9.5cqw] font-bold leading-[1.02] tracking-tight [overflow-wrap:anywhere]">{player.name}</p>
                 {voce && <span className="mb-[1cqw]">{voce}</span>}
               </div>
-              <div className="mt-[3cqw]">{atributos(true)}</div>
+              {/* On a small card the table hides (CSS, so the first paint is right too) and the back shows it. */}
+              <div className="mt-[3cqw] [@container(max-width:160px)]:hidden">{atributos(true)}</div>
+              {vira && (
+                <div
+                  aria-hidden={!mostraNotas}
+                  // Anchored to the bottom, so the first row clears the ⋯ in the corner.
+                  className={`absolute inset-0 flex flex-col justify-end bg-paper px-[8cqw] pb-[6cqw] transition-opacity duration-150 motion-reduce:transition-none [@media(hover:hover)]:group-hover:opacity-100 ${
+                    mostraNotas ? "opacity-100" : "opacity-0"
+                  }`}
+                >
+                  {atributos(false, true)}
+                </div>
+              )}
             </div>
           )}
 

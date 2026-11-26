@@ -33,7 +33,7 @@ export function SemConexao() {
   return (
     // Under the sticky header (h-14 and its border, below the status bar when installed).
     // The canvas under the tint, so the list doesn't show through as it scrolls by.
-    <div className="sticky top-[calc(3.5rem+1px+env(safe-area-inset-top))] z-30 mb-5 rounded-xl bg-background">
+    <div className="sticky top-[calc(3.5rem+1px+env(safe-area-inset-top))] z-30 baixa:top-[calc(3rem+1px+env(safe-area-inset-top))] mb-5 rounded-xl bg-background">
       <div className="flex items-center gap-2 rounded-xl bg-warning/15 px-3 py-2">
         <WifiOff size={16} aria-hidden="true" className="shrink-0" />
         <p role="status" className="min-w-0 flex-1 text-sm font-medium text-foreground">

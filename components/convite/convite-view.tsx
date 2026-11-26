@@ -65,7 +65,7 @@ export function ConviteView({
   const nome = grupoNome ?? "fut";
   const titulo = (
     <>
-      Você foi chamado pro <span className="whitespace-nowrap">{nome}</span>
+      Você foi chamado pro <span className="[overflow-wrap:anywhere]">{nome}</span>
     </>
   );
 

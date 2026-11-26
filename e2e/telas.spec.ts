@@ -75,3 +75,80 @@ test("on a fut's pages the phone's status bar takes the header's color", { tag: 
   const fundo = await page.locator("header").first().evaluate((el) => getComputedStyle(el).backgroundColor);
   expect(fundo).toMatch(/^rgba?\(255, 255, 255/);
 });
+
+test("on a phone a modal is a sheet at the bottom, from edge to edge", { tag: "@telas" }, async ({ page }) => {
+  const tela = page.viewportSize()!;
+  test.skip(tela.width >= 640, "from sm up it's a card in the middle");
+  await signIn(page, DEV_USER);
+  await page.goto("/g/fut-do-dev/partidas");
+  await page.getByRole("button", { name: "Nova partida" }).click();
+  const caixa = page.locator("dialog[open] > form");
+  await expect(caixa).toBeVisible();
+  // Once it has slid up.
+  await expect.poll(async () => Math.round((await caixa.boundingBox())!.y + (await caixa.boundingBox())!.height)).toBe(tela.height);
+  const { x, width } = (await caixa.boundingBox())!;
+  expect(x).toBe(0);
+  expect(width).toBe(tela.width);
+});
+
+test.describe("the narrowest phones (280px)", () => {
+  test.use({ viewport: { width: 280, height: 653 }, hasTouch: true, isMobile: true });
+
+  test("the album shows each card's face, and a tap turns it to the attributes", async ({ page }) => {
+    await signIn(page, DEV_USER);
+    await abrirAba(page, "Elenco");
+    // At 125px a card's attribute table would print at 7px: the face only, turning on a tap.
+    const carta = page.getByRole("button", { name: /^Carta de Foguete, .*Toque para ver as notas$/ });
+    await expect(carta).toHaveAttribute("aria-expanded", "false");
+    await carta.click();
+    await expect(carta).toHaveAttribute("aria-expanded", "true");
+    const notas = carta.getByLabel("Atributos do jogador").last();
+    await expect(notas).toBeVisible();
+    const tamanho = await notas.locator("dd").first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+    expect(tamanho).toBeGreaterThanOrEqual(11);
+  });
+
+  test("nothing runs past the screen's edge on any of the fut's pages", async ({ page }) => {
+    await signIn(page, DEV_USER);
+    for (const caminho of ["/g/fut-do-dev", "/g/fut-do-dev/partidas", "/g/fut-do-dev/elenco", "/g/fut-do-dev/voce", "/g/fut-do-dev/pessoas"]) {
+      await page.goto(caminho);
+      await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+      // html clips horizontal overflow, so look for any element past the edge instead.
+      const fora = await page.evaluate(() => {
+        const largura = document.documentElement.clientWidth;
+        return [...document.querySelectorAll("main *, header *, nav *")]
+          .filter((el) => {
+            const b = el.getBoundingClientRect();
+            return b.width > 0 && (b.right > largura + 1 || b.left < -1);
+          })
+          .map((el) => `${el.tagName} "${(el.textContent ?? "").trim().slice(0, 30)}"`);
+      });
+      expect(fora, caminho).toEqual([]);
+    }
+  });
+});
+
+test.describe("a tablet standing up (820px)", () => {
+  test.use({ viewport: { width: 820, height: 1180 }, hasTouch: true, isMobile: true });
+
+  test("the Partida puts the Times beside the list", async ({ page }) => {
+    await signIn(page, DEV_USER);
+    await page.goto("/g/fut-do-dev");
+    const lista = page.getByRole("region", { name: "Quem vai" });
+    const times = page.getByRole("region", { name: "Sorteio" });
+    await expect(times).toBeVisible();
+    const a = (await lista.boundingBox())!;
+    const b = (await times.boundingBox())!;
+    expect(b.x).toBeGreaterThan(a.x + a.width - 1);
+  });
+});
+
+test("on a phone lying down the frame shrinks: a 48px header and a tab bar of icons", { tag: "@telas" }, async ({ page }) => {
+  const tela = page.viewportSize()!;
+  test.skip(tela.height > 500, "only on a short screen");
+  await signIn(page, DEV_USER);
+  await abrirAba(page, "Elenco");
+  expect((await page.locator("header > div").first().boundingBox())!.height).toBe(48);
+  // The tab names stay for screen readers.
+  await expect(page.getByRole("navigation", { name: "Seções do fut" }).getByRole("link", { name: "Elenco", exact: true })).toHaveCount(1);
+});

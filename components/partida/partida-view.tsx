@@ -126,7 +126,14 @@ export function PartidaView({
         </Link>
       )}
 
-      <div className={temTimes ? "grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start lg:gap-8" : "flex flex-col gap-6"}>
+      {/* Two columns from a tablet up: the list on the left, the Times beside it. */}
+      <div
+        className={
+          temTimes
+            ? "grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-8"
+            : "flex flex-col gap-6"
+        }
+      >
         <div className="flex flex-col gap-6">
           <section aria-label="Partida" className="flex flex-col gap-4 rounded-2xl border border-divider bg-content1 p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3">
@@ -182,7 +189,8 @@ export function PartidaView({
         </div>
 
         {temTimes && (
-          <div className="flex flex-col gap-6 lg:sticky lg:top-24">
+          // Stays in view beside a long list, and scrolls on its own when the Times are taller than the screen.
+          <div className="flex flex-col gap-6 md:sticky md:top-[calc(5rem+env(safe-area-inset-top))] md:max-h-[calc(100dvh-6rem-env(safe-area-inset-top))] md:overflow-y-auto md:overscroll-contain">
             <SorteioDaPartida
               slug={grupo.slug}
               partidaId={id}
@@ -288,7 +296,7 @@ function SuaPresenca({
         <p className="font-semibold text-foreground">Escolha seu jogador para responder.</p>
         <Link
           href={escolherHref}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-base font-medium text-primary-foreground transition-colors hover:bg-primary-600 active:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-center text-base font-medium sm:px-6 text-primary-foreground transition-colors hover:bg-primary-600 active:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <UserCheck size={18} aria-hidden="true" /> Escolher meu jogador
         </Link>
@@ -359,7 +367,8 @@ function SuaPresenca({
 
   return (
     <section aria-label="Sua presença" className="flex items-center justify-between gap-3 border-t border-divider pt-4">
-      <p className={`flex min-w-0 items-center gap-2 rounded-full px-3 py-1.5 font-semibold ${tom}`}>
+      {/* rounded-2xl, not a pill: "Você está em 2º na lista de espera" wraps on a narrow phone. */}
+      <p className={`flex min-w-0 items-center gap-2 rounded-2xl px-3 py-1.5 font-semibold ${tom}`}>
         <span aria-hidden="true">{icone}</span>
         {texto}
       </p>
@@ -503,8 +512,11 @@ function ResponderPorAlguem({
         <p className="text-muted">Para quem não tem conta ou avisou no grupo.</p>
       </ModalHeader>
       <ModalBody className="flex flex-col gap-3 pb-6">
-        <Input label="Buscar jogador" value={busca} onChange={(e) => setBusca(e.target.value)} size="sm" autoComplete="off" />
-        <ul className="flex max-h-[55dvh] flex-col divide-y divide-divider overflow-y-auto" aria-label="Jogadores do fut">
+        {/* One scroller, the modal's: the search stays on top as the list goes by. */}
+        <div className="sticky -top-4 z-10 -mx-4 -mt-4 bg-content1 px-4 pb-1 pt-4 sm:-mx-6 sm:px-6">
+          <Input label="Buscar jogador" value={busca} onChange={(e) => setBusca(e.target.value)} size="sm" autoComplete="off" />
+        </div>
+        <ul className="flex flex-col divide-y divide-divider" aria-label="Jogadores do fut">
           {visiveis.map((j) => {
             const { texto, vai } = situacao(j.id);
             const ocupado = respondendo === j.id;

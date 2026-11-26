@@ -1,3 +1,5 @@
+import plugin from "tailwindcss/plugin";
+
 /** @type {import('tailwindcss').Config} */
 const config = {
   // Hover styles only where there's a mouse: on a phone they'd stick after a tap.
@@ -9,10 +11,6 @@ const config = {
   ],
   theme: {
     extend: {
-      screens: {
-        // A mouse or trackpad (desktop, a laptop's touchpad), not a finger: `mouse:text-sm`.
-        mouse: { raw: "(pointer: fine)" },
-      },
       fontFamily: {
         sans: ["var(--font-sans)"],
       },
@@ -114,7 +112,16 @@ const config = {
     },
   },
   darkMode: "class",
-  plugins: [],
+  plugins: [
+    // Variants, not screens: a raw media query among the screens turns off Tailwind's
+    // max-* variants (max-sm:, max-[339px]:) without a word.
+    plugin(({ addVariant }) => {
+      // A mouse or trackpad (desktop, a laptop's touchpad), not a finger: `mouse:text-sm`.
+      addVariant("mouse", "@media (pointer: fine)");
+      // A short screen (a phone on its side): the frame gives the content more room. `baixa:h-12`.
+      addVariant("baixa", "@media (max-height: 500px)");
+    }),
+  ],
 };
 
 export default config;

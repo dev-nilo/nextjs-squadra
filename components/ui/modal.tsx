@@ -18,7 +18,12 @@ interface ModalProps {
 }
 
 // dvh, not vh: on a phone the browser's bars and the keyboard take part of the screen.
-const CAIXA = "mx-auto flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-2xl bg-content1 shadow-2xl";
+// Below sm it's a sheet: full width at the bottom, rounded on top, clear of the home
+// indicator, sliding up as it opens (the motion answers the tap; none with reduced motion).
+const CAIXA =
+  "mx-auto flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-2xl bg-content1 shadow-2xl " +
+  "max-sm:w-full max-sm:max-w-none max-sm:max-h-[calc(100dvh-2rem)] max-sm:rounded-b-none max-sm:pb-[env(safe-area-inset-bottom)] " +
+  "max-sm:motion-safe:animate-[subir_220ms_cubic-bezier(0.2,0.8,0.2,1)]";
 
 export function Modal({ isOpen, onClose, children, className = "max-w-md", onSubmit, noValidate }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -70,7 +75,7 @@ export function Modal({ isOpen, onClose, children, className = "max-w-md", onSub
       onClick={(e) => {
         if (e.target === dialogRef.current) dialogRef.current?.close();
       }}
-      className="m-auto max-h-none w-full max-w-none bg-transparent p-0 backdrop:bg-overlay/50 backdrop:backdrop-blur-sm"
+      className="m-auto max-h-none w-full max-w-none bg-transparent p-0 backdrop:bg-overlay/50 backdrop:backdrop-blur-sm max-sm:mb-0"
     >
       {onSubmit ? (
         <form noValidate={noValidate} onSubmit={onSubmit} className={`${CAIXA} ${className}`}>
