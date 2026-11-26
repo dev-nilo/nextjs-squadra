@@ -37,42 +37,43 @@ export function ConfirmarComNome({
   const confere = digitado.trim().toLowerCase() === nome.trim().toLowerCase();
 
   return (
-    <Modal isOpen onClose={onClose} className="max-w-md">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!confere) return;
-          setErro(null);
-          startTransition(async () => {
-            const recusa = await onConfirmar(digitado);
-            if (recusa) setErro(recusa);
-          });
-        }}
-      >
-        <ModalHeader className="flex flex-col gap-1">
-          <h2 className="text-title">{titulo}</h2>
-        </ModalHeader>
-        <ModalBody className="flex flex-col gap-4">
-          <div className="text-sm text-default-600">{explicacao}</div>
-          {erro && <Alert tone="danger">{erro}</Alert>}
-          <Input
-            label={`Digite "${nome}" pra confirmar`}
-            value={digitado}
-            onChange={(e) => setDigitado(e.target.value)}
-            autoComplete="off"
-            autoCapitalize="off"
-            spellCheck={false}
-          />
-        </ModalBody>
-        <ModalFooter>
-          <Button type="button" variant="flat" onClick={onClose}>
-            Voltar
-          </Button>
-          <Button type="submit" color={perigo ? "danger" : "primary"} isDisabled={!confere} isLoading={pendente}>
-            {acao}
-          </Button>
-        </ModalFooter>
-      </form>
+    <Modal
+      isOpen
+      onClose={onClose}
+      className="max-w-md"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!confere) return;
+        setErro(null);
+        startTransition(async () => {
+          const recusa = await onConfirmar(digitado);
+          if (recusa) setErro(recusa);
+        });
+      }}
+    >
+      <ModalHeader className="flex flex-col gap-1">
+        <h2 className="text-title">{titulo}</h2>
+      </ModalHeader>
+      <ModalBody className="flex flex-col gap-4">
+        <div className="text-sm text-default-600">{explicacao}</div>
+        {erro && <Alert tone="danger">{erro}</Alert>}
+        <Input
+          label={`Digite "${nome}" pra confirmar`}
+          value={digitado}
+          onChange={(e) => setDigitado(e.target.value)}
+          autoComplete="off"
+          autoCapitalize="off"
+          spellCheck={false}
+        />
+      </ModalBody>
+      <ModalFooter>
+        <Button type="button" variant="flat" onClick={onClose}>
+          Voltar
+        </Button>
+        <Button type="submit" color={perigo ? "danger" : "primary"} isDisabled={!confere} isLoading={pendente}>
+          {acao}
+        </Button>
+      </ModalFooter>
     </Modal>
   );
 }

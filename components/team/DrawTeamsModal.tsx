@@ -6,12 +6,13 @@ import { Logo } from "@/components/ui/logo";
 import { Player, Time } from "@/types";
 import { membrosPorNome } from "@/lib/sorteio";
 import { getTeamPresentation } from "@/lib/constants";
-import { Download, Loader2, Shuffle } from "lucide-react";
+import { ArrowLeftRight, Download, Loader2, Shuffle } from "lucide-react";
 import { toast } from "sonner";
 import { Modal, ModalHeader, ModalBody } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { useFocoAoMover } from "@/hooks/use-foco-ao-mover";
+import { MoverJogador } from "@/components/team/mover-jogador";
 
 
 interface DrawTeamsModalProps {
@@ -121,8 +122,11 @@ export const DrawTeamsModal = ({
                     <div className="min-w-0">
                         <h2 className="text-title">Times sorteados</h2>
                         <p className="text-muted mt-1">
-                            Troque alguém de time pelo seletor ao lado do nome
-                            <span className="hidden sm:inline">, ou arraste</span>
+                            Pra trocar alguém de time, use{" "}
+                            <ArrowLeftRight size={14} role="img" aria-label="o botão de trocar" className="inline align-[-2px]" /> ao lado do
+                            nome
+                            {/* Dragging needs a mouse; a finger scrolls the list instead. */}
+                            <span className="hidden mouse:inline">, ou arraste</span>
                         </p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto shrink-0">
@@ -273,23 +277,16 @@ export const DrawTeamsModal = ({
                                                             {player.rating}
                                                         </span>
                                                     </div>
-                                                    <select
-                                                        data-export-ignore="true"
-                                                        aria-label={`Mover ${player.name}`}
+                                                    <MoverJogador
                                                         ref={foco.refDo(player.id)}
-                                                        value={idx}
-                                                        onChange={(e) => {
+                                                        nome={player.name}
+                                                        indice={idx}
+                                                        times={generatedTeams}
+                                                        onMover={(destino) => {
                                                             foco.marcar(player.id);
-                                                            onMover(player.id, idx, Number(e.target.value));
+                                                            onMover(player.id, idx, destino);
                                                         }}
-                                                        className="shrink-0 rounded-lg border border-default-200 bg-default-100 px-1 py-0.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                                                    >
-                                                        {generatedTeams.map((destino, i) => (
-                                                            <option key={destino.name} value={i}>
-                                                                {i === idx ? destino.name : `→ ${destino.name}`}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                                    />
                                                 </li>
                                             ))}
                                         </ul>

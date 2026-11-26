@@ -24,7 +24,7 @@ interface AuthFormProps {
 }
 
 const linkDiscreto =
-  "rounded text-sm font-medium text-default-500 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  "area-de-toque rounded text-sm font-medium text-default-500 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
 export function LoginForm({ onSuccess, onEsqueci }: AuthFormProps & { onEsqueci?: () => void }) {
   const [email, setEmail] = useState("");

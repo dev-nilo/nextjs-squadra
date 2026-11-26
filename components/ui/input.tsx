@@ -12,9 +12,10 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "
   size?: "sm" | "md" | "lg";
 }
 
+// 16px under a finger: iOS zooms the page in on a field with smaller text, and stays zoomed.
 const SIZE_STYLES: Record<"sm" | "md" | "lg", string> = {
-  sm: "h-8 text-sm",
-  md: "h-10 text-sm",
+  sm: "h-8 text-base mouse:text-sm",
+  md: "h-10 text-base mouse:text-sm",
   lg: "h-12 text-base",
 };
 

@@ -121,7 +121,7 @@ export function PartidaView({
     // data-ao-vivo: the list is listening for changes (the E2E suite waits on it).
     <div data-ao-vivo={aoVivo} className={`flex flex-col gap-6 ${temTimes ? "" : "mx-auto w-full max-w-2xl"}`}>
       {!naInicio && (
-        <Link href={`${fut}/partidas`} className="flex w-fit items-center gap-1 text-sm font-medium text-default-500 hover:text-foreground">
+        <Link href={`${fut}/partidas`} className="flex w-fit items-center gap-1 text-sm font-medium text-default-500 hover:text-foreground area-de-toque rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
           <ArrowLeft size={16} aria-hidden="true" /> Partidas
         </Link>
       )}
@@ -325,7 +325,7 @@ function SuaPresenca({
           </Button>
         </div>
         {mudando && (
-          <button type="button" onClick={() => setMudando(false)} className="self-center text-sm font-medium text-default-500 hover:text-foreground">
+          <button type="button" onClick={() => setMudando(false)} className="self-center text-sm font-medium text-default-500 hover:text-foreground area-de-toque rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             Deixar como está
           </button>
         )}

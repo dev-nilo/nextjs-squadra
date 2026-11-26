@@ -111,10 +111,12 @@ The **only exception** is the Jogador card (`PlayerCard`): its radii are in `cqw
 
 | Primitive | Notes |
 |-----------|-------|
-| `Button` | `color`: `primary` · `secondary` (Sorteio only) · `danger` · `default`. `variant`: `solid` (main action) · `flat` (secondary action, e.g. Cancelar, Voltar) · `light` (tertiary / inline / icon). `size`: `sm` · `md` · `lg`. Supports `isLoading`, `isIconOnly`, `radius="full"`, `startContent`. One `solid` primary or secondary per action group. |
-| `Input`, `Select` | `rounded-xl`, `bg-default-100`, `border-default-200`, focus ring `primary`. Always pass `label` or `aria-label`. `Input` sizes `sm` · `md` · `lg` (auth); `endContent` is an interactive trailing slot. |
+| `Button` | `color`: `primary` · `secondary` (Sorteio only) · `danger` · `default`. `variant`: `solid` (main action) · `flat` (secondary action, e.g. Cancelar, Voltar) · `light` (tertiary / inline / icon). `size`: `sm` · `md` · `lg`. Supports `isLoading`, `isIconOnly`, `radius="full"`, `startContent`. One `solid` primary or secondary per action group. Every variant has a pressed (`active:`) state. `sm` buttons and small icon buttons keep their look, but an invisible `::after` stretches the tap area to 44px. |
+| `Input`, `Select` | `rounded-xl`, `bg-default-100`, `border-default-200`, focus ring `primary`. Always pass `label` or `aria-label`. `Input` sizes `sm` · `md` · `lg` (auth); `endContent` is an interactive trailing slot. Text is **16px under a finger** and 14px only with a mouse (`text-base mouse:text-sm`). iOS zooms the page in on any field under 16px and stays zoomed. This applies to every field, raw `<input>`/`<select>` included. |
 | `PasswordInput` | `Input` with a show/hide toggle (`aria-pressed`). Use for every password field. |
-| `Modal`, `ModalHeader`, `ModalBody`, `ModalFooter` | Native `<dialog>`. Header holds a `.text-title` and optional `.text-muted` subtitle. Footer: secondary action (`flat`) first, primary action last; full width on mobile. |
+| `Modal`, `ModalHeader`, `ModalBody`, `ModalFooter` | Native `<dialog>`, at most `100dvh - 1rem` tall: the body scrolls between a fixed header and footer. Header holds a `.text-title` and optional `.text-muted` subtitle. Footer: secondary action (`flat`) first, primary action last; full width on mobile. A form modal passes `onSubmit` (and `noValidate`) to `Modal`, which then renders itself as the `<form>`. Never wrap `ModalBody`/`ModalFooter` in a `<form>` of your own: it breaks the column, the body stops scrolling and the footer falls off a short screen. |
+| `MenuDeAcoes` | The ⋯ button and its popover menu. It opens under the button, aligned to its right edge, moved in to stay 8px inside the screen, and above the button when there's no room under it (`lib/posicao-do-menu.ts`, `useMenuFlutuante`). It closes on scroll or rotation. The account menu (`UserMenu`) uses the same placement. |
+| `MoverJogador` | Moves a Jogador to another Time: a 32px two-arrow mark (`ArrowLeftRight`) with the native `<select>` invisible over it (16px text, 44px tap area). A tap opens the phone's own picker, and the row keeps its width for the name. Used in the Partida's Sorteio and the quick one. |
 | `Surface` | Page-level card: `rounded-2xl bg-content1 shadow-2xl p-4 sm:p-6`. Use for any standalone content block outside a modal. |
 | `Alert` | Inline status box, `tone`: `danger` · `warning` · `success` · `info`. `rounded-lg`, `bg-<tone>/10`, `text-sm font-medium`. Use instead of hand-rolled colored boxes. |
 | `FullScreenLoader` | Centered coin-tossing mark + label on `bg-background`, full viewport. The only loading state for routes and route-level fallbacks. |
@@ -125,6 +127,8 @@ The **only exception** is the Jogador card (`PlayerCard`): its radii are in `cqw
 
 - **App shell**: `app/layout.tsx` renders the single `<Toaster position="top-center" richColors theme="system" />`. Pages never render their own Toaster. Toast colors are remapped to the tokens in `app/globals.css` (sonner's `--normal-*`, `--success-*`, `--error-*`… variables), so they follow the palette.
 - **The fut's frame** (`app/g/[slug]/layout.tsx` → `FutShell`): every page inside a fut shares one header, one navigation and one width, so only the content changes between tabs. Pages render only their content, never their own header or `<main>`.
+  - **Side margins**: `.margem-lateral` (`0.75rem`, `1.5rem` from `sm`) or the notch's inset, whichever is wider. An iPhone on its side puts the notch on the left or right, and iOS ignores the manifest's orientation. The header, `main` and every docked bar use it. Fixed bars also pad by `env(safe-area-inset-left/right)` and by the bottom inset.
+  - **Scrolling**: only `html` clips horizontal overflow (`overflow-x: clip`). Overflow on `body` would make it its own scroll container, and `position: sticky` (the header, the Partida's Times) would then have nothing to stick to.
   - **Header** (`CabecalhoDoFut`): one slim sticky row (`h-14`, `bg-content1/95`, `border-b`), the mark (links to the fut's home) and the fut switcher; on `md+` the tabs sit on its right, underlined in `accent`. Pads by `env(safe-area-inset-top)`.
   - **Tabs**: **Partidas · Elenco · Você** (`lib/navegacao.ts`). Phones get a fixed bottom tab bar (`BarraDeAbas`, `h-16`, icon + label, active in `foreground` with a small `accent` pill on top, padded by `env(safe-area-inset-bottom)`, `md:hidden`). The page's `<main>` leaves `5rem` + the safe area free below it.
   - **Width**: `max-w-5xl` for every page. Each page uses it its own way: the Elenco is a 2 / 3 / 4-column album, the Partida two columns on `lg` (lists left, Times right, sticky), Partidas and Você a centered reading column.
@@ -151,7 +155,10 @@ The **only exception** is the Jogador card (`PlayerCard`): its radii are in `cqw
 
 ## Interaction
 
-- Focus: `focus-visible:ring-2 ring-primary` on every interactive element.
+- Focus: `focus-visible:ring-2 ring-primary` on every interactive element, menu items included.
+- **Touch**: hover styles only apply where there's a mouse (`future.hoverOnlyWhenSupported`), so nothing stays "hovered" after a tap. Pressed feedback is `active:`. There's no tap highlight (`-webkit-tap-highlight-color: transparent`). The header and tab bar can't be selected or long-pressed into a link preview. Installed, the page doesn't rubber-band (`overscroll-behavior-y: none` under `display-mode: standalone`).
+- **Tap areas are 44px or more.** Where the visible control is smaller (⋯, share, back links, "Criar conta"), an invisible area makes up the rest without moving the layout: `Button`'s own `::after`, `.area-de-toque` for text links and inline buttons, and `.slider` for ranges (24px thumb, 44px tall).
+- `mouse:` (a Tailwind screen, `pointer: fine`) is for what only makes sense with a mouse ("ou arraste", 14px fields). Never decide that by width: a tablet is wide and has no mouse.
 - Selection: `ring-2 ring-primary` plus a `primary/10` tint.
 - Hover on rows: border shifts toward `primary/40–50`. Hover is a desktop extra, never the only way to reach an action. Cards don't scale on hover.
 - Dragging is a desktop extra too. A Jogador moves between Times with a select beside their name ("Mover <nome>"), in the Partida's Sorteio and in the quick one; the quick one also lets a mouse drag the row.
@@ -170,3 +177,4 @@ The exported image follows the active theme: its background is read from the `--
 1. Only tokens, scales and primitives from this file.
 2. Checked in light **and** dark, at 375px **and** desktop.
 3. `npm run lint`, `npm test`, `npm run build` pass.
+4. Anything that changes the frame (header, bars, modals, menus) is covered by `e2e/telas.spec.ts`, which runs on desktop, a phone, a phone on its side (`landscape`, 360px tall) and a tablet.

@@ -7,9 +7,20 @@ interface ModalProps {
   onClose: () => void;
   children: React.ReactNode;
   className?: string; // e.g. "max-w-md" | "max-w-3xl" | "max-w-5xl"
+  /**
+   * Makes the modal itself the form. Wrapping ModalBody and ModalFooter in a
+   * <form> of your own breaks the column: the body stops scrolling and the
+   * footer falls off a short screen.
+   */
+  onSubmit?: React.FormEventHandler<HTMLFormElement>;
+  /** With `onSubmit`: skip the browser's own field checks (the form shows its own). */
+  noValidate?: boolean;
 }
 
-export function Modal({ isOpen, onClose, children, className = "max-w-md" }: ModalProps) {
+// dvh, not vh: on a phone the browser's bars and the keyboard take part of the screen.
+const CAIXA = "mx-auto flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-2xl bg-content1 shadow-2xl";
+
+export function Modal({ isOpen, onClose, children, className = "max-w-md", onSubmit, noValidate }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closingFromEffect = useRef(false);
   const isOpenRef = useRef(isOpen);
@@ -59,13 +70,15 @@ export function Modal({ isOpen, onClose, children, className = "max-w-md" }: Mod
       onClick={(e) => {
         if (e.target === dialogRef.current) dialogRef.current?.close();
       }}
-      className="m-auto w-full max-w-none bg-transparent p-0 backdrop:bg-overlay/50 backdrop:backdrop-blur-sm"
+      className="m-auto max-h-none w-full max-w-none bg-transparent p-0 backdrop:bg-overlay/50 backdrop:backdrop-blur-sm"
     >
-      <div
-        className={`mx-auto flex max-h-[90vh] w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-2xl bg-content1 shadow-2xl ${className}`}
-      >
-        {children}
-      </div>
+      {onSubmit ? (
+        <form noValidate={noValidate} onSubmit={onSubmit} className={`${CAIXA} ${className}`}>
+          {children}
+        </form>
+      ) : (
+        <div className={`${CAIXA} ${className}`}>{children}</div>
+      )}
     </dialog>
   );
 }

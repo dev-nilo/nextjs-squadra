@@ -25,7 +25,7 @@ export function FutShell({
   return (
     <div data-guardar-offline className="min-h-dvh bg-background text-foreground">
       <CabecalhoDoFut grupo={grupo} participacoes={participacoes} />
-      <main className="mx-auto w-full max-w-5xl px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pt-8 md:pb-16">
+      <main className="margem-lateral mx-auto w-full max-w-5xl pb-[calc(5rem+env(safe-area-inset-bottom))] pt-5 sm:pt-8 md:pb-16">
         <SemConexao />
         {children}
       </main>

@@ -8,9 +8,9 @@ import { KickableBall } from "./kickable-ball";
  */
 export function AuthShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative isolate min-h-screen bg-panel text-panel-foreground sm:p-3 lg:p-4">
+    <div className="relative isolate min-h-dvh bg-panel text-panel-foreground sm:p-3 lg:p-4">
       <NightPitch id="frame" className="fixed inset-0 -z-10 h-full w-full" />
-      <div className="grid min-h-screen content-start gap-2 bg-background p-2 text-foreground shadow-2xl sm:min-h-[calc(100vh-1.5rem)] sm:rounded-3xl sm:p-3 lg:min-h-[calc(100vh-2rem)] lg:grid-cols-2 lg:content-stretch">
+      <div className="grid min-h-dvh content-start gap-2 bg-background p-2 text-foreground shadow-2xl sm:min-h-[calc(100dvh-1.5rem)] sm:rounded-3xl sm:p-3 lg:min-h-[calc(100dvh-2rem)] lg:grid-cols-2 lg:content-stretch">
         <main className="order-2 flex justify-center px-3 py-8 sm:py-12 lg:order-1 lg:items-center">
           <div className="w-full max-w-sm">{children}</div>
         </main>

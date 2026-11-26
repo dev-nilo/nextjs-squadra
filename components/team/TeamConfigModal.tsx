@@ -38,7 +38,7 @@ const RangeSlider = ({ label, min, max, value, onChange }: RangeSliderProps) => 
                 step={1}
                 value={value}
                 onChange={(e) => onChange(Number(e.target.value))}
-                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-default-200 accent-primary"
+                className="slider w-full"
             />
             <datalist id={listId}>
                 {Array.from({ length: max - min + 1 }, (_, i) => (

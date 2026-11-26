@@ -60,7 +60,7 @@ export function ChangePasswordModal({
   };
 
   return (
-    <Modal isOpen={open} onClose={handleClose} className="max-w-md">
+    <Modal isOpen={open} onClose={handleClose} className="max-w-md" onSubmit={handleSubmit}>
       <ModalHeader className="flex flex-col gap-1">
         <h2 className="text-title">Alterar senha</h2>
         <p className="text-muted">
@@ -68,50 +68,48 @@ export function ChangePasswordModal({
         </p>
       </ModalHeader>
 
-      <form onSubmit={handleSubmit}>
-        <ModalBody className="flex flex-col gap-4">
-          <Input
-            label="Senha atual"
-            id="current-password"
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            isDisabled={loading}
-            isRequired
-            autoComplete="current-password"
-          />
-          <Input
-            label="Nova senha"
-            id="new-password"
-            type="password"
-            placeholder="Mínimo 6 caracteres"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            isDisabled={loading}
-            isRequired
-            autoComplete="new-password"
-          />
-          <Input
-            label="Confirmar nova senha"
-            id="confirm-new-password"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            isDisabled={loading}
-            isRequired
-            autoComplete="new-password"
-          />
-        </ModalBody>
+      <ModalBody className="flex flex-col gap-4">
+        <Input
+          label="Senha atual"
+          id="current-password"
+          type="password"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          isDisabled={loading}
+          isRequired
+          autoComplete="current-password"
+        />
+        <Input
+          label="Nova senha"
+          id="new-password"
+          type="password"
+          placeholder="Mínimo 6 caracteres"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          isDisabled={loading}
+          isRequired
+          autoComplete="new-password"
+        />
+        <Input
+          label="Confirmar nova senha"
+          id="confirm-new-password"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          isDisabled={loading}
+          isRequired
+          autoComplete="new-password"
+        />
+      </ModalBody>
 
-        <ModalFooter>
-          <Button variant="flat" type="button" onClick={handleClose} isDisabled={loading}>
-            Cancelar
-          </Button>
-          <Button type="submit" color="primary" isLoading={loading}>
-            {loading ? "Salvando…" : "Salvar senha"}
-          </Button>
-        </ModalFooter>
-      </form>
+      <ModalFooter>
+        <Button variant="flat" type="button" onClick={handleClose} isDisabled={loading}>
+          Cancelar
+        </Button>
+        <Button type="submit" color="primary" isLoading={loading}>
+          {loading ? "Salvando…" : "Salvar senha"}
+        </Button>
+      </ModalFooter>
     </Modal>
   );
 }

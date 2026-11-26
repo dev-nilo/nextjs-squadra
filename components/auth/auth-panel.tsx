@@ -43,7 +43,7 @@ export function AuthPanel({
             <button
               type="button"
               onClick={() => setModo(modo === "entrar" ? "criar" : "entrar")}
-              className="rounded font-bold text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="area-de-toque rounded font-bold text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               {modo === "entrar" ? "Criar conta" : "Entrar"}
             </button>

@@ -17,7 +17,7 @@ export function AbasNoTopo({ slug }: { slug: string }) {
           key={a.id}
           href={caminhoDaAba(slug, a.id)}
           aria-current={a.id === ativa ? "page" : undefined}
-          className={`-mb-px flex items-center border-b-2 px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
+          className={`-mb-px flex items-center border-b-2 px-4 text-sm font-medium transition-colors active:bg-default-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
             a.id === ativa ? "border-accent text-foreground" : "border-transparent text-default-500 hover:text-foreground"
           }`}
         >
@@ -37,7 +37,7 @@ export function BarraDeAbas({ slug }: { slug: string }) {
   return (
     <nav
       aria-label="Seções do fut"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-divider bg-content1/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 select-none border-t border-divider bg-content1/95 pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur-sm [-webkit-touch-callout:none] md:hidden"
     >
       <ul className="mx-auto grid h-16 max-w-md grid-cols-3">
         {ABAS.map((a) => {
@@ -48,7 +48,7 @@ export function BarraDeAbas({ slug }: { slug: string }) {
               <Link
                 href={caminhoDaAba(slug, a.id)}
                 aria-current={atual ? "page" : undefined}
-                className={`relative flex h-full flex-col items-center justify-center gap-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
+                className={`relative flex h-full flex-col items-center justify-center gap-1 text-xs font-medium transition-colors active:bg-default-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
                   atual ? "text-foreground" : "text-default-500"
                 }`}
               >

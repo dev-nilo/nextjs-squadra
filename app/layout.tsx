@@ -63,7 +63,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${bricolage.variable} font-sans antialiased overflow-x-hidden bg-background text-foreground`}>
+      <body className={`${bricolage.variable} font-sans antialiased bg-background text-foreground`}>
         <Providers>
           {children}
           <Toaster position="top-center" richColors theme="system" />
