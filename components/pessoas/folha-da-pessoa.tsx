@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Crown, UserMinus } from "lucide-react";
+import { Check } from "lucide-react";
 import { toast } from "sonner";
 import { mudarPapel, passarPosse, removerDoFut } from "@/app/actions/pessoas";
 import { Alert } from "@/components/ui/alert";
@@ -51,7 +51,7 @@ export function FolhaDaPessoa({ grupo, pessoa, onClose }: { grupo: Participacao;
         setErro(resultado.message);
         return;
       }
-      toast.success(`${nome} saiu do fut`);
+      toast.success(`${nome} não está mais no fut`);
       onClose();
     });
   };
@@ -104,13 +104,13 @@ export function FolhaDaPessoa({ grupo, pessoa, onClose }: { grupo: Participacao;
 
           <div className="flex flex-col gap-2 border-t border-divider pt-4">
             {pessoa.papel === "admin" ? (
-              <Button variant="flat" startContent={<Crown size={16} />} isDisabled={pendente} onClick={() => setPassando(true)}>
+              <Button variant="flat" isDisabled={pendente} onClick={() => setPassando(true)}>
                 Passar o fut pra {nome}
               </Button>
             ) : (
               <p className="text-xs text-default-500">Pra passar o fut pra alguém, torne a pessoa admin primeiro.</p>
             )}
-            <Button variant="flat" color="danger" startContent={<UserMinus size={16} />} isDisabled={pendente} onClick={remover}>
+            <Button variant="flat" color="danger" isDisabled={pendente} onClick={remover}>
               Remover do fut
             </Button>
           </div>

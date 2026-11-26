@@ -71,7 +71,7 @@ export function LoginForm({ onSuccess, onEsqueci }: AuthFormProps & { onEsqueci?
       />
 
       <Button type="submit" color="primary" size="lg" radius="full" className="mt-2 w-full" isLoading={loading}>
-        {loading ? "Entrando..." : "Entrar"}
+        {loading ? "Entrando…" : "Entrar"}
       </Button>
 
       {onEsqueci && (
@@ -118,7 +118,7 @@ export function RecoveryForm() {
       />
 
       <Button type="submit" color="primary" size="lg" radius="full" className="mt-2 w-full" isLoading={loading}>
-        {loading ? "Enviando..." : "Enviar link"}
+        {loading ? "Enviando…" : "Enviar link"}
       </Button>
     </form>
   );
@@ -206,7 +206,7 @@ export function SignUpForm({ onSuccess, redirectPath }: AuthFormProps) {
       />
 
       <Button type="submit" color="primary" size="lg" radius="full" className="mt-2 w-full" isLoading={loading}>
-        {loading ? "Criando conta..." : "Criar conta"}
+        {loading ? "Criando conta…" : "Criar conta"}
       </Button>
 
       {(pendingEmail || email) && (

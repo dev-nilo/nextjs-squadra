@@ -135,7 +135,7 @@ function ItemDaPartida({
             <span className="rounded-full bg-default-100 px-2 py-0.5 text-xs font-semibold text-default-600">{rotulo}</span>
           ) : (
             <span className="font-semibold tabular-nums text-foreground">
-              {partida.confirmados}/{partida.vagas}
+              {partida.confirmados} de {partida.vagas}
             </span>
           )}
           <ChevronRight size={16} aria-hidden="true" className="text-default-400" />

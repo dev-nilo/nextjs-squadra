@@ -34,31 +34,19 @@ export function Logo({ className = "h-8 w-8", tossing = false, title }: LogoProp
   );
 }
 
-const LOCKUP_SIZES = {
-  sm: { mark: "h-9 w-9", text: "text-xl", gap: "gap-1.5" },
-  lg: { mark: "h-20 w-20", text: "text-3xl", gap: "gap-2" },
-} as const;
-
-/** Mark + "Squadra" wordmark. `stacked` centers the wordmark under the mark (auth screens). */
+/** Mark + "Squadra" wordmark, as in the fut's header. */
 export function BrandLockup({
-  size = "sm",
-  stacked = false,
   compactOnMobile = false,
   className = "",
 }: {
-  size?: keyof typeof LOCKUP_SIZES;
-  stacked?: boolean;
   /** Below `sm`, keep only the mark (the wordmark stays for screen readers). */
   compactOnMobile?: boolean;
   className?: string;
 }) {
-  const s = LOCKUP_SIZES[size];
   return (
-    <div className={`flex items-center ${s.gap} ${stacked ? "flex-col" : ""} ${className}`}>
-      <Logo className={s.mark} />
-      <span
-        className={`${s.text} font-black tracking-tight text-brand leading-none ${compactOnMobile ? "sr-only sm:not-sr-only" : ""}`}
-      >
+    <div className={`flex items-center gap-1.5 ${className}`}>
+      <Logo className="h-9 w-9" />
+      <span className={`text-lg font-black tracking-tight text-brand leading-none ${compactOnMobile ? "sr-only sm:not-sr-only" : ""}`}>
         Squadra
       </span>
     </div>

@@ -6,6 +6,7 @@ import {
   concluirConfirmacao,
   definirNovaSenha,
   sessaoToast,
+  explicarErro,
   isEmailUnconfirmedError,
   isSupabaseConfigured,
   login,
@@ -175,7 +176,7 @@ describe("concluirConfirmacao", () => {
     const { destino, aviso } = await concluirConfirmacao(auth, linkDoEmail(`${ORIGEM}/`));
     expect(auth.verifyOtp).toHaveBeenCalledWith({ token_hash: "abc", type: "signup" });
     expect(destino).toBe("/");
-    expect(aviso).toEqual({ variant: "success", title: "Email confirmado! Você entrou." });
+    expect(aviso).toEqual({ variant: "success", title: "Email confirmado. Você entrou." });
   });
 
   it("an invite sign-up lands on the invite", async () => {
@@ -197,14 +198,14 @@ describe("concluirConfirmacao", () => {
     const { destino, aviso } = await concluirConfirmacao(auth, url);
     expect(auth.verifyOtp).not.toHaveBeenCalled();
     expect(destino).toBe("/auth");
-    expect(aviso).toMatchObject({ variant: "error", title: "Link expirado ou inválido" });
+    expect(aviso).toMatchObject({ variant: "error", title: "Esse link não vale mais." });
   });
 
   it("a token Supabase refuses goes to sign-in, saying why", async () => {
     const auth = createFakeAuth({ verifyOtp: vi.fn(async () => ({ error: { message: "Token has expired or is invalid" } })) });
     const { destino, aviso } = await concluirConfirmacao(auth, linkDoEmail(`${ORIGEM}/`));
     expect(destino).toBe("/auth");
-    expect(aviso).toMatchObject({ variant: "error", title: "Não foi possível confirmar", description: "Token has expired or is invalid" });
+    expect(aviso).toMatchObject({ variant: "error", title: "Não deu pra confirmar o email.", description: "O link venceu ou já foi usado. Peça outro." });
   });
 
   it("exchanges a PKCE code", async () => {
@@ -260,6 +261,54 @@ describe("sessaoToast", () => {
   it("has a notice for every outcome, so a new code without one won't compile", () => {
     expect(sessaoToast({ ok: false, code: "logout_failed" })).toMatchObject({ variant: "error" });
     expect(sessaoToast({ ok: true, code: "logged_out" })).toMatchObject({ variant: "success" });
+  });
+
+  it("never shouts, and never says just \"Erro\" or \"Algo deu errado\"", () => {
+    const codigos = [
+      "logged_in", "signed_up", "confirmed", "resent", "logged_out", "password_changed", "recovery_sent", "recovery_verified", "password_set",
+    ] as const;
+    const erros = [
+      "recovery_required", "recovery_failed", "recovery_error", "password_set_failed", "password_set_error", "email_unconfirmed",
+      "login_failed", "login_error", "password_mismatch", "password_too_short", "password_unchanged", "wrong_current_password",
+      "password_change_failed", "password_change_error", "signup_failed", "email_taken", "signup_error", "email_required",
+      "resend_failed", "resend_error", "logout_failed", "logout_error", "expired_link", "confirm_url_error", "pkce_failed",
+      "otp_failed", "no_session", "confirm_error",
+    ] as const;
+    const avisos = [
+      ...codigos.map((code) => sessaoToast({ ok: true, code })),
+      ...erros.flatMap((code) => (["login", "watcher", "recovery"] as const).map((ctx) => sessaoToast({ ok: false, code, message: "Something odd" }, ctx))),
+    ];
+    for (const aviso of avisos) {
+      const texto = `${aviso?.title} ${aviso?.description ?? ""}`;
+      expect(texto).not.toMatch(/!|\bErro\b|Algo deu errado| — |Something/);
+    }
+  });
+
+  it("says wrong credentials in the person's words", () => {
+    expect(sessaoToast({ ok: false, code: "login_failed", message: "Invalid login credentials" })).toMatchObject({
+      title: "Email ou senha errados.",
+      description: "Confira os dois, ou use Esqueci minha senha.",
+    });
+  });
+});
+
+describe("explicarErro", () => {
+  it("turns Supabase's English into what to do", () => {
+    expect(explicarErro("For security purposes, you can only request this after 30 seconds.")).toBe(
+      "Muitas tentativas seguidas. Espere um minuto e tente de novo.",
+    );
+    expect(explicarErro("Email rate limit exceeded")).toMatch(/^Muitas tentativas/);
+    expect(explicarErro("User already registered")).toMatch(/^Esse email já tem conta/);
+    expect(explicarErro("Password should be at least 6 characters.")).toBe("A senha precisa de pelo menos 6 caracteres.");
+    expect(explicarErro("New password should be different from the old password.")).toBe("A senha nova precisa ser diferente da atual.");
+    expect(explicarErro("Token has expired or is invalid")).toBe("O link venceu ou já foi usado. Peça outro.");
+    expect(explicarErro("Unable to validate email address: invalid format")).toMatch(/^Esse email não parece certo/);
+    expect(explicarErro("TypeError: Failed to fetch")).toBe("Confira a conexão e tente de novo.");
+  });
+
+  it("never passes the English on", () => {
+    expect(explicarErro("Database error saving new user")).toBe("Tente de novo em instantes.");
+    expect(explicarErro(undefined)).toBe("Tente de novo em instantes.");
   });
 });
 
@@ -442,13 +491,13 @@ describe("concluirConfirmacao, for a password recovery link", () => {
     const auth = createFakeAuth({ verifyOtp: vi.fn(async () => ({ error: { message: "Email link is invalid or has expired" } })) });
     const { destino, aviso } = await concluirConfirmacao(auth, linkDeRecuperacao());
     expect(destino).toBe("/auth");
-    expect(aviso).toMatchObject({ variant: "error", title: "Esse link não vale mais" });
+    expect(aviso).toMatchObject({ variant: "error", title: "Esse link não vale mais." });
   });
 
   it("a sign-up link still confirms and goes to its next", async () => {
     const { destino, aviso } = await concluirConfirmacao(createFakeAuth(), linkDoEmail(`${ORIGEM}/convite/x`));
     expect(destino).toBe("/convite/x");
-    expect(aviso?.title).toBe("Email confirmado! Você entrou.");
+    expect(aviso?.title).toBe("Email confirmado. Você entrou.");
   });
 });
 

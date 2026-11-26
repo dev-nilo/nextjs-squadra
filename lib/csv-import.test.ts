@@ -47,7 +47,7 @@ describe("importPlayersFromCsv", () => {
 
     const { players, skippedRows, errors } = importPlayersFromCsv(sample);
 
-    expect(errors.filter((e) => e.includes("nome ausente"))).toHaveLength(0);
+    expect(errors.filter((e) => e.includes("sem nome"))).toHaveLength(0);
     expect(skippedRows).toBe(0);
     expect(players).toHaveLength(2);
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { esquecerPaginas } from "@/lib/pwa/paginas";
-import { isSupabaseConfigured, logout as sessaoLogout, toSessaoAuth } from "@/lib/sessao";
+import { isSupabaseConfigured, logout as sessaoLogout, toSessaoAuth, type SessaoResult } from "@/lib/sessao";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -27,7 +27,7 @@ export function useAuth() {
         setUser(data.user ?? null);
       } catch (err) {
         console.error("[app] Session fetch error:", err);
-        setError("Erro ao carregar sessão");
+        setError("Não deu pra carregar a sessão.");
       } finally {
         setLoading(false);
       }
@@ -44,20 +44,21 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const logout = async () => {
+  /** Signs out and forgets the saved pages. The result says how it went, for the notice. */
+  const logout = async (): Promise<SessaoResult> => {
     if (!isSupabaseConfigured()) {
       setUser(null);
-      return;
+      return { ok: true, code: "logged_out" };
     }
     const result = await sessaoLogout(toSessaoAuth(createClient()));
     if (!result.ok) {
       console.error("[app] Logout error:", result.message);
-      setError("Erro ao fazer logout");
-      return;
+      return result;
     }
     // The pages saved for use with no signal are this person's: gone with the session.
     await esquecerPaginas();
     setUser(null);
+    return result;
   };
 
   return {

@@ -14,7 +14,7 @@ async function sortearRapido(page: Page) {
   const selected = Number((await drawButton.textContent())?.match(/\((\d+)\)/)?.[1]);
 
   await drawButton.click();
-  const config = page.getByRole("dialog").filter({ has: page.getByRole("heading", { name: "Configurar times" }) });
+  const config = page.getByRole("dialog").filter({ has: page.getByRole("heading", { name: "Quantos times?" }) });
   await config.getByRole("button", { name: "Sortear", exact: true }).click();
 
   const result = page.getByRole("dialog").filter({ has: page.getByRole("heading", { name: "Times sorteados" }) });

@@ -527,6 +527,35 @@ export async function concluirConfirmacao(auth: SessaoAuth, url: URL): Promise<{
   return { destino, aviso: sessaoToast(resultado, contexto) };
 }
 
+/** When the request never got an answer: the phone's signal, not the person. */
+const SEM_RESPOSTA = "Confira a conexão e tente de novo.";
+
+/**
+ * What Supabase's (English) error message means for the person, in their
+ * words, saying what to do. Never shows the English: an unknown message gets
+ * a plain "try again".
+ */
+export function explicarErro(mensagem: string | null | undefined): string {
+  const m = (mensagem ?? "").toLowerCase();
+  if (m.includes("invalid login credentials")) return "Email ou senha errados. Confira os dois, ou use Esqueci minha senha.";
+  if (m.includes("not confirmed")) return "Falta confirmar o email: abra o link que enviamos.";
+  if (m.includes("already registered") || m.includes("already been registered")) return "Esse email já tem conta. Entre com ele, ou use Esqueci minha senha.";
+  if (m.includes("different from the old")) return "A senha nova precisa ser diferente da atual.";
+  if (m.includes("weak") || m.includes("pwned") || m.includes("easy to guess")) return "Essa senha é fácil de adivinhar. Escolha outra.";
+  if (m.includes("password should be") || m.includes("at least 6")) return "A senha precisa de pelo menos 6 caracteres.";
+  if (m.includes("rate limit") || m.includes("for security purposes") || m.includes("too many")) {
+    return "Muitas tentativas seguidas. Espere um minuto e tente de novo.";
+  }
+  if (m.includes("expired") || m.includes("link is invalid") || m.includes("token")) return "O link venceu ou já foi usado. Peça outro.";
+  if (m.includes("invalid format") || m.includes("validate email") || m.includes("invalid email")) {
+    return "Esse email não parece certo. Confira se digitou direito.";
+  }
+  if (m.includes("signups not allowed") || m.includes("signup is disabled")) return "Contas novas estão fechadas no momento.";
+  if (m.includes("session missing") || m.includes("session not found")) return "Sua sessão acabou. Entre de novo.";
+  if (m.includes("fetch") || m.includes("network")) return SEM_RESPOSTA;
+  return "Tente de novo em instantes.";
+}
+
 /** Toast/copy mapping for adapters — single policy for shared codes. */
 export function sessaoToast(
   result: SessaoResult,
@@ -551,31 +580,22 @@ export function sessaoToast(
       case "signed_up":
         return {
           variant: "success",
-          title: "Conta criada!",
-          description:
-            "Abra o email e clique em Confirmar — isso evita que scanners invalidem o link.",
+          title: "Conta criada. Confirme pelo email.",
+          description: "Abra o link que enviamos e toque em Confirmar minha conta.",
           duration: 8000,
         };
       case "confirmed":
-        return { variant: "success", title: "Email confirmado! Você entrou." };
+        return { variant: "success", title: "Email confirmado. Você entrou." };
       case "resent":
-        return {
-          variant: "success",
-          title: "Email reenviado",
-          description: "Use o link mais recente. Links antigos deixam de valer.",
-        };
+        return { variant: "success", title: "Email reenviado.", description: "Só o link mais recente vale." };
       case "logged_out":
-        return { variant: "success", title: "Desconectado com sucesso!" };
+        return { variant: "success", title: "Você saiu." };
       case "password_changed":
-        return {
-          variant: "success",
-          title: "Senha atualizada",
-          description: "Use a nova senha no próximo login.",
-        };
+        return { variant: "success", title: "Senha trocada.", description: "Da próxima vez, entre com a nova." };
       case "recovery_sent":
         return {
           variant: "success",
-          title: "Link enviado",
+          title: "Link enviado.",
           description: "Se esse email tiver conta no Squadra, chega um link pra criar uma senha nova. Só o mais recente vale.",
           duration: 8000,
         };
@@ -591,176 +611,100 @@ export function sessaoToast(
   // A recovery link that no longer works: the way out is a new one.
   const linkDeRecuperacaoVencido = {
     variant: "error" as const,
-    title: "Esse link não vale mais",
+    title: "Esse link não vale mais.",
     description: "Peça outro em Esqueci minha senha. Só o mais recente funciona.",
     duration: 8000,
   };
+  const naoConfirmou = (description: string) => ({ variant: "error" as const, title: "Não deu pra confirmar o email.", description });
 
   switch (result.code) {
     case "recovery_failed":
-      return { variant: "error", title: "Não deu pra enviar o link", description: result.message };
+      return { variant: "error", title: "Não deu pra enviar o link.", description: explicarErro(result.message) };
     case "recovery_error":
-      return { variant: "error", title: "Erro ao enviar o link", description: "Algo deu errado. Tente novamente." };
+      return { variant: "error", title: "Não deu pra enviar o link.", description: SEM_RESPOSTA };
     case "password_set_failed":
-      return { variant: "error", title: "Não deu pra salvar a senha", description: result.message };
+      return { variant: "error", title: "Não deu pra salvar a senha.", description: explicarErro(result.message) };
     case "password_set_error":
-      return { variant: "error", title: "Erro ao salvar a senha", description: "Algo deu errado. Tente novamente." };
+      return { variant: "error", title: "Não deu pra salvar a senha.", description: SEM_RESPOSTA };
     case "recovery_required":
       return {
         variant: "error",
-        title: "Abra o link de recuperação",
+        title: "Abra o link de recuperação.",
         description: "Sem a senha atual, só pelo link de Esqueci minha senha. Sabendo a atual, troque em Você.",
         duration: 8000,
       };
     case "not_configured":
+      // Only a developer without .env.local sees this.
       return {
         variant: "error",
         title: "Configuração ausente",
-        description:
-          "Supabase não está configurado. Adicione as variáveis de ambiente.",
+        description: "Supabase não está configurado. Adicione as variáveis de ambiente.",
       };
     case "email_unconfirmed":
       return {
         variant: "error",
-        title: "Email não confirmado",
-        description:
-          "Confirme o email pelo link enviado (ou peça um novo reenvio).",
+        title: "Falta confirmar o email.",
+        description: "Abra o link que enviamos, ou peça outro em Reenviar email de confirmação.",
       };
     case "login_failed":
-      return {
-        variant: "error",
-        title: "Erro ao fazer login",
-        description: result.message,
-      };
+      if ((result.message ?? "").toLowerCase().includes("invalid login credentials")) {
+        return { variant: "error", title: "Email ou senha errados.", description: "Confira os dois, ou use Esqueci minha senha." };
+      }
+      return { variant: "error", title: "Não deu pra entrar.", description: explicarErro(result.message) };
     case "login_error":
-      return {
-        variant: "error",
-        title: "Erro",
-        description: "Algo deu errado. Tente novamente.",
-      };
+      return { variant: "error", title: "Não deu pra entrar.", description: SEM_RESPOSTA };
     case "password_mismatch":
-      return {
-        variant: "error",
-        title: "Senhas não conferem",
-        description: "Por favor, verifique suas senhas.",
-      };
+      return { variant: "error", title: "As senhas não batem.", description: "Digite a mesma senha nos dois campos." };
     case "password_too_short":
-      return {
-        variant: "error",
-        title: "Senha muito curta",
-        description: "A senha deve ter pelo menos 6 caracteres.",
-      };
+      return { variant: "error", title: "Senha curta demais.", description: "Use pelo menos 6 caracteres." };
     case "password_unchanged":
-      return {
-        variant: "error",
-        title: "Senha igual à atual",
-        description: "Escolha uma senha diferente da atual.",
-      };
+      return { variant: "error", title: "Essa já é a sua senha.", description: "Escolha uma diferente." };
     case "wrong_current_password":
-      return {
-        variant: "error",
-        title: "Senha atual incorreta",
-        description: "Confira a senha atual e tente de novo.",
-      };
+      return { variant: "error", title: "A senha atual não confere.", description: "Confira e tente de novo." };
     case "password_change_failed":
-      return {
-        variant: "error",
-        title: "Não foi possível alterar a senha",
-        description: result.message,
-      };
+      return { variant: "error", title: "Não deu pra trocar a senha.", description: explicarErro(result.message) };
     case "password_change_error":
-      return {
-        variant: "error",
-        title: "Erro ao alterar senha",
-        description: "Algo deu errado. Tente novamente.",
-      };
+      return { variant: "error", title: "Não deu pra trocar a senha.", description: SEM_RESPOSTA };
     case "signup_failed":
-      return {
-        variant: "error",
-        title: "Erro ao criar conta",
-        description: result.message,
-      };
+      return { variant: "error", title: "Não deu pra criar a conta.", description: explicarErro(result.message) };
     case "email_taken":
-      return {
-        variant: "error",
-        title: "Email já cadastrado",
-        description: "Tente fazer login ou recuperar a senha.",
-      };
+      return { variant: "error", title: "Esse email já tem conta.", description: "Entre com ele, ou use Esqueci minha senha." };
     case "signup_error":
-      return {
-        variant: "error",
-        title: "Erro",
-        description: "Algo deu errado. Tente novamente.",
-      };
+      return { variant: "error", title: "Não deu pra criar a conta.", description: SEM_RESPOSTA };
     case "email_required":
-      return {
-        variant: "error",
-        title: context === "recovery" ? "Informe o seu email" : "Informe o email para reenviar a confirmação",
-      };
+      return { variant: "error", title: context === "recovery" ? "Escreva o seu email." : "Escreva o email pra reenviar a confirmação." };
     case "resend_failed":
-      return {
-        variant: "error",
-        title: "Não foi possível reenviar",
-        description: result.message,
-      };
+      return { variant: "error", title: "Não deu pra reenviar.", description: explicarErro(result.message) };
     case "resend_error":
-      return { variant: "error", title: "Erro ao reenviar email" };
+      return { variant: "error", title: "Não deu pra reenviar.", description: SEM_RESPOSTA };
     case "expired_link":
       if (context === "recovery") return linkDeRecuperacaoVencido;
-      if (context === "watcher") {
-        return {
-          variant: "error",
-          title: "Link de confirmação inválido ou expirado",
-          description:
-            "Scanners de email costumam abrir o link antes de você. Use Reenviar email de confirmação e abra o link mais recente.",
-          duration: 9000,
-        };
-      }
+      // The one place that explains it: a mail scanner opened the link first.
       return {
         variant: "error",
-        title: "Link expirado ou inválido",
+        title: "Esse link não vale mais.",
         description:
-          "Peça um novo email de confirmação. Scanners de email costumam invalidar o link antigo.",
-        duration: 8000,
+          "Programas de email às vezes abrem o link antes de você. Peça outro em Reenviar email de confirmação e abra o mais recente.",
+        duration: 9000,
       };
     case "confirm_url_error":
-      return {
-        variant: "error",
-        title: context === "watcher" ? "Erro de autenticação" : "Erro na confirmação",
-        description: result.message,
-        duration: context === "watcher" ? 9000 : undefined,
-      };
+      return { ...naoConfirmou(explicarErro(result.message)), duration: context === "watcher" ? 9000 : undefined };
     case "pkce_failed":
       if (context === "recovery") {
         // Supabase's default email: the code only works in the browser that asked for the link.
         return { ...linkDeRecuperacaoVencido, description: "Abra o link no mesmo navegador em que pediu, ou peça outro em Esqueci minha senha." };
       }
-      return {
-        variant: "error",
-        title: "Erro ao autenticar",
-        description: result.message,
-      };
+      return naoConfirmou("Abra o link no mesmo navegador em que criou a conta, ou peça outro.");
     case "otp_failed":
       if (context === "recovery") return linkDeRecuperacaoVencido;
-      return {
-        variant: "error",
-        title:
-          context === "confirm" ? "Não foi possível confirmar" : "Erro ao confirmar",
-        description: result.message,
-      };
+      return naoConfirmou(explicarErro(result.message));
     case "confirm_error":
-      return {
-        variant: "error",
-        title:
-          context === "confirm"
-            ? "Erro ao confirmar email"
-            : "Erro ao processar confirmação",
-      };
+      return naoConfirmou(SEM_RESPOSTA);
     case "logout_failed":
     case "logout_error":
-      return { variant: "error", title: "Não deu pra sair agora", description: result.message };
+      return { variant: "error", title: "Não deu pra sair agora.", description: SEM_RESPOSTA };
     case "no_session":
-      return { variant: "error", title: "Entre de novo", description: "Sua sessão não foi encontrada." };
+      return { variant: "error", title: "Entre de novo.", description: "Sua sessão não foi encontrada." };
     default:
       return semCaso(result);
   }

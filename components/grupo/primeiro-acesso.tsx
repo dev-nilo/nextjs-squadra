@@ -4,9 +4,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { UserMenu } from "@/components/auth/user-menu";
 import { NomearGrupo } from "@/components/grupo/nomear-grupo";
-import { Button } from "@/components/ui/button";
 import { FullScreenLoader } from "@/components/ui/full-screen-loader";
-import { Surface } from "@/components/ui/surface";
+import { TelaDeAviso } from "@/components/ui/tela-de-aviso";
 import { caminhoDoConvite, convitePendente } from "@/lib/convite";
 import type { Participacao } from "@/lib/grupo";
 
@@ -35,19 +34,11 @@ export function PrimeiroAcesso() {
 export function ErroAoAbrirFut() {
   const router = useRouter();
   return (
-    <div className="min-h-dvh bg-background flex items-center justify-center p-4">
-      <Surface className="max-w-md flex flex-col gap-4">
-        <div>
-          <h1 className="text-title">Não deu pra abrir seu fut</h1>
-          <p className="text-muted mt-1">Confira a conexão e tente de novo.</p>
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <Button color="primary" radius="full" onClick={() => router.refresh()}>
-            Tentar de novo
-          </Button>
-          <UserMenu />
-        </div>
-      </Surface>
-    </div>
+    <TelaDeAviso
+      titulo="Não deu pra abrir seu fut"
+      texto="Confira a conexão e tente de novo."
+      tentarDeNovo={() => router.refresh()}
+      extra={<UserMenu />}
+    />
   );
 }

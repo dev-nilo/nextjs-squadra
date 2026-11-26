@@ -10,9 +10,9 @@ import {
     calculateOVR,
 } from "@/lib/jogador";
 import { StatSlider } from "./StatSlider";
-import { Upload, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/components/ui/modal";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -37,11 +37,13 @@ export const PlayerModal = ({
     const [image, setImage] = useState<string | null>(null);
     const [attributes, setAttributes] = useState<Attributes>(DEFAULT_ATTRIBUTES);
     const [salvando, setSalvando] = useState(false);
+    const [semNome, setSemNome] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const applyFormState = () => {
+            setSemNome(false);
             if (initialData) {
                 setName(initialData.name);
                 setPosition(initialData.position);
@@ -70,14 +72,14 @@ export const PlayerModal = ({
                 setImage(processedImage);
             } catch (error) {
                 console.error("Error processing image:", error);
-                toast.error("Erro ao processar imagem.");
+                toast.error("Não deu pra usar essa foto.", { description: "Tente outra imagem, em JPG ou PNG." });
             }
         }
     };
 
     const handleSubmit = async () => {
         if (!name.trim()) {
-            toast.error("Nome do jogador é obrigatório");
+            setSemNome(true);
             return;
         }
 
@@ -111,10 +113,19 @@ export const PlayerModal = ({
                         <Input
                             label="Nome do jogador"
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="Nome do jogador"
+                            onChange={(e) => {
+                                setName(e.target.value);
+                                if (e.target.value.trim()) setSemNome(false);
+                            }}
                             isRequired
+                            aria-invalid={semNome || undefined}
+                            aria-describedby={semNome ? "jogador-sem-nome" : undefined}
                         />
+                        {semNome && (
+                            <Alert tone="danger" id="jogador-sem-nome">
+                                Escreva o nome do jogador.
+                            </Alert>
+                        )}
 
                         <Select
                             label="Posição"
@@ -147,7 +158,6 @@ export const PlayerModal = ({
                             <div className="flex flex-wrap gap-2">
                                 <Button
                                     onClick={() => fileInputRef.current?.click()}
-                                    startContent={<Upload size={16} />}
                                     variant="flat"
                                     className="flex-1 sm:flex-none min-w-0"
                                 >
@@ -174,7 +184,7 @@ export const PlayerModal = ({
                             {image && (
                                 <div className="mt-2 p-3 sm:p-4 bg-default-100 rounded-lg flex justify-center">
                                     <img
-                                        src={image || "/placeholder.svg"}
+                                        src={image}
                                         alt="Prévia"
                                         className="max-h-32 sm:max-h-40 object-cover rounded-lg"
                                     />
@@ -260,7 +270,6 @@ export const PlayerModal = ({
                     color="primary"
                     onClick={handleSubmit}
                     isLoading={salvando}
-                    startContent={<Save size={18} />}
                     className="w-full sm:w-auto"
                 >
                     {initialData ? "Atualizar carta" : "Criar carta"}
