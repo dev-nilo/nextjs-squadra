@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
-import { abrirAba, admin, DEV_USER, SEED_PASSWORD, signIn } from "./support";
+import { abrirAba, admin, DEV_USER, salva, SEED_PASSWORD, signIn } from "./support";
 
 const FUT_DO_DEV = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
@@ -68,6 +68,9 @@ test("a membro sees who's in, can't manage anyone, and leaves from Você", { tag
     await signIn(page, membro.email);
     await page.goto("/g/fut-do-dev/voce");
     await expect(page.getByText("Você é membro do Fut do Dev")).toBeVisible();
+    // Opened, so saved for use with no signal (until they leave, below).
+    await page.waitForFunction(() => !!navigator.serviceWorker?.controller);
+    await expect.poll(() => salva(page, "/g/fut-do-dev/voce"), { timeout: 15_000 }).toBe(true);
 
     await page.getByRole("link", { name: /^Pessoas/ }).click();
     await expect(page.getByRole("region", { name: "Quem organiza" })).toBeVisible();
@@ -82,6 +85,8 @@ test("a membro sees who's in, can't manage anyone, and leaves from Você", { tag
     await page.getByRole("button", { name: "Sair do fut" }).click();
     // No other fut: the first-access screen.
     await expect(page.getByRole("heading", { name: "Dê um nome pro seu fut" })).toBeVisible();
+    // With no signal later, the app won't open the fut they left.
+    expect(await salva(page, "/g/fut-do-dev/voce")).toBe(false);
     const { data } = await admin().from("grupo_membros").select("user_id").eq("grupo_id", FUT_DO_DEV).eq("user_id", membro.id);
     expect(data).toEqual([]);
   } finally {

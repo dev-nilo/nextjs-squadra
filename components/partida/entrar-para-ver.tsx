@@ -28,11 +28,15 @@ export function EntrarParaVer() {
   );
 }
 
-/** The slug names a Grupo that doesn't exist or this user isn't in. */
+/**
+ * The slug names a Grupo that doesn't exist or this user isn't in.
+ * `data-fut-fora` tells the service worker to forget this fut's saved pages:
+ * someone removed from it mustn't keep opening it with no signal.
+ */
 export function FutNaoEncontrado() {
   return (
     <AuthShell>
-      <div className="flex flex-col items-center gap-4 text-center">
+      <div data-fut-fora="" className="flex flex-col items-center gap-4 text-center">
         <Logo className="h-12 w-12" />
         <div className="flex flex-col gap-1">
           <h1 className="text-title">Esse fut não existe</h1>

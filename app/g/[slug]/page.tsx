@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { MarcaOffline } from "@/components/fut/marca-offline";
 import { PartidaView } from "@/components/partida/partida-view";
 import { PartidasView } from "@/components/partida/partidas-view";
 import { carregarGrupo } from "@/lib/grupo-server";
@@ -24,10 +25,18 @@ export default async function InicioDoFut({ params }: { params: Promise<{ slug: 
   if (lida) {
     const { jogadores, ...inicial } = lida;
     return (
-      <PartidaView key={inicial.partida.id} grupo={grupo} userId={user.id} inicial={inicial} jogadores={jogadores} agora={agora} naInicio />
+      <>
+        <MarcaOffline />
+        <PartidaView key={inicial.partida.id} grupo={grupo} userId={user.id} inicial={inicial} jogadores={jogadores} agora={agora} naInicio />
+      </>
     );
   }
 
   const { partidas, frequencia } = await lerHistorico(supabase, grupo.id);
-  return <PartidasView grupo={grupo} partidas={partidas} frequencia={frequencia} agora={agora} />;
+  return (
+    <>
+      <MarcaOffline />
+      <PartidasView grupo={grupo} partidas={partidas} frequencia={frequencia} agora={agora} />
+    </>
+  );
 }

@@ -9,7 +9,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Participacao } from "@/lib/grupo";
-import { esquecerPaginas } from "@/lib/pwa/paginas";
+import { esquecerFut } from "@/lib/pwa/paginas";
 import { ConfirmarComNome } from "./confirmar-com-nome";
 
 /** The dono's controls over the fut itself: rename it, delete it. */
@@ -74,7 +74,7 @@ export function ZonaDePerigo({ grupo }: { grupo: Participacao }) {
             // What was typed goes along: the database checks it again.
             const resultado = await excluirFut(grupo.slug, digitado);
             if (!resultado.ok) return resultado.message;
-            await esquecerPaginas();
+            await esquecerFut(grupo.slug);
             toast.success(`${resultado.valor.nome} foi excluído`);
             // "/" opens the next fut you're in, or "Dê um nome pro seu fut".
             router.replace("/");

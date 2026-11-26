@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { MarcaOffline } from "@/components/fut/marca-offline";
 import { PartidasView } from "@/components/partida/partidas-view";
 import { carregarGrupo } from "@/lib/grupo-server";
 import { lerHistorico } from "@/lib/leitura-da-partida";
@@ -14,5 +15,10 @@ export default async function PartidasPage({ params }: { params: Promise<{ slug:
 
   const { supabase, grupo, agora } = ctx;
   const { partidas, frequencia } = await lerHistorico(supabase, grupo.id);
-  return <PartidasView grupo={grupo} partidas={partidas} frequencia={frequencia} agora={agora} />;
+  return (
+    <>
+      <MarcaOffline />
+      <PartidasView grupo={grupo} partidas={partidas} frequencia={frequencia} agora={agora} />
+    </>
+  );
 }
