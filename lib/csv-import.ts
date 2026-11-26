@@ -262,7 +262,7 @@ export function importPlayersFromCsv(csvText: string): CsvImportResult {
     const player = rowToPlayer(mapped);
     if (!player) {
       skippedRows++;
-      errors.push(`Linha ${i + 1}: nome ausente — ignorada.`);
+      errors.push(`Linha ${i + 1}: sem nome, ficou de fora.`);
       continue;
     }
 
@@ -272,7 +272,7 @@ export function importPlayersFromCsv(csvText: string): CsvImportResult {
       }
       if (value.trim() !== "" && coerceStat(value) === undefined) {
         errors.push(
-          `Linha ${i + 1} (${player.name}): valor inválido em "${key}" ("${value}") — usando padrão.`,
+          `Linha ${i + 1} (${player.name}): "${value}" em ${key} não é uma nota, ficou ${DEFAULT_ATTRIBUTES[key as keyof Attributes] ?? 60}.`,
         );
       }
     }

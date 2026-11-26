@@ -6,7 +6,7 @@ import { Logo } from "@/components/ui/logo";
 import { Player, Time } from "@/types";
 import { membrosPorNome } from "@/lib/sorteio";
 import { getTeamPresentation } from "@/lib/constants";
-import { ArrowLeftRight, Download, Loader2, Shuffle } from "lucide-react";
+import { ArrowLeftRight, Shuffle } from "lucide-react";
 import { toast } from "sonner";
 import { Modal, ModalHeader, ModalBody } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -88,11 +88,11 @@ export const DrawTeamsModal = ({
             link.download = `squadra-times-${stamp}.png`;
             link.href = dataUrl;
             link.click();
-            toast.success("PNG baixado", { description: "Imagem dos times salva com sucesso" });
+            toast.success("Imagem dos times baixada.");
         } catch (error) {
             console.error("[DrawTeamsModal] PNG export failed:", error);
-            toast.error("Erro ao gerar PNG", {
-                description: "Tente novamente. Imagens externas podem bloquear a exportação.",
+            toast.error("Não deu pra gerar a imagem.", {
+                description: "Uma foto que não carregou pode ter travado. Tente de novo.",
             });
         } finally {
             setIsExporting(false);
@@ -129,7 +129,6 @@ export const DrawTeamsModal = ({
                             variant="flat"
                             onClick={handleDownloadPng}
                             isLoading={isExporting}
-                            startContent={<Download size={16} />}
                             size="sm"
                             className="w-full sm:w-auto"
                         >
@@ -164,7 +163,7 @@ export const DrawTeamsModal = ({
                             <div className="flex items-center gap-3 min-w-0">
                                 <Logo className="h-10 w-10 sm:h-12 sm:w-12" />
                                 <div className="min-w-0">
-                                    <p className="text-lg sm:text-xl font-black text-brand tracking-tight leading-tight">
+                                    <p className="text-lg sm:text-2xl font-black text-brand tracking-tight leading-tight">
                                         Squadra
                                     </p>
                                     <p className="text-xs text-default-500 font-medium">
@@ -292,15 +291,6 @@ export const DrawTeamsModal = ({
                         </div>
                     </div>
 
-                    {isExporting && (
-                        <div
-                            className="flex items-center justify-center gap-2 text-sm text-default-500 mt-3"
-                            data-export-ignore="true"
-                        >
-                            <Loader2 size={16} className="animate-spin" />
-                            Gerando imagem...
-                        </div>
-                    )}
                 </div>
             </ModalBody>
         </Modal>

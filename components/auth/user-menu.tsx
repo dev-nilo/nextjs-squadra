@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { toast } from "sonner"
 import { ChangePasswordModal } from "@/components/auth/change-password-modal"
 import { useMenuFlutuante } from "@/components/ui/use-menu-flutuante"
+import { applySessaoToast } from "@/lib/sessao"
 
 export function UserMenu() {
   const { user, logout } = useAuth()
@@ -18,13 +19,15 @@ export function UserMenu() {
   if (!user) return null
 
   const handleLogout = async () => {
-    await logout()
-    toast.success("Desconectado com sucesso!")
+    const result = await logout()
+    applySessaoToast(result, "login", toast)
+    if (!result.ok) return
     // Server-rendered pages render again without the session: the sign-in screen.
     router.refresh()
   }
 
-  const initials = user.email?.substring(0, 2).toUpperCase() || "US"
+  // No email to take them from: a "?" rather than letters that mean nothing.
+  const initials = user.email?.substring(0, 2).toUpperCase() || "?"
 
   return (
     <>
@@ -47,7 +50,7 @@ export function UserMenu() {
         className="fixed m-0 min-w-[14rem] max-w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-divider bg-content1 p-1 text-foreground shadow-2xl"
       >
         <div className="flex flex-col gap-0.5 border-b border-divider px-3 py-3">
-          <p className="text-xs text-default-500">Logado como</p>
+          <p className="text-xs text-default-500">Sua conta</p>
           <p className="max-w-[16rem] truncate text-sm font-semibold">{user.email}</p>
         </div>
 
@@ -70,7 +73,7 @@ export function UserMenu() {
           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-danger hover:bg-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
         >
           <LogOut className="h-4 w-4" />
-          Desconectar
+          Sair
         </button>
       </div>
 

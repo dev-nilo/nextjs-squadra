@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/full-screen-loader";
+import { Logo } from "@/components/ui/logo";
 import { PasswordInput } from "@/components/ui/password-input";
 import { createClient } from "@/lib/supabase/client";
 import { applySessaoToast, definirNovaSenha, toSessaoAuth, veioDeUmLink } from "@/lib/sessao";
@@ -52,13 +52,13 @@ export default function NovaSenhaPage() {
   if (temSessao === null) return <LoadingState />;
 
   return (
-    <div>
-      <div className="flex flex-col gap-1 pb-6">
-        <div className="flex items-center gap-2">
-          <KeyRound size={22} className="text-primary" aria-hidden="true" />
+    <div className="flex flex-col gap-8">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <Logo className="h-12 w-12" />
+        <div className="flex flex-col gap-1">
           <h1 className="text-title">Senha nova</h1>
+          <p className="text-muted">Escolha a senha que você vai usar daqui pra frente.</p>
         </div>
-        <p className="text-muted">Escolha a senha que você vai usar daqui pra frente.</p>
       </div>
 
       {temSessao ? (
@@ -86,7 +86,7 @@ export default function NovaSenhaPage() {
             autoComplete="new-password"
           />
           <Button type="submit" color="primary" size="lg" radius="full" className="mt-2 w-full" isLoading={salvando}>
-            {salvando ? "Salvando..." : "Salvar senha nova"}
+            {salvando ? "Salvando…" : "Salvar senha nova"}
           </Button>
         </form>
       ) : (
@@ -94,8 +94,8 @@ export default function NovaSenhaPage() {
           <Alert tone="warning">
             Essa página abre pelo link de recuperação. Peça um em Esqueci minha senha e abra o mais recente. Sabendo a senha atual, troque em Você.
           </Alert>
-          <Button variant="flat" className="w-full" onClick={() => router.push("/auth")}>
-            Voltar ao login
+          <Button variant="flat" size="lg" radius="full" className="w-full" onClick={() => router.push("/auth")}>
+            Entrar
           </Button>
         </div>
       )}

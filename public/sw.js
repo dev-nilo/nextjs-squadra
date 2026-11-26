@@ -25,7 +25,7 @@ const CACHE_DE_PAGINAS = "squadra-paginas-v1";
 const CACHE_DE_ARQUIVOS = "squadra-arquivos-v1";
 const CACHE_DE_IMAGENS = "squadra-imagens-v1";
 // v2: offline.html changed (a way back to the saved pages).
-const CACHE_BASICO = "squadra-basico-v2";
+const CACHE_BASICO = "squadra-basico-v3";
 const CACHES = [CACHE_DE_PAGINAS, CACHE_DE_ARQUIVOS, CACHE_DE_IMAGENS, CACHE_BASICO];
 
 const CABECALHO_SALVO_EM = "x-squadra-salvo-em";

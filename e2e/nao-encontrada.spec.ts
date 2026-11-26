@@ -6,6 +6,6 @@ test("an address the app doesn't have shows Squadra's own page, with a 404", { t
   await expect(page.getByRole("heading", { name: "Essa página não existe" })).toBeVisible();
   await expect(page).toHaveTitle("Página não encontrada · Squadra");
 
-  await page.getByRole("link", { name: "Ir para o início" }).click();
+  await page.getByRole("link", { name: "Ir pro meu fut" }).click();
   await expect(page.getByRole("heading", { name: "Bora pro jogo!" })).toBeVisible();
 });

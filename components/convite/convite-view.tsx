@@ -11,6 +11,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { FullScreenLoader } from "@/components/ui/full-screen-loader";
 import { Logo } from "@/components/ui/logo";
+import { TelaDeAviso } from "@/components/ui/tela-de-aviso";
 import { useAuth } from "@/hooks/use-auth";
 import {
   caminhoDoConvite,
@@ -46,20 +47,8 @@ export function ConviteView({
 
   if (situacao !== "valido") {
     const problema = PROBLEMA_DO_CONVITE[situacao];
-    return (
-      <AuthShell>
-        <div className="flex flex-col items-center gap-4 text-center">
-          <Logo className="h-12 w-12" />
-          <div className="flex flex-col gap-1">
-            <h1 className="text-title">{problema.titulo}</h1>
-            <p className="text-sm text-default-500">{problema.texto}</p>
-          </div>
-          <Link href="/" className={linkClass}>
-            Ir pro Squadra
-          </Link>
-        </div>
-      </AuthShell>
-    );
+    // Someone opening their first invite may have no fut yet: "/" is the Squadra.
+    return <TelaDeAviso titulo={problema.titulo} texto={problema.texto} inicio="Ir pro Squadra" />;
   }
 
   const nome = grupoNome ?? "fut";
@@ -115,7 +104,7 @@ export function ConviteView({
         <div className="space-y-4">
           {erro && <Alert tone="danger">{erro}</Alert>}
           <Button color="primary" size="lg" radius="full" className="w-full" isLoading={entrando} onClick={entrar}>
-            {entrando ? "Entrando..." : `Entrar no ${nome}`}
+            {entrando ? "Entrando…" : `Entrar no ${nome}`}
           </Button>
           <p className="text-center text-sm text-default-500">
             Não é isso?{" "}

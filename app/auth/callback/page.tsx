@@ -27,12 +27,12 @@ function CallbackContent() {
     })();
   }, [router]);
 
-  return <LoadingState label="Processando autenticação..." />;
+  return <LoadingState label="Entrando…" />;
 }
 
 export default function AuthCallbackPage() {
   return (
-    <Suspense fallback={<LoadingState label="Processando autenticação..." />}>
+    <Suspense fallback={<LoadingState label="Entrando…" />}>
       <CallbackContent />
     </Suspense>
   );

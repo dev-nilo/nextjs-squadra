@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, DoorOpen, Download, KeyRound, LogOut, Unlink, UserCheck, Users } from "lucide-react";
+import { ChevronRight, Users } from "lucide-react";
 import { toast } from "sonner";
 import { sairDoFut } from "@/app/actions/pessoas";
 import { desvincularJogador } from "@/app/actions/vinculo";
@@ -13,6 +13,7 @@ import { PlayerCard } from "@/components/player/PlayerCard";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { capacidades } from "@/lib/capacidades";
+import { applySessaoToast } from "@/lib/sessao";
 import type { Participacao } from "@/lib/grupo";
 import { caminhoDasPessoas } from "@/lib/navegacao";
 import { O_QUE_O_PAPEL_FAZ } from "@/lib/pessoas";
@@ -60,8 +61,9 @@ export function VoceView({
   };
 
   const sair = async () => {
-    await logout();
-    toast.success("Você saiu.");
+    const resultado = await logout();
+    applySessaoToast(resultado, "login", toast);
+    if (!resultado.ok) return;
     // The fut's pages render again on the server without the session: the sign-in screen.
     router.refresh();
   };
@@ -77,7 +79,7 @@ export function VoceView({
             <div className="w-56 shrink-0">
               <PlayerCard player={meu} isMine completa />
             </div>
-            <Button variant="flat" size="sm" startContent={<Unlink size={16} />} onClick={desvincular} isDisabled={semConexao}>
+            <Button variant="flat" size="sm" onClick={desvincular} isDisabled={semConexao}>
               Desvincular minha conta
             </Button>
           </div>
@@ -86,7 +88,7 @@ export function VoceView({
             <p className="text-sm text-default-600">
               Você ainda não disse qual jogador é você nesse fut. É assim que o fut sabe quem confirmou presença.
             </p>
-            <Button color="primary" startContent={<UserCheck size={16} />} onClick={() => setEscolhendo(true)} isDisabled={semConexao}>
+            <Button color="primary" onClick={() => setEscolhendo(true)} isDisabled={semConexao}>
               Escolher meu jogador
             </Button>
           </div>
@@ -115,10 +117,10 @@ export function VoceView({
         <h2 className="text-label">Conta</h2>
         <p className="truncate text-sm text-default-600">{email}</p>
         <div className="flex flex-wrap gap-2">
-          <Button variant="flat" startContent={<KeyRound size={16} />} onClick={() => setTrocandoSenha(true)} isDisabled={semConexao}>
+          <Button variant="flat" onClick={() => setTrocandoSenha(true)} isDisabled={semConexao}>
             Alterar senha
           </Button>
-          <Button variant="flat" color="danger" startContent={<LogOut size={16} />} onClick={sair} isDisabled={semConexao}>
+          <Button variant="flat" color="danger" onClick={sair} isDisabled={semConexao}>
             Sair
           </Button>
         </div>
@@ -151,7 +153,6 @@ function InstalarApp() {
         {como === "pronto" ? (
           <Button
             color="primary"
-            startContent={<Download size={16} />}
             onClick={async () => {
               if (await instalar()) toast.success(INSTALOU);
             }}
@@ -212,7 +213,7 @@ function EsteFut({ grupo, pessoas, semConexao }: { grupo: Participacao; pessoas:
         </Link>
         <div className="px-4 py-3">
           {podeSair ? (
-            <Button variant="light" color="danger" size="sm" startContent={<DoorOpen size={16} />} onClick={sair} isDisabled={semConexao}>
+            <Button variant="light" color="danger" size="sm" onClick={sair} isDisabled={semConexao}>
               Sair do fut
             </Button>
           ) : (

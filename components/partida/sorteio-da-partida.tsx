@@ -93,7 +93,7 @@ export function SorteioDaPartida({
           >
             {OPCOES_DE_TIMES.map((n) => (
               <option key={n} value={n} disabled={!cabeNoSorteio(confirmados.length, n)}>
-                {n} Times
+                {n} times
               </option>
             ))}
           </Select>

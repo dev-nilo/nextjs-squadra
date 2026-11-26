@@ -278,21 +278,6 @@ html [data-sonner-toaster][data-theme] {
   }
 }
 
-@keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-scale-in {
-  animation: scale-in 0.3s ease-out;
-}
-
 /* A phone's sheet coming up from the bottom (Modal, below sm). */
 @keyframes subir {
   from {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { FileUp } from "lucide-react";
 import type { Player } from "@/types";
 import { importPlayersFromCsv } from "@/lib/csv-import";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/components/ui/modal";
@@ -58,7 +57,7 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
         setPreview([]);
         setSkippedRows(result.skippedRows);
         setParseErrors(result.errors);
-        setError(result.errors[0] ?? "Nenhum jogador encontrado no CSV.");
+        setError(result.errors[0] ?? "Nenhum jogador no arquivo. Confira se a primeira linha tem os cabeçalhos.");
         return;
       }
       setPreview(result.players);
@@ -66,7 +65,7 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
       setParseErrors(result.errors);
     } catch {
       setPreview([]);
-      setError("Não foi possível ler o arquivo (use UTF-8).");
+      setError("Não deu pra ler o arquivo. Salve o CSV em UTF-8 e tente de novo.");
     }
   };
 
@@ -78,7 +77,7 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
       reset();
       onClose();
     } catch {
-      setError("Falha ao importar os jogadores.");
+      setError("Não deu pra importar os jogadores. Confira a conexão e tente de novo.");
     } finally {
       setImporting(false);
     }
@@ -89,8 +88,7 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
       <ModalHeader className="flex flex-col gap-1">
         <h2 className="text-title">Importar CSV</h2>
         <p className="text-muted">
-          UTF-8, com os cabeçalhos JOGADOR, VEL, RES, CHU, PAS, POS, DEF, DRI, FIS
-          (ordem das colunas não importa)
+          Em UTF-8, com os cabeçalhos JOGADOR, VEL, RES, CHU, PAS, POS, DEF, DRI e FIS, em qualquer ordem.
         </p>
       </ModalHeader>
 
@@ -105,7 +103,6 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
 
         <Button
           variant="flat"
-          startContent={<FileUp size={16} />}
           onClick={() => inputRef.current?.click()}
           isDisabled={importing}
           className="w-full"
@@ -126,8 +123,8 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
         {preview.length > 0 && (
           <div className="rounded-xl border border-divider bg-default-50 p-3">
             <p className="text-sm font-medium text-foreground mb-2">
-              {preview.length} jogador(es) prontos
-              {skippedRows > 0 ? `, ${skippedRows} linha(s) ignorada(s)` : ""}
+              {preview.length === 1 ? "1 jogador pronto" : `${preview.length} jogadores prontos`}
+              {skippedRows === 1 ? ", 1 linha ficou de fora" : skippedRows > 1 ? `, ${skippedRows} linhas ficaram de fora` : ""}
             </p>
             <ul className="max-h-40 overflow-y-auto space-y-1 text-sm text-default-600">
               {preview.slice(0, 12).map((p) => (
@@ -140,7 +137,7 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
               ))}
               {preview.length > 12 && (
                 <li className="text-default-400">
-                  +{preview.length - 12} mais…
+                  e mais {preview.length - 12}
                 </li>
               )}
             </ul>
@@ -150,7 +147,7 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
         {parseErrors.length > 0 && preview.length > 0 && (
           <details className="text-xs text-default-500">
             <summary className="cursor-pointer">
-              {parseErrors.length} aviso(s) no parse
+              {parseErrors.length === 1 ? "1 linha com aviso" : `${parseErrors.length} linhas com aviso`}
             </summary>
             <ul className="mt-2 max-h-24 overflow-y-auto space-y-0.5">
               {parseErrors.slice(0, 20).map((msg, i) => (

@@ -47,7 +47,7 @@ test("a plain sign-up confirms the email in one hop to /, with one notice", asyn
     await expect(page.getByRole("heading", { name: "Dê um nome pro seu fut" })).toBeVisible();
     const avisos = page.locator("[data-sonner-toast]");
     await expect(avisos).toHaveCount(1);
-    await expect(avisos.first()).toContainText("Email confirmado! Você entrou.");
+    await expect(avisos.first()).toContainText("Email confirmado. Você entrou.");
   } finally {
     const service = admin();
     const { data } = await service.auth.admin.listUsers({ perPage: 1000 });
@@ -96,7 +96,7 @@ test("someone who forgot the password gets a link by email, sets a new one and s
       await p.getByPlaceholder("Email").fill(email);
       await p.getByPlaceholder("Senha").fill(SEED_PASSWORD);
       await p.getByRole("button", { name: "Entrar", exact: true }).click();
-      await expect(p.locator("[data-sonner-toast]").filter({ hasText: "Erro ao fazer login" })).toBeVisible();
+      await expect(p.locator("[data-sonner-toast]").filter({ hasText: "Email ou senha errados." })).toBeVisible();
 
       await p.getByPlaceholder("Senha").fill(NOVA);
       await p.getByRole("button", { name: "Entrar", exact: true }).click();

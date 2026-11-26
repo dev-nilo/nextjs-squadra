@@ -4,7 +4,6 @@ import { useId } from "react";
 import { Shuffle } from "lucide-react";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
-import { Alert } from "@/components/ui/alert";
 import { MAX_TIMES, MIN_TIMES } from "@/lib/sorteio-partida";
 
 interface RangeSliderProps {
@@ -79,10 +78,8 @@ export const TeamConfigModal = ({
     return (
         <Modal isOpen={isOpen} onClose={onClose} className="max-w-md">
             <ModalHeader className="flex flex-col gap-1">
-                <h2 className="text-title">Configurar times</h2>
-                <p className="text-muted">
-                    Quantos times, e o mínimo de jogadores em cada. Quem sobrar também entra num time.
-                </p>
+                <h2 className="text-title">Quantos times?</h2>
+                <p className="text-muted">E o mínimo de jogadores em cada. Quem sobrar também entra num time.</p>
             </ModalHeader>
 
             <ModalBody className="flex flex-col gap-5">
@@ -102,21 +99,11 @@ export const TeamConfigModal = ({
                     onChange={setMinimoPorTime}
                 />
 
-                <div className="rounded-xl border border-divider bg-default-50 p-4 space-y-2.5">
-                    <div className="flex items-center justify-between text-sm">
-                        <span className="text-default-600 font-medium">Necessários</span>
-                        <span className="font-semibold text-foreground tabular-nums">{required}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                        <span className="text-default-600 font-medium">Selecionados</span>
-                        <span className="font-semibold text-foreground tabular-nums">{selectedCount}</span>
-                    </div>
-                    <Alert tone={hasEnough ? "success" : "danger"} className="mt-1">
-                        {hasEnough
-                            ? "✓ Quantidade suficiente"
-                            : `✗ Faltam ${faltam} jogadores`}
-                    </Alert>
-                </div>
+                {/* Not an error: just how far the selection is from a Sorteio. */}
+                <p className="text-muted" aria-live="polite">
+                    {hasEnough ? "Dá pra sortear" : faltam === 1 ? "Falta 1 jogador" : `Faltam ${faltam} jogadores`}:{" "}
+                    {selectedCount === 1 ? "1 selecionado" : `${selectedCount} selecionados`}, e precisa de pelo menos {required}.
+                </p>
             </ModalBody>
 
             <ModalFooter>

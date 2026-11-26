@@ -94,7 +94,7 @@ export function ConvitesDoFut({ grupo }: { grupo: Participacao }) {
       {erro && <Alert tone="danger">{erro}</Alert>}
 
       {convites === null ? (
-        <p className="text-sm text-default-500">Carregando links...</p>
+        <p className="text-sm text-default-500">Carregando links…</p>
       ) : convites.length === 0 ? (
         <p className="text-sm text-default-500">Nenhum link ativo. Gere um pra mandar pra pelada.</p>
       ) : (

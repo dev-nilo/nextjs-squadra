@@ -28,7 +28,7 @@ test("the next Partida and the Elenco stay readable with no signal", { tag: "@mo
     // A page never saved: the offline page, with a way back to the saved ones.
     await page.goto("/g/fut-do-dev/pessoas");
     await expect(page.getByRole("heading", { name: "Sem conexão" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Abrir meu fut" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Ir pro meu fut" })).toBeVisible();
   } finally {
     await context.setOffline(false);
   }

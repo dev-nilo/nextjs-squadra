@@ -10,7 +10,7 @@ import {
 } from "@/lib/sessao";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 
 interface ChangePasswordModalProps {
   open: boolean;
@@ -63,37 +63,31 @@ export function ChangePasswordModal({
     <Modal isOpen={open} onClose={handleClose} className="max-w-md" onSubmit={handleSubmit}>
       <ModalHeader className="flex flex-col gap-1">
         <h2 className="text-title">Alterar senha</h2>
-        <p className="text-muted">
-          Defina uma senha nova para compartilhar a conta sem usar a senha antiga.
-        </p>
+        <p className="text-muted">Use pelo menos 6 caracteres.</p>
       </ModalHeader>
 
       <ModalBody className="flex flex-col gap-4">
-        <Input
+        <PasswordInput
           label="Senha atual"
           id="current-password"
-          type="password"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
           isDisabled={loading}
           isRequired
           autoComplete="current-password"
         />
-        <Input
+        <PasswordInput
           label="Nova senha"
           id="new-password"
-          type="password"
-          placeholder="Mínimo 6 caracteres"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           isDisabled={loading}
           isRequired
           autoComplete="new-password"
         />
-        <Input
+        <PasswordInput
           label="Confirmar nova senha"
           id="confirm-new-password"
-          type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           isDisabled={loading}

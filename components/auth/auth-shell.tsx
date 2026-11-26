@@ -23,19 +23,9 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
 
 function PitchPicture() {
   return (
-    <aside className="on-panel relative isolate order-1 flex min-h-56 flex-col justify-between overflow-hidden rounded-2xl bg-panel p-4 text-panel-foreground sm:min-h-72 sm:p-6 lg:order-2 lg:min-h-0 lg:p-8 baixa:order-2 baixa:min-h-0 baixa:p-4">
+    <aside className="on-panel relative isolate order-1 flex min-h-56 flex-col justify-end overflow-hidden rounded-2xl bg-panel p-4 text-panel-foreground sm:min-h-72 sm:p-6 lg:order-2 lg:min-h-0 lg:p-8 baixa:order-2 baixa:min-h-0 baixa:p-4">
       <NightPitch id="picture" className="absolute inset-0 -z-10 h-full w-full" />
       <KickableBall />
-      <ul className="flex justify-end gap-2" aria-label="Modalidades">
-        {["Futsal", "Society"].map((tag) => (
-          <li
-            key={tag}
-            className="rounded-full border border-panel-foreground/40 bg-panel/40 px-3 py-1 text-sm font-medium backdrop-blur-sm"
-          >
-            {tag}
-          </li>
-        ))}
-      </ul>
       <p className="text-display flex max-w-xl items-start gap-3 text-balance baixa:text-2xl">
         <Logo className="mt-0.5 h-7 w-7 sm:h-9 sm:w-9" />
         <span>

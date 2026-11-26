@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { FileUp, Pencil, Plus, Search, Shuffle, Trash2, Unlink, User, UserCheck } from "lucide-react";
+import { FileUp, Pencil, Plus, Search, Shuffle, Trash2, Unlink, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { excluirJogador, importarJogadores, salvarJogador } from "@/app/actions/jogador";
 import { desvincularJogador, vincularJogador } from "@/app/actions/vinculo";
@@ -257,7 +257,7 @@ export function ElencoView({
           <div className="flex flex-wrap gap-2">
             <div className="min-w-[10rem] flex-1">
               <Input
-                placeholder="Buscar jogador..."
+                placeholder="Buscar jogador…"
                 aria-label="Buscar jogador"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -273,21 +273,22 @@ export function ElencoView({
         )}
 
         {filteredPlayers.length === 0 ? (
-          <div className="px-2 py-12 text-center sm:py-16">
-            {searchQuery ? (
-              <User size={64} className="mx-auto mb-4 text-default-400" aria-hidden="true" />
-            ) : (
+          searchQuery ? (
+            <div className="flex flex-col items-center gap-3 px-2 py-12 text-center sm:py-16">
+              <p className="text-muted [overflow-wrap:anywhere]">Nenhum jogador com &ldquo;{searchQuery.trim()}&rdquo;.</p>
+              <Button variant="flat" size="sm" onClick={() => setSearchQuery("")}>
+                Limpar busca
+              </Button>
+            </div>
+          ) : (
+            <div className="px-2 py-12 text-center sm:py-16">
               <Logo className="mx-auto mb-4 h-20 w-20 opacity-90" />
-            )}
-            <p className="text-section">{searchQuery ? "Nenhuma carta encontrada" : "Nenhuma carta criada ainda"}</p>
-            <p className="text-muted mt-2">
-              {searchQuery
-                ? "Tente ajustar a busca"
-                : pode.editaElenco
-                  ? "Toque em Nova carta para começar"
-                  : "Quem organiza o fut cadastra os jogadores"}
-            </p>
-          </div>
+              <p className="text-section">Nenhuma carta criada ainda</p>
+              <p className="text-muted mt-2">
+                {pode.editaElenco ? "Toque em Nova carta para começar." : "Quem organiza o fut cadastra os jogadores."}
+              </p>
+            </div>
+          )
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
             {filteredPlayers.map((player) => (
