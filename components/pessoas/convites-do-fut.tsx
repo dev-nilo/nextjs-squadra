@@ -112,7 +112,7 @@ export function ConvitesDoFut({ grupo }: { grupo: Participacao }) {
                   className="w-full truncate rounded-lg border border-default-200 bg-default-50 px-2 py-1.5 font-mono text-base text-foreground mouse:text-xs focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </label>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
                   color="primary"

@@ -60,8 +60,9 @@ export function FolhaDaPessoa({ grupo, pessoa, onClose }: { grupo: Participacao;
     <>
       <Modal isOpen onClose={onClose} className="max-w-md">
         <ModalHeader className="flex flex-col gap-1">
-          <h2 className="text-title">{nome}</h2>
-          <p className="text-muted">
+          {/* An email as the name (no Jogador yet) has no spaces to break at. */}
+          <h2 className="text-title [overflow-wrap:anywhere]">{nome}</h2>
+          <p className="text-muted [overflow-wrap:anywhere]">
             {pessoa.jogador_nome && pessoa.email ? `${pessoa.email}, ` : !pessoa.jogador_nome ? "Sem jogador no elenco, " : ""}
             no fut desde {desde.format(new Date(pessoa.desde))}
           </p>

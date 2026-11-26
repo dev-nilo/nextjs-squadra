@@ -39,12 +39,13 @@ export function BarraDeAbas({ slug }: { slug: string }) {
       aria-label="Seções do fut"
       className="fixed inset-x-0 bottom-0 z-40 select-none border-t border-divider bg-content1/95 pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur-sm [-webkit-touch-callout:none] md:hidden"
     >
-      <ul className="mx-auto grid h-16 max-w-md grid-cols-3">
+      {/* On a short screen (a phone on its side) the bar keeps its icons and drops the words, which stay for screen readers. */}
+      <ul className="mx-auto grid h-16 max-w-md grid-cols-3 baixa:h-12">
         {ABAS.map((a) => {
           const Icone = ICONE[a.id];
           const atual = a.id === ativa;
           return (
-            <li key={a.id}>
+            <li key={a.id} className="min-w-0">
               <Link
                 href={caminhoDaAba(slug, a.id)}
                 aria-current={atual ? "page" : undefined}
@@ -54,7 +55,7 @@ export function BarraDeAbas({ slug }: { slug: string }) {
               >
                 {atual && <span aria-hidden="true" className="absolute top-0 h-1 w-8 rounded-b-full bg-accent" />}
                 <Icone size={22} strokeWidth={atual ? 2.4 : 1.8} aria-hidden="true" />
-                {a.rotulo}
+                <span className="baixa:sr-only">{a.rotulo}</span>
               </Link>
             </li>
           );

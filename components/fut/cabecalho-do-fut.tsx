@@ -20,7 +20,7 @@ export function CabecalhoDoFut({ grupo, participacoes }: { grupo: Participacao; 
 
   return (
     <header className="sticky top-0 z-40 select-none border-b border-divider bg-content1/95 pt-[env(safe-area-inset-top)] backdrop-blur-sm [-webkit-touch-callout:none]">
-      <div className="margem-lateral mx-auto flex h-14 max-w-5xl items-center gap-2 sm:gap-3">
+      <div className="margem-lateral mx-auto flex h-14 max-w-5xl items-center gap-2 sm:gap-3 baixa:h-12">
         <Link
           href={`/g/${encodeURIComponent(grupo.slug)}`}
           aria-label="Squadra, próxima partida"

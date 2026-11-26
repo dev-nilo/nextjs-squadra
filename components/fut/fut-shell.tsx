@@ -25,7 +25,7 @@ export function FutShell({
   return (
     <div className="min-h-dvh bg-background text-foreground">
       <CabecalhoDoFut grupo={grupo} participacoes={participacoes} />
-      <main className="margem-lateral mx-auto w-full max-w-5xl pb-[calc(5rem+env(safe-area-inset-bottom))] pt-5 sm:pt-8 md:pb-16">
+      <main className="margem-lateral mx-auto w-full max-w-5xl pb-[calc(5rem+env(safe-area-inset-bottom))] pt-5 sm:pt-8 md:pb-16 baixa:pb-[calc(4rem+env(safe-area-inset-bottom))] baixa:pt-4">
         <SemConexao />
         {children}
       </main>

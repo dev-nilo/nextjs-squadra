@@ -124,9 +124,10 @@ function ItemDaPartida({
           <span className={`font-bold capitalize text-foreground ${estado === "cancelada" ? "line-through" : ""}`}>
             {formatarInicio(partida.inicio)}
           </span>
-          <span className="flex items-center gap-1 truncate text-sm text-default-500">
+          <span className="flex min-w-0 items-center gap-1 text-sm text-default-500">
             <MapPin size={14} aria-hidden="true" className="shrink-0" />
-            {partida.local}
+            {/* truncate on the text itself: on the flex row it cut the place off with no "…". */}
+            <span className="truncate">{partida.local}</span>
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-2 text-sm">
@@ -173,12 +174,14 @@ function Frequencia({ linhas }: { linhas: FrequenciaDoJogador[] }) {
       </div>
       <ul className="flex flex-col divide-y divide-divider rounded-2xl border border-divider bg-content1">
         {linhas.map((l) => (
-          <li key={l.nome} aria-label={`${l.nome}: ${l.frequencia}%`} className="flex items-center gap-3 px-4 py-2.5">
-            <span className="w-32 shrink-0 truncate font-semibold text-foreground sm:w-40">{l.nome}</span>
-            <span aria-hidden="true" className="h-2 flex-1 overflow-hidden rounded-full bg-default-100">
+          // Phones: the name and the number on one line, the bar under them across the row.
+          // From sm up: name, bar, number side by side.
+          <li key={l.nome} aria-label={`${l.nome}: ${l.frequencia}%`} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2.5">
+            <span className="min-w-0 flex-1 truncate font-semibold text-foreground sm:w-40 sm:flex-none">{l.nome}</span>
+            <span aria-hidden="true" className="order-last h-2 basis-full overflow-hidden rounded-full bg-default-100 sm:order-none sm:basis-auto sm:flex-1">
               <span className="block h-full rounded-full bg-primary" style={{ width: `${l.frequencia}%` }} />
             </span>
-            <span className="w-24 shrink-0 text-right text-sm tabular-nums text-default-600">
+            <span className="shrink-0 whitespace-nowrap text-right text-sm tabular-nums text-default-600 sm:w-28">
               <span className="font-semibold text-foreground">{l.frequencia}%</span> ({l.presencas} de {l.partidas})
             </span>
           </li>

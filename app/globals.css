@@ -293,6 +293,16 @@ html [data-sonner-toaster][data-theme] {
   animation: scale-in 0.3s ease-out;
 }
 
+/* A phone's sheet coming up from the bottom (Modal, below sm). */
+@keyframes subir {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
 @keyframes coin-toss {
   0%,
   20% {

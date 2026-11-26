@@ -50,14 +50,17 @@ export function EscolherJogador({ slug, players, onClose }: { slug: string; play
       </ModalHeader>
 
       <ModalBody className="flex flex-col gap-4">
-        {erro && <Alert tone="danger">{erro}</Alert>}
+        {/* One scroller, the modal's: the search stays on top as the list goes by. */}
+        <div className="sticky -top-4 z-10 -mx-4 -mt-4 bg-content1 px-4 pb-1 pt-4 sm:-mx-6 sm:px-6">
+          <Input label="Buscar seu nome" value={busca} onChange={(e) => setBusca(e.target.value)} size="sm" autoComplete="off" />
+        </div>
 
-        <Input label="Buscar seu nome" value={busca} onChange={(e) => setBusca(e.target.value)} size="sm" autoComplete="off" />
+        {erro && <Alert tone="danger">{erro}</Alert>}
 
         {livres.length === 0 ? (
           <p className="text-sm text-default-500">Nenhum jogador livre com esse nome.</p>
         ) : (
-          <ul className="flex max-h-64 flex-col gap-1 overflow-y-auto" aria-label="Jogadores sem conta">
+          <ul className="flex flex-col gap-1" aria-label="Jogadores sem conta">
             {livres.map((p) => (
               <li key={p.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 hover:bg-default-100">
                 <span className="min-w-0">

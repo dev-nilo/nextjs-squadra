@@ -138,41 +138,45 @@ export function SorteioDaPartida({
       )}
 
       {times.length > 0 && (
-        <ol className="grid gap-3 sm:grid-cols-2">
-          {times.map((time, indice) => (
-            <li key={time.name} className="flex flex-col gap-2 rounded-2xl border border-divider bg-content1 p-4">
-              <div className="flex items-center justify-between gap-2">
-                <span className="flex items-center gap-2 font-bold text-foreground">
-                  <span aria-hidden="true" className={`h-3 w-3 rounded-full ${getTeamPresentation(indice).crest}`} />
-                  {time.name}
-                </span>
-                <span className="text-xs font-semibold tabular-nums text-default-500">OVR médio {time.avg}</span>
-              </div>
-              <ul className="flex flex-col gap-1" aria-label={`Jogadores do ${time.name}`}>
-                {membrosPorNome(time.members).map((jogador) => (
-                    <li key={jogador.id} className="flex items-center justify-between gap-2 text-sm">
-                      <span className="min-w-0 truncate text-foreground">
-                        {jogador.name} <span className="text-default-500">{jogador.position}</span>
-                      </span>
-                      {editavel && emDia && sorteio && (
-                        <MoverJogador
-                          ref={foco.refDo(jogador.id)}
-                          nome={jogador.name}
-                          indice={indice}
-                          times={times}
-                          disabled={pendente}
-                          onMover={(destino) => {
-                            foco.marcar(jogador.id);
-                            executar(() => moverNoSorteio(slug, partidaId, jogador.id, destino, sorteio.sorteado_em));
-                          }}
-                        />
-                      )}
-                    </li>
-                  ))}
-              </ul>
-            </li>
-          ))}
-        </ol>
+        // Two Times side by side only when this column is wide enough, not the screen:
+        // beside the list on a laptop the column is narrow.
+        <div className="[container-type:inline-size]">
+          <ol className="grid gap-3 [@container(min-width:30rem)]:grid-cols-2">
+            {times.map((time, indice) => (
+              <li key={time.name} className="flex flex-col gap-2 rounded-2xl border border-divider bg-content1 p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2 font-bold text-foreground">
+                    <span aria-hidden="true" className={`h-3 w-3 rounded-full ${getTeamPresentation(indice).crest}`} />
+                    {time.name}
+                  </span>
+                  <span className="text-xs font-semibold tabular-nums text-default-500">OVR médio {time.avg}</span>
+                </div>
+                <ul className="flex flex-col gap-1" aria-label={`Jogadores do ${time.name}`}>
+                  {membrosPorNome(time.members).map((jogador) => (
+                      <li key={jogador.id} className="flex items-center justify-between gap-2 text-sm">
+                        <span className="min-w-0 truncate text-foreground">
+                          {jogador.name} <span className="text-default-500">{jogador.position}</span>
+                        </span>
+                        {editavel && emDia && sorteio && (
+                          <MoverJogador
+                            ref={foco.refDo(jogador.id)}
+                            nome={jogador.name}
+                            indice={indice}
+                            times={times}
+                            disabled={pendente}
+                            onMover={(destino) => {
+                              foco.marcar(jogador.id);
+                              executar(() => moverNoSorteio(slug, partidaId, jogador.id, destino, sorteio.sorteado_em));
+                            }}
+                          />
+                        )}
+                      </li>
+                    ))}
+                </ul>
+              </li>
+            ))}
+          </ol>
+        </div>
       )}
     </section>
   );

@@ -43,10 +43,12 @@ const COLOR_STYLES: Record<ButtonColor, Record<ButtonVariant, string>> = {
 };
 
 // A small button keeps its look, but its tap area reaches 44px (the pseudo-element).
+// Heights are minimums: a long label ("Passar o fut pra …") wraps inside the button
+// instead of spilling out of it. `lg` is narrower on phones, so "Não vou" fits half a card.
 const SIZE_STYLES: Record<ButtonSize, string> = {
-  sm: "h-8 px-3 text-sm gap-1.5 after:absolute after:inset-x-0 after:-inset-y-1.5 after:content-['']",
-  md: "h-10 px-4 text-sm gap-2",
-  lg: "h-12 px-6 text-base gap-2",
+  sm: "min-h-8 py-1 px-3 text-sm gap-1.5 after:absolute after:inset-x-0 after:-inset-y-1.5 after:content-['']",
+  md: "min-h-10 py-1.5 px-4 text-sm gap-2",
+  lg: "min-h-12 py-2 px-4 sm:px-6 text-base gap-2",
 };
 
 const ICON_ONLY_SIZE: Record<ButtonSize, string> = {
@@ -82,7 +84,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       type={type}
       disabled={isDisabled || disabled || isLoading}
-      className={`relative inline-flex shrink-0 items-center justify-center font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+      className={`relative inline-flex shrink-0 items-center justify-center text-center font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
         isIconOnly ? ICON_ONLY_SIZE[size] : SIZE_STYLES[size]
       } ${radius === "full" ? "rounded-full" : "rounded-xl"} ${COLOR_STYLES[color][variant]} ${className}`}
       {...props}

@@ -230,8 +230,9 @@ export function ElencoView({
   return (
     <>
       <div className={`flex flex-col gap-4 ${selecionando ? "pb-24" : ""}`}>
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-title">
+        {/* On the narrowest phones the actions go under the title rather than off the screen. */}
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <h1 className="text-title whitespace-nowrap">
             Elenco <span className="font-normal text-default-500 tabular-nums">{players.length}</span>
           </h1>
           <div className="flex items-center gap-2">
@@ -253,8 +254,8 @@ export function ElencoView({
         {selecionando ? (
           <p className="text-muted">Toque nas cartas de quem vai jogar.</p>
         ) : (
-          <div className="flex gap-2">
-            <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap gap-2">
+            <div className="min-w-[10rem] flex-1">
               <Input
                 placeholder="Buscar jogador..."
                 aria-label="Buscar jogador"
@@ -263,7 +264,7 @@ export function ElencoView({
                 startContent={<Search size={18} className="shrink-0 text-default-400" />}
               />
             </div>
-            <Select value={sortBy} onChange={(e) => ordenar(e.target.value)} className="w-32 shrink-0 sm:w-40" aria-label="Ordenar por">
+            <Select value={sortBy} onChange={(e) => ordenar(e.target.value)} className="w-32 shrink-0 sm:w-40 max-[339px]:w-full" aria-label="Ordenar por">
               <option value="rating">Maior OVR</option>
               <option value="name">Nome</option>
               <option value="position">Posição</option>
@@ -307,7 +308,7 @@ export function ElencoView({
       {selecionando && (
         <section
           aria-label="Sortear rápido"
-          className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-divider bg-content1/95 shadow-2xl backdrop-blur-sm md:bottom-0 md:pb-[env(safe-area-inset-bottom)]"
+          className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 baixa:bottom-[calc(3rem+env(safe-area-inset-bottom))] border-t border-divider bg-content1/95 shadow-2xl backdrop-blur-sm md:bottom-0 md:pb-[env(safe-area-inset-bottom)]"
         >
           <div className="margem-lateral mx-auto flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 py-3">
             <p className="text-sm text-default-600">

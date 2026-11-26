@@ -4,14 +4,15 @@ import { KickableBall } from "./kickable-ball";
 /**
  * Full-screen auth layout, shared by `/` (no Sessão) and every `/auth` route.
  * A floating card over the night pitch: content column on the left, an inset pitch picture
- * on the right (a band on top on mobile).
+ * on the right (a band on top on mobile). On a short screen (a phone on its side) the two
+ * sit side by side as on a laptop, or the band would push the form off the screen.
  */
 export function AuthShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative isolate min-h-dvh bg-panel text-panel-foreground sm:p-3 lg:p-4">
       <NightPitch id="frame" className="fixed inset-0 -z-10 h-full w-full" />
-      <div className="grid min-h-dvh content-start gap-2 bg-background p-2 text-foreground shadow-2xl sm:min-h-[calc(100dvh-1.5rem)] sm:rounded-3xl sm:p-3 lg:min-h-[calc(100dvh-2rem)] lg:grid-cols-2 lg:content-stretch">
-        <main className="order-2 flex justify-center px-3 py-8 sm:py-12 lg:order-1 lg:items-center">
+      <div className="grid min-h-dvh content-start gap-2 bg-background p-2 text-foreground shadow-2xl sm:min-h-[calc(100dvh-1.5rem)] sm:rounded-3xl sm:p-3 lg:min-h-[calc(100dvh-2rem)] lg:grid-cols-2 lg:content-stretch baixa:grid-cols-2 baixa:content-stretch">
+        <main className="order-2 flex justify-center px-3 py-8 sm:py-12 lg:order-1 lg:items-center baixa:order-1 baixa:items-center baixa:py-4">
           <div className="w-full max-w-sm">{children}</div>
         </main>
         <PitchPicture />
@@ -22,7 +23,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
 
 function PitchPicture() {
   return (
-    <aside className="on-panel relative isolate order-1 flex min-h-56 flex-col justify-between overflow-hidden rounded-2xl bg-panel p-4 text-panel-foreground sm:min-h-72 sm:p-6 lg:order-2 lg:min-h-0 lg:p-8">
+    <aside className="on-panel relative isolate order-1 flex min-h-56 flex-col justify-between overflow-hidden rounded-2xl bg-panel p-4 text-panel-foreground sm:min-h-72 sm:p-6 lg:order-2 lg:min-h-0 lg:p-8 baixa:order-2 baixa:min-h-0 baixa:p-4">
       <NightPitch id="picture" className="absolute inset-0 -z-10 h-full w-full" />
       <KickableBall />
       <ul className="flex justify-end gap-2" aria-label="Modalidades">
@@ -35,7 +36,7 @@ function PitchPicture() {
           </li>
         ))}
       </ul>
-      <p className="text-display flex max-w-xl items-start gap-3 text-balance">
+      <p className="text-display flex max-w-xl items-start gap-3 text-balance baixa:text-2xl">
         <Logo className="mt-0.5 h-7 w-7 sm:h-9 sm:w-9" />
         <span>
           Pelada boa começa com time equilibrado.
