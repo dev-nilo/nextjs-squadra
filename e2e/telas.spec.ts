@@ -64,3 +64,14 @@ test("fields are at least 16px under a finger, so iOS doesn't zoom in", { tag: "
   const busca = page.getByPlaceholder(/Buscar jogador/);
   expect(await busca.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
 });
+
+test("on a fut's pages the phone's status bar takes the header's color", { tag: "@telas" }, async ({ page }) => {
+  await signIn(page, DEV_USER);
+  await abrirAba(page, "Elenco");
+  const tema = (esquema: string) => page.locator(`meta[name="theme-color"][media="(prefers-color-scheme: ${esquema})"]`);
+  await expect(tema("light")).toHaveAttribute("content", "#FFFFFF");
+  await expect(tema("dark")).toHaveAttribute("content", "#1B2A4C");
+  // The same color the header is painted with (content1 at 95%, over the canvas).
+  const fundo = await page.locator("header").first().evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(fundo).toMatch(/^rgba?\(255, 255, 255/);
+});

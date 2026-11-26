@@ -8,11 +8,13 @@ type PedidoDeInstalacao = Event & { prompt: () => Promise<void>; userChoice: Pro
 /**
  * How this browser can install Squadra:
  * - "pronto": Android / desktop Chrome and Edge, one tap through the native prompt;
- * - "ios": Safari on iPhone and iPad, by hand from the Share menu;
+ * - "ios": iPhone and iPad, by hand from the Share menu;
+ * - "outro-navegador": a link opened inside Instagram, Facebook and the like,
+ *   whose browser can't install anything: open it in the phone's browser first;
  * - "instalado": already running as the installed app;
  * - "indisponivel": anything else (or Chrome hasn't offered it yet).
  */
-export type ComoInstalar = "pronto" | "ios" | "instalado" | "indisponivel";
+export type ComoInstalar = "pronto" | "ios" | "outro-navegador" | "instalado" | "indisponivel";
 
 let pedido: PedidoDeInstalacao | null = null;
 let instalou = false;
@@ -48,12 +50,25 @@ function ehIOS(): boolean {
   return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
 }
 
+/** The browser inside a social app (Instagram, Facebook, Messenger, TikTok, LINE, Snapchat). */
+export function ehNavegadorDeApp(ua: string): boolean {
+  return /Instagram|FBAN|FBAV|FB_IAB|Messenger|musical_ly|BytedanceWebview|TikTok|\bLine\/|Snapchat/i.test(ua);
+}
+
 export function comoInstalar(): ComoInstalar {
   if (typeof window === "undefined") return "indisponivel";
   if (rodandoInstalado()) return "instalado";
   if (pedido) return "pronto";
+  if (ehNavegadorDeApp(navigator.userAgent)) return "outro-navegador";
   if (ehIOS()) return "ios";
   return "indisponivel";
+}
+
+/** Where to open the link when the in-app browser can't install: Safari on iPhone, Chrome on Android. */
+export function instrucoesOutroNavegador(): string {
+  return typeof navigator !== "undefined" && ehIOS()
+    ? "Abra este link no Safari (no menu ⋯, \"Abrir no navegador\") pra instalar."
+    : "Abra este link no Chrome (no menu ⋮, \"Abrir no navegador\") pra instalar.";
 }
 
 export function useComoInstalar(): ComoInstalar {
@@ -73,11 +88,25 @@ export async function instalar(): Promise<boolean> {
   const atual = pedido;
   pedido = null; // a prompt can be shown only once
   avisar();
-  await atual.prompt();
-  return (await atual.userChoice).outcome === "accepted";
+  try {
+    await atual.prompt();
+    return (await atual.userChoice).outcome === "accepted";
+  } catch {
+    // The browser refused to show it (no tap behind it, or already shown): nothing installed.
+    return false;
+  }
 }
 
-export const INSTRUCOES_IOS = "No Safari, toque em Compartilhar e depois em \"Adicionar à Tela de Início\".";
+/** Shown on success, wherever the install started. */
+export const INSTALOU = "Pronto, o Squadra está na sua tela inicial.";
+
+/**
+ * iPhone steps. Safari, Chrome and Firefox on iOS all have "Adicionar à Tela de
+ * Início" in the Share menu. The installed app keeps its own sign-in, apart
+ * from the browser's: say so, or the sign-in screen looks like a bug.
+ */
+export const INSTRUCOES_IOS =
+  "Toque em Compartilhar e depois em \"Adicionar à Tela de Início\". No app, você entra com seu email uma vez.";
 
 const JA_OFERECEU = "squadra:ofereceu-instalar";
 
@@ -87,6 +116,7 @@ const JA_OFERECEU = "squadra:ofereceu-instalar";
  */
 export function deveOferecerInstalacao(): boolean {
   const como = comoInstalar();
+  // Not inside Instagram & co.: "open it elsewhere" is no reward for answering.
   if (como !== "pronto" && como !== "ios") return false;
   try {
     if (localStorage.getItem(JA_OFERECEU)) return false;

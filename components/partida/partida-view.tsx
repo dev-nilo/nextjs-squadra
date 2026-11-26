@@ -15,7 +15,7 @@ import type { Participacao } from "@/lib/grupo";
 import { usePartidaAoVivo } from "@/hooks/use-partida-ao-vivo";
 import { capacidades, SO_LEITURA } from "@/lib/capacidades";
 import { useSemConexao } from "@/lib/pwa/conexao";
-import { deveOferecerInstalacao, instalar, INSTRUCOES_IOS, comoInstalar } from "@/lib/pwa/instalar";
+import { comoInstalar, deveOferecerInstalacao, INSTALOU, instalar, INSTRUCOES_IOS } from "@/lib/pwa/instalar";
 import type { JogadorDaLista, PartidaAoVivo } from "@/lib/leitura-da-partida";
 import { compartilharTexto } from "@/lib/compartilhar";
 import {
@@ -247,7 +247,14 @@ function oferecerInstalacao() {
   toast("Deixe o Squadra na tela inicial", {
     description: ios ? INSTRUCOES_IOS : "Na próxima, é só tocar no ícone pra responder.",
     duration: 12_000,
-    action: ios ? undefined : { label: "Instalar", onClick: () => void instalar() },
+    action: ios
+      ? undefined
+      : {
+          label: "Instalar",
+          onClick: async () => {
+            if (await instalar()) toast.success(INSTALOU);
+          },
+        },
   });
 }
 
@@ -281,7 +288,7 @@ function SuaPresenca({
         <p className="font-semibold text-foreground">Escolha seu jogador para responder.</p>
         <Link
           href={escolherHref}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-base font-medium text-primary-foreground transition-colors hover:bg-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-base font-medium text-primary-foreground transition-colors hover:bg-primary-600 active:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <UserCheck size={18} aria-hidden="true" /> Escolher meu jogador
         </Link>

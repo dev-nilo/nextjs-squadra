@@ -17,7 +17,7 @@ import type { Participacao } from "@/lib/grupo";
 import { caminhoDasPessoas } from "@/lib/navegacao";
 import { O_QUE_O_PAPEL_FAZ } from "@/lib/pessoas";
 import { useSemConexao } from "@/lib/pwa/conexao";
-import { instalar, INSTRUCOES_IOS, useComoInstalar } from "@/lib/pwa/instalar";
+import { INSTALOU, instalar, INSTRUCOES_IOS, instrucoesOutroNavegador, useComoInstalar } from "@/lib/pwa/instalar";
 import { esquecerFut } from "@/lib/pwa/paginas";
 import type { Player } from "@/types";
 
@@ -111,8 +111,6 @@ export function VoceView({
 
       <EsteFut grupo={grupo} pessoas={pessoas} semConexao={semConexao} />
 
-      <InstalarApp />
-
       <section aria-label="Conta" className="flex flex-col gap-3">
         <h2 className="text-label">Conta</h2>
         <p className="truncate text-sm text-default-600">{email}</p>
@@ -126,6 +124,9 @@ export function VoceView({
         </div>
       </section>
 
+      {/* Last: whether it shows is only known in the browser, so it never pushes anything down. */}
+      <InstalarApp />
+
       {escolhendo && <EscolherJogador slug={grupo.slug} players={jogadores} onClose={() => setEscolhendo(false)} />}
       <ChangePasswordModal open={trocandoSenha} email={email} onOpenChange={setTrocandoSenha} />
     </div>
@@ -134,8 +135,8 @@ export function VoceView({
 
 /**
  * "Instalar o app": the native prompt on Android and desktop Chrome / Edge,
- * the Share-menu steps on iPhone. Hidden once installed, and where the
- * browser can't install at all.
+ * the Share-menu steps on iPhone, "open it in the browser" inside Instagram
+ * and the like. Hidden once installed, and where the browser can't install.
  */
 function InstalarApp() {
   const como = useComoInstalar();
@@ -152,13 +153,15 @@ function InstalarApp() {
             color="primary"
             startContent={<Download size={16} />}
             onClick={async () => {
-              if (await instalar()) toast.success("Pronto, o Squadra está na sua tela inicial.");
+              if (await instalar()) toast.success(INSTALOU);
             }}
           >
             Instalar o app
           </Button>
         ) : (
-          <p className="text-sm font-semibold text-foreground">{INSTRUCOES_IOS}</p>
+          <p className="text-sm font-semibold text-foreground">
+            {como === "outro-navegador" ? instrucoesOutroNavegador() : INSTRUCOES_IOS}
+          </p>
         )}
       </div>
     </section>
