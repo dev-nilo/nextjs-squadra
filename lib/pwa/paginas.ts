@@ -1,19 +1,32 @@
 /**
- * The pages the app keeps for use with no signal: each fut's home (the next
- * Partida) and its Elenco. The service worker (`public/sw.js`) saves them when
- * they're opened and serves them read-only when the network fails. Keep the
- * names and the path rule here in step with `public/sw.js`.
+ * The pages the app keeps for use with no signal: every tab of each fut (the
+ * next Partida, Partidas, the Elenco, Você) and the last few Partidas opened.
+ * The service worker (`public/sw.js`) saves them when they're opened and
+ * serves them read-only when the network fails or hangs. Keep the names and
+ * the path rule here in step with `public/sw.js`.
  */
 
 /** The Cache Storage bucket with the saved pages. */
 export const CACHE_DE_PAGINAS = "squadra-paginas-v1";
 
+/** Where the service worker sends "/" with no signal (the last fut home it saved). */
+const ULTIMO_FUT = "/__squadra/ultimo-fut";
+
 /** The header the service worker stamps on a saved page: when it was saved (ms). */
 export const CABECALHO_SALVO_EM = "x-squadra-salvo-em";
 
-/** `/g/<slug>` or `/g/<slug>/elenco`: the pages worth having with no signal. */
+/** The <meta> name the service worker puts into a page it serves from its saved copy. */
+export const MARCA_DE_COPIA = "squadra-copia-salva";
+
+/** A fut's tabs and its Partidas: the pages worth having with no signal. */
 export function guardaOffline(pathname: string): boolean {
-  return /^\/g\/[^/]+(\/elenco)?\/?$/.test(pathname);
+  return /^\/g\/[^/]+(\/(elenco|partidas|voce|partidas\/[^/]+))?\/?$/.test(pathname);
+}
+
+/** Whether `pathname` is one of the fut `slug`'s pages. */
+export function ehDoFut(pathname: string, slug: string): boolean {
+  const fut = `/g/${encodeURIComponent(slug)}`;
+  return pathname === fut || pathname.startsWith(`${fut}/`);
 }
 
 const FUSO = "America/Sao_Paulo";
@@ -59,6 +72,24 @@ export function guardarPagina(url: string): void {
   const pedir = () => sw.controller?.postMessage({ tipo: "guardar", url });
   if (sw.controller) pedir();
   else sw.addEventListener("controllerchange", pedir, { once: true });
+}
+
+/**
+ * Forgets one fut's saved pages, when the person leaves it: with no signal
+ * the app mustn't open a fut they're no longer in. "/" stops going there too.
+ */
+export async function esquecerFut(slug: string): Promise<void> {
+  if (typeof caches === "undefined") return;
+  try {
+    const paginas = await caches.open(CACHE_DE_PAGINAS);
+    for (const chave of await paginas.keys()) {
+      if (ehDoFut(new URL(chave.url).pathname, slug)) await paginas.delete(chave);
+    }
+    const ultimo = await paginas.match(ULTIMO_FUT);
+    if (ultimo && ehDoFut(await ultimo.text(), slug)) await paginas.delete(ULTIMO_FUT);
+  } catch {
+    // Nothing saved, or storage blocked: nothing to forget.
+  }
 }
 
 /** Forgets every saved page on sign out, so the next person on this phone can't open your lists. Cached photos stay until the browser evicts them. */

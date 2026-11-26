@@ -18,6 +18,7 @@ import { caminhoDasPessoas } from "@/lib/navegacao";
 import { O_QUE_O_PAPEL_FAZ } from "@/lib/pessoas";
 import { useSemConexao } from "@/lib/pwa/conexao";
 import { instalar, INSTRUCOES_IOS, useComoInstalar } from "@/lib/pwa/instalar";
+import { esquecerFut } from "@/lib/pwa/paginas";
 import type { Player } from "@/types";
 
 /**
@@ -180,6 +181,8 @@ function EsteFut({ grupo, pessoas, semConexao }: { grupo: Participacao; pessoas:
       toast.error("Não deu pra sair", { description: resultado.message });
       return;
     }
+    // With no signal later, the app mustn't open a fut you're no longer in.
+    await esquecerFut(grupo.slug);
     toast.success(`Você saiu do ${resultado.valor.nome}`);
     // "/" opens the next fut you're in, or "Dê um nome pro seu fut".
     router.replace("/");

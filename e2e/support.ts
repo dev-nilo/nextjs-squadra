@@ -39,6 +39,10 @@ export async function acaoDaCarta(page: Page, name: string, acao: string) {
   await page.getByRole("button", { name: acao, exact: true }).click();
 }
 
+/** Whether the service worker has saved `pathname` for use with no signal. */
+export const salva = (page: Page, pathname: string) =>
+  page.evaluate(async (p) => !!(await (await caches.open("squadra-paginas-v1")).match(p)), pathname);
+
 function escapeRegExp(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

@@ -8,24 +8,25 @@
     <title>Sem conexão · Squadra</title>
     <!-- Served by the service worker with no signal: everything it needs is in this file. -->
     <style>
+      /* The app's tokens (app/globals.css): background, foreground, default-500, primary. */
       :root {
         --fundo: #f2f4f7;
-        --texto: #14213d;
-        --suave: #5b6478;
+        --texto: #121b30;
+        --suave: #505a6e;
         --marca: #14213d;
         --marca-fundo: #f4ede0;
         --botao: #14213d;
-        --botao-texto: #f4ede0;
+        --botao-texto: #f2f4f7;
         color-scheme: light dark;
       }
       @media (prefers-color-scheme: dark) {
         :root {
           --fundo: #14213d;
-          --texto: #f4ede0;
-          --suave: #b7bfd0;
+          --texto: #f2f4f7;
+          --suave: #b0bace;
           --marca: #f4ede0;
           --marca-fundo: #14213d;
-          --botao: #f4ede0;
+          --botao: #96ace0;
           --botao-texto: #14213d;
         }
       }
@@ -65,6 +66,15 @@
         color: var(--suave);
         line-height: 1.5;
       }
+      a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 0 12px;
+        color: var(--texto);
+        font-weight: 600;
+        text-underline-offset: 4px;
+      }
       button {
         margin-top: 12px;
         height: 48px;
@@ -77,6 +87,7 @@
         font-weight: 600;
         cursor: pointer;
       }
+      a:focus-visible,
       button:focus-visible {
         outline: 2px solid var(--texto);
         outline-offset: 3px;
@@ -91,8 +102,10 @@
         <circle cx="50" cy="50" r="44" fill="none" stroke="var(--marca)" stroke-width="9" />
       </svg>
       <h1>Sem conexão</h1>
-      <p>Essa tela ainda não foi aberta com internet neste aparelho. A próxima partida e o elenco que você já abriu continuam aqui sem sinal.</p>
+      <p>Essa tela ainda não foi aberta com internet neste aparelho. As telas do seu fut que você já abriu continuam aqui sem sinal.</p>
       <button type="button" onclick="location.reload()">Tentar de novo</button>
+      <!-- With no signal "/" goes to the last fut saved on this phone. -->
+      <a href="/">Abrir meu fut</a>
     </main>
     <script>
       // Back online: try again on its own.

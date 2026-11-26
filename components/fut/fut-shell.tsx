@@ -10,8 +10,8 @@ import { SemConexao } from "./sem-conexao";
  * content. On phones the bottom of the page leaves room for the tab bar
  * (h-16) and the home indicator.
  *
- * `data-guardar-offline` tells the service worker this page rendered a fut
- * for someone signed in, so it may keep it for use with no signal.
+ * Each page marks itself for the service worker to save (MarcaOffline), not
+ * this frame: see why there.
  */
 export function FutShell({
   grupo,
@@ -23,7 +23,7 @@ export function FutShell({
   children: React.ReactNode;
 }) {
   return (
-    <div data-guardar-offline className="min-h-dvh bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       <CabecalhoDoFut grupo={grupo} participacoes={participacoes} />
       <main className="margem-lateral mx-auto w-full max-w-5xl pb-[calc(5rem+env(safe-area-inset-bottom))] pt-5 sm:pt-8 md:pb-16">
         <SemConexao />

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { z } from "zod";
 import Link from "next/link";
+import { MarcaOffline } from "@/components/fut/marca-offline";
 import { PartidaView } from "@/components/partida/partida-view";
 import { carregarGrupo } from "@/lib/grupo-server";
 import { lerPartida } from "@/lib/leitura-da-partida";
@@ -24,7 +25,10 @@ export default async function PartidaPage({ params }: { params: Promise<{ slug: 
   const { jogadores, ...inicial } = lida;
 
   return (
-    <PartidaView grupo={grupo} userId={user.id} inicial={inicial} jogadores={jogadores} agora={agora} />
+    <>
+      <MarcaOffline />
+      <PartidaView grupo={grupo} userId={user.id} inicial={inicial} jogadores={jogadores} agora={agora} />
+    </>
   );
 }
 

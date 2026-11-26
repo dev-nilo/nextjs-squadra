@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { MarcaOffline } from "@/components/fut/marca-offline";
 import { ElencoView } from "@/components/elenco/elenco-view";
 import { carregarGrupo } from "@/lib/grupo-server";
 import { COLUNAS_DO_JOGADOR, jogadorDaLinha, type LinhaDoJogador } from "@/lib/jogador";
@@ -18,12 +19,15 @@ export default async function ElencoPage({ params }: { params: Promise<{ slug: s
   if (error) throw new Error(`Could not load the Elenco: ${error.message}`);
 
   return (
-    <ElencoView
-      // A new Grupo starts with a clean search, selection and draw.
-      key={grupo.id}
-      grupo={grupo}
-      jogadores={((linhas ?? []) as unknown as LinhaDoJogador[]).map(jogadorDaLinha)}
-      userId={user.id}
-    />
+    <>
+      <MarcaOffline />
+      <ElencoView
+        // A new Grupo starts with a clean search, selection and draw.
+        key={grupo.id}
+        grupo={grupo}
+        jogadores={((linhas ?? []) as unknown as LinhaDoJogador[]).map(jogadorDaLinha)}
+        userId={user.id}
+      />
+    </>
   );
 }

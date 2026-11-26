@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { MarcaOffline } from "@/components/fut/marca-offline";
 import { VoceView } from "@/components/voce/voce-view";
 import { carregarGrupo } from "@/lib/grupo-server";
 import { COLUNAS_DO_JOGADOR, jogadorDaLinha, type LinhaDoJogador } from "@/lib/jogador";
@@ -29,13 +30,16 @@ export default async function VocePage({ params }: { params: Promise<{ slug: str
   const { count: pessoas } = await supabase.from("grupo_membros").select("user_id", { count: "exact", head: true }).eq("grupo_id", grupo.id);
 
   return (
-    <VoceView
-      pessoas={pessoas ?? 0}
-      grupo={grupo}
-      jogadores={jogadores}
-      meu={meu}
-      email={user.email ?? ""}
-      frequencia={frequencia && frequencia.partidas > 0 ? (frequencia as { partidas: number; presencas: number; frequencia: number }) : null}
-    />
+    <>
+      <MarcaOffline />
+      <VoceView
+        pessoas={pessoas ?? 0}
+        grupo={grupo}
+        jogadores={jogadores}
+        meu={meu}
+        email={user.email ?? ""}
+        frequencia={frequencia && frequencia.partidas > 0 ? (frequencia as { partidas: number; presencas: number; frequencia: number }) : null}
+      />
+    </>
   );
 }

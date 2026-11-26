@@ -46,6 +46,10 @@ export function PlayerAvatar({
             {showImage ? (
                 <img
                     src={src!}
+                    // CORS, so the service worker keeps a real copy (an opaque one costs megabytes of quota).
+                    crossOrigin="anonymous"
+                    loading="lazy"
+                    decoding="async"
                     alt={name || ""}
                     className="h-full w-full object-cover"
                     onError={() => setImageFailed(true)}

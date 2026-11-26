@@ -88,6 +88,9 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
     <span className="flex items-center gap-[2cqw] text-[6cqw] font-semibold text-paper-foreground/70">
       <img
         src={getFlagUrl(countryCode)}
+        crossOrigin="anonymous"
+        loading="lazy"
+        decoding="async"
         alt={getCountryName(countryCode)}
         width={24}
         height={16}
@@ -142,7 +145,7 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
             <>
               <div className={`relative isolate bg-paper ${completa ? "aspect-[4/5]" : "min-h-0 flex-1"}`}>
                 {/* Duotone: the photo in grey multiplied onto Papel, then the navy ink lightened in, so black prints navy. */}
-                <img src={player.image!} alt="" className="absolute inset-0 h-full w-full object-cover object-top mix-blend-multiply grayscale contrast-125" />
+                <img src={player.image!} alt="" crossOrigin="anonymous" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover object-top mix-blend-multiply grayscale contrast-125" />
                 <div aria-hidden="true" className="absolute inset-0 bg-paper-foreground mix-blend-lighten" />
                 {vira && (
                   // The back of the sticker: the attributes over the photo, on hover or after a tap.
