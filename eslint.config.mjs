@@ -16,7 +16,7 @@ const designTokenRule = (pattern, message) => [
 const eslintConfig = [
   ...nextConfig,
   {
-    files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"],
+    files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}", "src/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-syntax": [
         "error",

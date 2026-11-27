@@ -19,6 +19,8 @@
       }
     ],
     "paths": {
+      "@/modulos/*": ["./src/modulos/*"],
+      "@/compartilhado/*": ["./src/compartilhado/*"],
       "@/*": ["./*"]
     },
     "noUncheckedIndexedAccess": true,
