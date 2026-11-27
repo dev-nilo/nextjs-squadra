@@ -164,6 +164,7 @@ Then run `npm run dev` and open http://localhost:3000. The seed users all use th
 | `npm run test:local` | What the CI's database job runs, against the local Supabase: RLS and integration tests, then a production build and Playwright. `-- integration` or `-- e2e` runs one half |
 | `npm run test:integration` / `npm run test:e2e` | The same halves without the setup: export `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL` (integration only) and the two `NEXT_PUBLIC_` ones from `npx supabase status` yourself, and run `npm run build` before E2E |
 | `npm run lint` / `npm run typecheck` | |
+| `npm run format` / `npm run format:check` | Format with Prettier, or only check (CI runs the check). Markdown, SQL and HTML are left as written (`.prettierignore`) |
 | `npm run db:reset` | Rebuild the local database from migrations and seed |
 
 `test:local` reads the URL and keys from `supabase status` and blanks the Sentry variables. That matters if your `.env.local` came from `vercel env pull`: it then holds the real Sentry token and DSN, so a plain `npm run build` uploads source maps and a plain E2E run reports its errors to Sentry, tagged `development`. Next never overrides a variable that is already set, even an empty one, so the script's values win over `.env.local`.

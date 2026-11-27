@@ -39,13 +39,18 @@ async function partida(dono: TestUser, grupoId: string) {
 }
 
 const confirmar = async (dono: TestUser, partidaId: string, ...jogadores: string[]) => {
-  for (const j of jogadores) await dono.client.rpc("responder_presenca", { partida: partidaId, jogador: j, vou: true }).throwOnError();
+  for (const j of jogadores)
+    await dono.client.rpc("responder_presenca", { partida: partidaId, jogador: j, vou: true }).throwOnError();
 };
 const sortear = (dono: TestUser, partidaId: string, times: string[][]) =>
   dono.client.rpc("salvar_sorteio", { partida: partidaId, times }).throwOnError();
 /** Moves a Partida's start, as if time had passed. */
 const comecouHa = (partidaId: string, h: number) =>
-  service().from("partidas").update({ inicio: horas(-h) }).eq("id", partidaId).throwOnError();
+  service()
+    .from("partidas")
+    .update({ inicio: horas(-h) })
+    .eq("id", partidaId)
+    .throwOnError();
 
 describe("lerPartida", () => {
   it("gives the dono the draft Sorteio, a membro only a published one, and an outsider nothing", async () => {
@@ -80,9 +85,17 @@ describe("lerHistorico", () => {
   it("lists Partidas newest first with who played, only published Times, and Frequência from highest", async () => {
     const dono = await user("dono");
     const grupoId = await grupoCom(dono);
-    const [bia, ana, caio] = [await jogador(dono, grupoId, "Bia"), await jogador(dono, grupoId, "Ana"), await jogador(dono, grupoId, "Caio")];
+    const [bia, ana, caio] = [
+      await jogador(dono, grupoId, "Bia"),
+      await jogador(dono, grupoId, "Ana"),
+      await jogador(dono, grupoId, "Caio"),
+    ];
     // They've been in the Elenco for days, so the Partidas below count for them.
-    await service().from("players").update({ created_at: horas(-72) }).in("id", [bia, ana, caio]).throwOnError();
+    await service()
+      .from("players")
+      .update({ created_at: horas(-72) })
+      .in("id", [bia, ana, caio])
+      .throwOnError();
 
     const p1 = await partida(dono, grupoId);
     await confirmar(dono, p1, bia, ana);
@@ -99,7 +112,11 @@ describe("lerHistorico", () => {
     await confirmar(dono, cancelada, caio);
     // Moved into the past first: once cancelled, a Partida can't change (#87).
     await comecouHa(cancelada, 12);
-    await dono.client.from("partidas").update({ cancelada_em: horas(0) }).eq("id", cancelada).throwOnError();
+    await dono.client
+      .from("partidas")
+      .update({ cancelada_em: horas(0) })
+      .eq("id", cancelada)
+      .throwOnError();
 
     const proxima = await partida(dono, grupoId);
     // Joined today: no Partida to count yet, so not in the Frequência.

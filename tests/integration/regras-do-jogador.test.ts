@@ -36,9 +36,12 @@ async function futCom(label: string) {
 /** Uploads a file and returns the public URL the app would save, with its ?v=. */
 async function foto(quem: TestUser, caminho: string) {
   paths.push(caminho);
-  await quem.client.storage.from(BUCKET).upload(caminho, JPG, { upsert: true, contentType: "image/jpeg" }).then(({ error }) => {
-    if (error) throw error;
-  });
+  await quem.client.storage
+    .from(BUCKET)
+    .upload(caminho, JPG, { upsert: true, contentType: "image/jpeg" })
+    .then(({ error }) => {
+      if (error) throw error;
+    });
   return `${quem.client.storage.from(BUCKET).getPublicUrl(caminho).data.publicUrl}?v=${Date.now()}`;
 }
 
@@ -48,11 +51,19 @@ const atualizar = (quem: TestUser, id: string, campos: Record<string, unknown>) 
 describe("the Jogador's rules live in the table (#84)", () => {
   it("refuses a blank or long name, an unknown position and a bad nationality", async () => {
     const { dono, jogador } = await futCom("regras");
-    for (const campos of [{ name: "   " }, { name: "x".repeat(41) }, { position: "ZAG" }, { nationality: "Brasil" }, { nationality: "br" }]) {
+    for (const campos of [
+      { name: "   " },
+      { name: "x".repeat(41) },
+      { position: "ZAG" },
+      { nationality: "Brasil" },
+      { nationality: "br" },
+    ]) {
       const { error } = await atualizar(dono, jogador, campos);
       expect(error?.code, JSON.stringify(campos)).toBe("23514");
     }
-    expect((await atualizar(dono, jogador, { name: "x".repeat(40), position: "GOL", nationality: "AR" })).error).toBeNull();
+    expect(
+      (await atualizar(dono, jogador, { name: "x".repeat(40), position: "GOL", nationality: "AR" })).error,
+    ).toBeNull();
   });
 });
 
@@ -69,7 +80,10 @@ describe("a card's photo is a file in its Grupo's folder (#84, #89)", () => {
     const { dono, grupo, jogador } = await futCom("foto-dono");
     const outro = await futCom("foto-outro");
     const deOutroFut = await foto(outro.dono, `${outro.grupo}/${outro.jogador}.jpg`);
-    const base = dono.client.storage.from(BUCKET).getPublicUrl(`${grupo}/x.jpg`).data.publicUrl.replace(/\/x\.jpg$/, "");
+    const base = dono.client.storage
+      .from(BUCKET)
+      .getPublicUrl(`${grupo}/x.jpg`)
+      .data.publicUrl.replace(/\/x\.jpg$/, "");
 
     for (const [caso, url] of [
       ["another site", "https://example.com/gato.jpg"],

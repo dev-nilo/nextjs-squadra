@@ -56,18 +56,7 @@ const HEADER_ALIASES: Record<string, string> = {
 };
 
 /** Spreadsheet extras — ignored; OVR is recomputed from attributes. */
-const SKIP_HEADERS = new Set([
-  "#",
-  "n",
-  "nr",
-  "id",
-  "media",
-  "avg",
-  "average",
-  "total",
-  "ovr",
-  "rating",
-]);
+const SKIP_HEADERS = new Set(["#", "n", "nr", "id", "media", "avg", "average", "total", "ovr", "rating"]);
 
 export type CsvImportResult = {
   players: Player[];
@@ -139,9 +128,7 @@ export function parseCsvRows(text: string): string[][] {
   if (lines.length === 0) return [];
 
   const delimiter = detectDelimiter(lines[0]);
-  return lines.map((line) =>
-    splitCsvLine(line, delimiter).map((c) => c.trim()),
-  );
+  return lines.map((line) => splitCsvLine(line, delimiter).map((c) => c.trim()));
 }
 
 function mapHeaders(rawHeaders: string[]): (string | null)[] {
@@ -164,9 +151,7 @@ function findHeaderRowIndex(rows: string[][]): number {
 function parsePosition(value: unknown): PlayerPosition {
   if (typeof value !== "string") return "ATA";
   const upper = value.trim().toUpperCase();
-  return POSITIONS.includes(upper as PlayerPosition)
-    ? (upper as PlayerPosition)
-    : "ATA";
+  return POSITIONS.includes(upper as PlayerPosition) ? (upper as PlayerPosition) : "ATA";
 }
 
 /** A CSV cell as a whole attribute value: "82.6" → 83, blank or text → undefined. */
@@ -230,9 +215,7 @@ export function importPlayersFromCsv(csvText: string): CsvImportResult {
     return {
       players: [],
       skippedRows: 0,
-      errors: [
-        'Coluna de nome não encontrada. Use "JOGADOR" ou "name" no cabeçalho.',
-      ],
+      errors: ['Coluna de nome não encontrada. Use "JOGADOR" ou "name" no cabeçalho.'],
     };
   }
 

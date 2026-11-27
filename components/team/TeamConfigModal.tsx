@@ -7,119 +7,107 @@ import { Button } from "@/components/ui/button";
 import { MAX_TIMES, MIN_TIMES } from "@/lib/sorteio-partida";
 
 interface RangeSliderProps {
-    label: string;
-    min: number;
-    max: number;
-    value: number;
-    onChange: (value: number) => void;
+  label: string;
+  min: number;
+  max: number;
+  value: number;
+  onChange: (value: number) => void;
 }
 
 const RangeSlider = ({ label, min, max, value, onChange }: RangeSliderProps) => {
-    const inputId = useId();
-    const listId = useId();
+  const inputId = useId();
+  const listId = useId();
 
-    return (
-        <div className="flex w-full flex-col gap-1.5">
-            <div className="flex items-center justify-between text-sm">
-                <label htmlFor={inputId} className="font-medium text-foreground">
-                    {label}
-                </label>
-                <output htmlFor={inputId} className="text-numeral text-lg text-foreground">
-                    {value}
-                </output>
-            </div>
-            <input
-                id={inputId}
-                type="range"
-                list={listId}
-                min={min}
-                max={max}
-                step={1}
-                value={value}
-                onChange={(e) => onChange(Number(e.target.value))}
-                className="slider w-full"
-            />
-            <datalist id={listId}>
-                {Array.from({ length: max - min + 1 }, (_, i) => (
-                    <option key={min + i} value={min + i} />
-                ))}
-            </datalist>
-        </div>
-    );
+  return (
+    <div className="flex w-full flex-col gap-1.5">
+      <div className="flex items-center justify-between text-sm">
+        <label htmlFor={inputId} className="font-medium text-foreground">
+          {label}
+        </label>
+        <output htmlFor={inputId} className="text-numeral text-lg text-foreground">
+          {value}
+        </output>
+      </div>
+      <input
+        id={inputId}
+        type="range"
+        list={listId}
+        min={min}
+        max={max}
+        step={1}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="slider w-full"
+      />
+      <datalist id={listId}>
+        {Array.from({ length: max - min + 1 }, (_, i) => (
+          <option key={min + i} value={min + i} />
+        ))}
+      </datalist>
+    </div>
+  );
 };
 
 interface TeamConfigModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    numTeams: number;
-    setNumTeams: (n: number) => void;
-    minimoPorTime: number;
-    setMinimoPorTime: (n: number) => void;
-    selectedCount: number;
-    /** From faltamParaSortear: 0 when there are enough selected Jogadores. */
-    faltam: number;
-    onDraw: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+  numTeams: number;
+  setNumTeams: (n: number) => void;
+  minimoPorTime: number;
+  setMinimoPorTime: (n: number) => void;
+  selectedCount: number;
+  /** From faltamParaSortear: 0 when there are enough selected Jogadores. */
+  faltam: number;
+  onDraw: () => void;
 }
 
 export const TeamConfigModal = ({
-    isOpen,
-    onClose,
-    numTeams,
-    setNumTeams,
-    minimoPorTime,
-    setMinimoPorTime,
-    selectedCount,
-    faltam,
-    onDraw,
+  isOpen,
+  onClose,
+  numTeams,
+  setNumTeams,
+  minimoPorTime,
+  setMinimoPorTime,
+  selectedCount,
+  faltam,
+  onDraw,
 }: TeamConfigModalProps) => {
-    const required = numTeams * minimoPorTime;
-    const hasEnough = faltam === 0;
+  const required = numTeams * minimoPorTime;
+  const hasEnough = faltam === 0;
 
-    return (
-        <Modal isOpen={isOpen} onClose={onClose} className="max-w-md">
-            <ModalHeader className="flex flex-col gap-1">
-                <h2 className="text-title">Quantos times?</h2>
-                <p className="text-muted">E o mínimo de jogadores em cada. Quem sobrar também entra num time.</p>
-            </ModalHeader>
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} className="max-w-md">
+      <ModalHeader className="flex flex-col gap-1">
+        <h2 className="text-title">Quantos times?</h2>
+        <p className="text-muted">E o mínimo de jogadores em cada. Quem sobrar também entra num time.</p>
+      </ModalHeader>
 
-            <ModalBody className="flex flex-col gap-5">
-                <RangeSlider
-                    label="Número de times"
-                    min={MIN_TIMES}
-                    max={MAX_TIMES}
-                    value={numTeams}
-                    onChange={setNumTeams}
-                />
+      <ModalBody className="flex flex-col gap-5">
+        <RangeSlider label="Número de times" min={MIN_TIMES} max={MAX_TIMES} value={numTeams} onChange={setNumTeams} />
 
-                <RangeSlider
-                    label="Mínimo por time"
-                    min={1}
-                    max={20}
-                    value={minimoPorTime}
-                    onChange={setMinimoPorTime}
-                />
+        <RangeSlider label="Mínimo por time" min={1} max={20} value={minimoPorTime} onChange={setMinimoPorTime} />
 
-                {/* Not an error: just how far the selection is from a Sorteio. */}
-                <p className="text-muted" aria-live="polite">
-                    {hasEnough ? "Dá pra sortear" : faltam === 1 ? "Falta 1 jogador" : `Faltam ${faltam} jogadores`}:{" "}
-                    {selectedCount === 1 ? "1 selecionado" : `${selectedCount} selecionados`}, e precisa de pelo menos {required}.
-                </p>
-            </ModalBody>
+        {/* Not an error: just how far the selection is from a Sorteio. */}
+        <p className="text-muted" aria-live="polite">
+          {hasEnough ? "Dá pra sortear" : faltam === 1 ? "Falta 1 jogador" : `Faltam ${faltam} jogadores`}:{" "}
+          {selectedCount === 1 ? "1 selecionado" : `${selectedCount} selecionados`}, e precisa de pelo menos {required}.
+        </p>
+      </ModalBody>
 
-            <ModalFooter>
-                <Button variant="flat" onClick={onClose} className="w-full sm:w-auto">
-                    Cancelar
-                </Button>
-                <Button
-                    color="secondary"
-                    onClick={onDraw}
-                    isDisabled={!hasEnough}
-                    startContent={<Shuffle size={18} />}
-                    className="w-full sm:w-auto"
-                >
-                    Sortear
-                </Button>
-            </ModalFooter>
-        </Modal>
-    );
+      <ModalFooter>
+        <Button variant="flat" onClick={onClose} className="w-full sm:w-auto">
+          Cancelar
+        </Button>
+        <Button
+          color="secondary"
+          onClick={onDraw}
+          isDisabled={!hasEnough}
+          startContent={<Shuffle size={18} />}
+          className="w-full sm:w-auto"
+        >
+          Sortear
+        </Button>
+      </ModalFooter>
+    </Modal>
+  );
 };

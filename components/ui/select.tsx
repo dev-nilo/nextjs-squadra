@@ -8,14 +8,7 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
   size?: "sm" | "md";
 }
 
-export function Select({
-  label,
-  size = "md",
-  className = "",
-  children,
-  id,
-  ...props
-}: SelectProps) {
+export function Select({ label, size = "md", className = "", children, id, ...props }: SelectProps) {
   const generatedId = useId();
   const selectId = id ?? generatedId;
 

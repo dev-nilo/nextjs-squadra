@@ -20,7 +20,19 @@ const SIZE_STYLES: Record<"sm" | "md" | "lg", string> = {
 };
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, isRequired, isDisabled, startContent, endContent, size = "md", className = "", id, required, disabled, ...props },
+  {
+    label,
+    isRequired,
+    isDisabled,
+    startContent,
+    endContent,
+    size = "md",
+    className = "",
+    id,
+    required,
+    disabled,
+    ...props
+  },
   ref,
 ) {
   const generatedId = useId();
@@ -48,9 +60,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           className={`w-full rounded-xl border border-default-200 bg-default-100 px-3 text-foreground placeholder:text-default-400 focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50 ${SIZE_STYLES[size]} ${startContent ? "pl-9" : ""} ${endContent ? "pr-11" : ""} ${className}`}
           {...props}
         />
-        {endContent && (
-          <span className="absolute right-1.5 top-1/2 -translate-y-1/2">{endContent}</span>
-        )}
+        {endContent && <span className="absolute right-1.5 top-1/2 -translate-y-1/2">{endContent}</span>}
       </div>
     </div>
   );

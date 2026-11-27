@@ -27,7 +27,15 @@ export default async function InicioDoFut({ params }: { params: Promise<{ slug: 
     return (
       <>
         <MarcaOffline />
-        <PartidaView key={inicial.partida.id} grupo={grupo} userId={user.id} inicial={inicial} jogadores={jogadores} agora={agora} naInicio />
+        <PartidaView
+          key={inicial.partida.id}
+          grupo={grupo}
+          userId={user.id}
+          inicial={inicial}
+          jogadores={jogadores}
+          agora={agora}
+          naInicio
+        />
       </>
     );
   }

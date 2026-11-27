@@ -3,7 +3,10 @@
 import { useSyncExternalStore } from "react";
 
 /** Chrome's install prompt event (not in the DOM types yet). */
-type PedidoDeInstalacao = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
+type PedidoDeInstalacao = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
 
 /**
  * How this browser can install Squadra:
@@ -67,8 +70,8 @@ export function comoInstalar(): ComoInstalar {
 /** Where to open the link when the in-app browser can't install: Safari on iPhone, Chrome on Android. */
 export function instrucoesOutroNavegador(): string {
   return typeof navigator !== "undefined" && ehIOS()
-    ? "Abra este link no Safari (no menu ⋯, \"Abrir no navegador\") pra instalar."
-    : "Abra este link no Chrome (no menu ⋮, \"Abrir no navegador\") pra instalar.";
+    ? 'Abra este link no Safari (no menu ⋯, "Abrir no navegador") pra instalar.'
+    : 'Abra este link no Chrome (no menu ⋮, "Abrir no navegador") pra instalar.';
 }
 
 export function useComoInstalar(): ComoInstalar {
@@ -106,7 +109,7 @@ export const INSTALOU = "Pronto, o Squadra está na sua tela inicial.";
  * from the browser's: say so, or the sign-in screen looks like a bug.
  */
 export const INSTRUCOES_IOS =
-  "Toque em Compartilhar e depois em \"Adicionar à Tela de Início\". No app, você entra com seu email uma vez.";
+  'Toque em Compartilhar e depois em "Adicionar à Tela de Início". No app, você entra com seu email uma vez.';
 
 const JA_OFERECEU = "squadra:ofereceu-instalar";
 

@@ -86,9 +86,14 @@ export function textoDaPartida({
 }): string {
   const quando = formatarInicio(partida.inicio);
   const umaLinha = (texto: string) => texto.replace(/\s+/g, " ").trim();
-  const numerada = (presencas: readonly Presenca[]) => presencas.map((p, i) => `${i + 1}. ${umaLinha(nome(p.jogador_id))}`);
+  const numerada = (presencas: readonly Presenca[]) =>
+    presencas.map((p, i) => `${i + 1}. ${umaLinha(nome(p.jogador_id))}`);
   const blocos = [
-    [`*${quando.charAt(0).toUpperCase()}${quando.slice(1)}*`, umaLinha(partida.local), `${lista.confirmados.length} de ${partida.vagas} vagas, ${quantoFalta(lista)}`],
+    [
+      `*${quando.charAt(0).toUpperCase()}${quando.slice(1)}*`,
+      umaLinha(partida.local),
+      `${lista.confirmados.length} de ${partida.vagas} vagas, ${quantoFalta(lista)}`,
+    ],
     lista.confirmados.length > 0 ? numerada(lista.confirmados) : ["Ninguém confirmou ainda."],
     ...(lista.espera.length > 0 ? [["Lista de espera", ...numerada(lista.espera)]] : []),
     [`Quem já está no fut responde aqui: ${link}`],
@@ -121,7 +126,11 @@ export function esperaAteComecar(partida: Pick<Partida, "inicio" | "cancelada_em
 export const partidaSchema = z.object({
   inicio: z.coerce.date({ message: "Escolha dia e hora." }),
   local: z.string().trim().min(1, "Diz onde vai ser.").max(80, "Use até 80 caracteres."),
-  vagas: z.coerce.number().int("Vagas é um número inteiro.").min(2, "Pelo menos 2 vagas.").max(60, "No máximo 60 vagas."),
+  vagas: z.coerce
+    .number()
+    .int("Vagas é um número inteiro.")
+    .min(2, "Pelo menos 2 vagas.")
+    .max(60, "No máximo 60 vagas."),
 });
 
 /** Why the database refused an answer, from responder_presenca's HINT. */

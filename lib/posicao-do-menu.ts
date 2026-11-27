@@ -34,7 +34,11 @@ export function posicaoDoMenu(botao: Caixa, menu: Tamanho, tela: Tamanho): { top
 export function posicionarMenu(menu: HTMLElement, botao: HTMLElement) {
   const caixa = botao.getBoundingClientRect();
   const { width, height } = menu.getBoundingClientRect();
-  const { top, left } = posicaoDoMenu(caixa, { largura: width, altura: height }, { largura: window.innerWidth, altura: window.innerHeight });
+  const { top, left } = posicaoDoMenu(
+    caixa,
+    { largura: width, altura: height },
+    { largura: window.innerWidth, altura: window.innerHeight },
+  );
   menu.style.inset = "auto";
   menu.style.top = `${Math.round(top)}px`;
   menu.style.left = `${Math.round(left)}px`;

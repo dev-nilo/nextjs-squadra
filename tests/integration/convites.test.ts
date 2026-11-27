@@ -65,10 +65,18 @@ describe("creating and revoking invites", () => {
     await addMembro(grupo.id, membro, "membro");
     const { data: convite } = await convidar(dono, grupo.id);
 
-    const porMembro = await membro.client.from("convites").update({ revogado_em: new Date().toISOString() }).eq("id", convite!.id).select("id");
+    const porMembro = await membro.client
+      .from("convites")
+      .update({ revogado_em: new Date().toISOString() })
+      .eq("id", convite!.id)
+      .select("id");
     expect(porMembro.data ?? []).toEqual([]);
 
-    const porDono = await dono.client.from("convites").update({ revogado_em: new Date().toISOString() }).eq("id", convite!.id).select("id");
+    const porDono = await dono.client
+      .from("convites")
+      .update({ revogado_em: new Date().toISOString() })
+      .eq("id", convite!.id)
+      .select("id");
     expect(porDono.data).toEqual([{ id: convite!.id }]);
   });
 
@@ -89,7 +97,10 @@ describe("a link's rules live in the database", () => {
 
     const comToken = await dono.client.from("convites").insert({ grupo_id: grupo.id, token: "facil" }).select("id");
     expect(comToken.error).not.toBeNull();
-    const semFim = await dono.client.from("convites").insert({ grupo_id: grupo.id, expira_em: "2099-01-01" }).select("id");
+    const semFim = await dono.client
+      .from("convites")
+      .insert({ grupo_id: grupo.id, expira_em: "2099-01-01" })
+      .select("id");
     expect(semFim.error).not.toBeNull();
     expect((await convidar(dono, grupo.id)).error).toBeNull();
   });
@@ -98,9 +109,17 @@ describe("a link's rules live in the database", () => {
     const dono = await user("dono");
     const grupo = await futCom(dono);
     const { data: convite } = await convidar(dono, grupo.id);
-    await dono.client.from("convites").update({ revogado_em: new Date().toISOString() }).eq("id", convite!.id).throwOnError();
+    await dono.client
+      .from("convites")
+      .update({ revogado_em: new Date().toISOString() })
+      .eq("id", convite!.id)
+      .throwOnError();
 
-    const reaberto = await dono.client.from("convites").update({ revogado_em: null }).eq("id", convite!.id).select("id");
+    const reaberto = await dono.client
+      .from("convites")
+      .update({ revogado_em: null })
+      .eq("id", convite!.id)
+      .select("id");
     expect(reaberto.error).not.toBeNull();
     const { data } = await service().from("convites").select("revogado_em").eq("id", convite!.id).single();
     expect(data?.revogado_em).not.toBeNull();
@@ -123,7 +142,10 @@ describe("what the link shows before joining", () => {
     const { data: revogado } = await convidar(dono, grupo.id);
     const { data: expirado } = await convidar(dono, grupo.id);
     await dono.client.from("convites").update({ revogado_em: new Date().toISOString() }).eq("id", revogado!.id);
-    await service().from("convites").update({ expira_em: new Date(Date.now() - 1000).toISOString() }).eq("id", expirado!.id);
+    await service()
+      .from("convites")
+      .update({ expira_em: new Date(Date.now() - 1000).toISOString() })
+      .eq("id", expirado!.id);
 
     expect((await ver(anon(), revogado!.token)).data).toEqual({ situacao: "revogado", grupo_nome: null });
     expect((await ver(anon(), expirado!.token)).data).toEqual({ situacao: "expirado", grupo_nome: null });
@@ -144,7 +166,11 @@ describe("joining with a link", () => {
       expect(data).toMatchObject({ id: grupo.id, slug: grupo.slug });
     }
 
-    const { data: membros } = await service().from("grupo_membros").select("papel").eq("grupo_id", grupo.id).eq("user_id", visitante.id);
+    const { data: membros } = await service()
+      .from("grupo_membros")
+      .select("papel")
+      .eq("grupo_id", grupo.id)
+      .eq("user_id", visitante.id);
     expect(membros).toEqual([{ papel: "membro" }]);
   });
 
@@ -158,7 +184,11 @@ describe("joining with a link", () => {
     for (const quem of [dono, adminDoFut]) {
       expect((await quem.client.rpc("aceitar_convite", { token_do_convite: convite!.token })).error).toBeNull();
     }
-    const { data } = await service().from("grupo_membros").select("user_id, papel").eq("grupo_id", grupo.id).order("papel");
+    const { data } = await service()
+      .from("grupo_membros")
+      .select("user_id, papel")
+      .eq("grupo_id", grupo.id)
+      .order("papel");
     expect(data).toEqual([
       { user_id: dono.id, papel: "dono" },
       { user_id: adminDoFut.id, papel: "admin" },
@@ -172,7 +202,10 @@ describe("joining with a link", () => {
     const { data: revogado } = await convidar(dono, grupo.id);
     const { data: expirado } = await convidar(dono, grupo.id);
     await dono.client.from("convites").update({ revogado_em: new Date().toISOString() }).eq("id", revogado!.id);
-    await service().from("convites").update({ expira_em: new Date(Date.now() - 1000).toISOString() }).eq("id", expirado!.id);
+    await service()
+      .from("convites")
+      .update({ expira_em: new Date(Date.now() - 1000).toISOString() })
+      .eq("id", expirado!.id);
 
     for (const [token, motivo] of [
       [revogado!.token, "revogado"],
@@ -182,7 +215,11 @@ describe("joining with a link", () => {
       const { error } = await visitante.client.rpc("aceitar_convite", { token_do_convite: token });
       expect(error?.hint).toBe(motivo);
     }
-    const { data } = await service().from("grupo_membros").select("user_id").eq("grupo_id", grupo.id).eq("user_id", visitante.id);
+    const { data } = await service()
+      .from("grupo_membros")
+      .select("user_id")
+      .eq("grupo_id", grupo.id)
+      .eq("user_id", visitante.id);
     expect(data).toEqual([]);
   });
 

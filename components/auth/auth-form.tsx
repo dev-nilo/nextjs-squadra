@@ -95,7 +95,11 @@ export function RecoveryForm() {
     e.preventDefault();
     setLoading(true);
     try {
-      const result = await pedirNovaSenha(toSessaoAuth(createClient()), email, getEmailRedirectTo(RETORNO_DA_RECUPERACAO));
+      const result = await pedirNovaSenha(
+        toSessaoAuth(createClient()),
+        email,
+        getEmailRedirectTo(RETORNO_DA_RECUPERACAO),
+      );
       applySessaoToast(result, "recovery", toast);
     } finally {
       setLoading(false);
@@ -155,11 +159,7 @@ export function SignUpForm({ onSuccess, redirectPath }: AuthFormProps) {
     const target = pendingEmail || email;
     setResending(true);
     try {
-      const result = await resendConfirmation(
-        toSessaoAuth(createClient()),
-        target,
-        getEmailRedirectTo(redirectPath),
-      );
+      const result = await resendConfirmation(toSessaoAuth(createClient()), target, getEmailRedirectTo(redirectPath));
       applySessaoToast(result, "resend", toast);
     } finally {
       setResending(false);

@@ -20,7 +20,10 @@ async function seedUser(email: string) {
 type Linha = { jogador_id: string; partidas: number; presencas: number; frequencia: number | null };
 
 async function frequenciaPorNome(client: ReturnType<typeof anon>, grupoId: string) {
-  const { data: linhas, error } = await client.from("frequencia_jogadores").select("jogador_id, partidas, presencas, frequencia").eq("grupo_id", grupoId);
+  const { data: linhas, error } = await client
+    .from("frequencia_jogadores")
+    .select("jogador_id, partidas, presencas, frequencia")
+    .eq("grupo_id", grupoId);
   if (error) throw error;
   const { data: jogadores } = await service().from("players").select("id, name").eq("grupo_id", grupoId);
   const nome = new Map((jogadores ?? []).map((j) => [j.id, j.name]));
@@ -33,7 +36,14 @@ describe("frequencia_jogadores against the seed", () => {
 
     // Four past Partidas count: the cancelled one and next week's don't.
     expect([...porNome.values()].every((l) => l.partidas === 4)).toBe(true);
-    expect(Object.fromEntries(["Paredão", "Xerife", "Foguete", "Maestro", "Matador", "Bagre", "Corisco"].map((n) => [n, porNome.get(n)?.frequencia]))).toEqual({
+    expect(
+      Object.fromEntries(
+        ["Paredão", "Xerife", "Foguete", "Maestro", "Matador", "Bagre", "Corisco"].map((n) => [
+          n,
+          porNome.get(n)?.frequencia,
+        ]),
+      ),
+    ).toEqual({
       Paredão: 100,
       Xerife: 75,
       Foguete: 50, // waited once: that counts as absent
@@ -49,12 +59,18 @@ describe("frequencia_jogadores against the seed", () => {
     const amigo = await seedUser("amigo@squadra.test");
     const { data } = await amigo.from("frequencia_jogadores").select("jogador_id").eq("grupo_id", FUT_DO_DEV);
     expect(data).toEqual([]);
-    const { data: semSessao } = await anon().from("frequencia_jogadores").select("jogador_id").eq("grupo_id", FUT_DO_DEV);
+    const { data: semSessao } = await anon()
+      .from("frequencia_jogadores")
+      .select("jogador_id")
+      .eq("grupo_id", FUT_DO_DEV);
     expect(semSessao ?? []).toEqual([]);
   });
 
   it("is null for a Jogador with no past Partida to count", async () => {
-    const porNome = await frequenciaPorNome(await seedUser("amigo@squadra.test"), "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
+    const porNome = await frequenciaPorNome(
+      await seedUser("amigo@squadra.test"),
+      "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    );
     expect(porNome.get("Ala do Amigo")).toMatchObject({ partidas: 0, presencas: 0, frequencia: null });
   });
 });
@@ -67,7 +83,14 @@ describe("which Partidas count", () => {
     if (error) throw error;
     const { data: partidas } = await service()
       .from("partidas")
-      .insert(diasAtras.map((d) => ({ grupo_id: grupo.id, inicio: new Date(Date.now() - d * 86_400_000).toISOString(), local: "Quadra", vagas: 10 })))
+      .insert(
+        diasAtras.map((d) => ({
+          grupo_id: grupo.id,
+          inicio: new Date(Date.now() - d * 86_400_000).toISOString(),
+          local: "Quadra",
+          vagas: 10,
+        })),
+      )
       .select("id, inicio")
       .throwOnError();
     return { dono, grupoId: grupo.id as string, partidas: partidas! };
@@ -76,9 +99,21 @@ describe("which Partidas count", () => {
   it("only Partidas since the Jogador joined the Elenco", async () => {
     const { dono, grupoId, partidas } = await grupoComPartidasPassadas([30, 20, 2]);
     const { data: novato } = await addJogador(dono, grupoId, "Novato");
-    await service().from("players").update({ created_at: new Date(Date.now() - 5 * 86_400_000).toISOString() }).eq("id", novato!.id).throwOnError();
+    await service()
+      .from("players")
+      .update({ created_at: new Date(Date.now() - 5 * 86_400_000).toISOString() })
+      .eq("id", novato!.id)
+      .throwOnError();
     const recente = partidas.find((p) => new Date(p.inicio).getTime() > Date.now() - 3 * 86_400_000)!;
-    await service().from("presencas").insert({ partida_id: recente.id, jogador_id: novato!.id, situacao: "confirmado", pediu_vaga_em: new Date().toISOString() }).throwOnError();
+    await service()
+      .from("presencas")
+      .insert({
+        partida_id: recente.id,
+        jogador_id: novato!.id,
+        situacao: "confirmado",
+        pediu_vaga_em: new Date().toISOString(),
+      })
+      .throwOnError();
 
     const porNome = await frequenciaPorNome(dono.client, grupoId);
     expect(porNome.get("Novato")).toMatchObject({ partidas: 1, presencas: 1, frequencia: 100 });
@@ -88,12 +123,23 @@ describe("which Partidas count", () => {
     const dias = Array.from({ length: 12 }, (_, i) => i + 1);
     const { dono, grupoId, partidas } = await grupoComPartidasPassadas(dias);
     const { data: veterano } = await addJogador(dono, grupoId, "Veterano");
-    await service().from("players").update({ created_at: new Date(Date.now() - 60 * 86_400_000).toISOString() }).eq("id", veterano!.id).throwOnError();
+    await service()
+      .from("players")
+      .update({ created_at: new Date(Date.now() - 60 * 86_400_000).toISOString() })
+      .eq("id", veterano!.id)
+      .throwOnError();
     // Present only in the two oldest, which fall outside the window.
     const antigas = [...partidas].sort((a, b) => a.inicio.localeCompare(b.inicio)).slice(0, 2);
     await service()
       .from("presencas")
-      .insert(antigas.map((p) => ({ partida_id: p.id, jogador_id: veterano!.id, situacao: "confirmado", pediu_vaga_em: new Date().toISOString() })))
+      .insert(
+        antigas.map((p) => ({
+          partida_id: p.id,
+          jogador_id: veterano!.id,
+          situacao: "confirmado",
+          pediu_vaga_em: new Date().toISOString(),
+        })),
+      )
       .throwOnError();
 
     const porNome = await frequenciaPorNome(dono.client, grupoId);

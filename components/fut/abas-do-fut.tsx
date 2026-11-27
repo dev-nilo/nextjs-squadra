@@ -18,7 +18,9 @@ export function AbasNoTopo({ slug }: { slug: string }) {
           href={caminhoDaAba(slug, a.id)}
           aria-current={a.id === ativa ? "page" : undefined}
           className={`-mb-px flex items-center border-b-2 px-4 text-sm font-medium transition-colors active:bg-default-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
-            a.id === ativa ? "border-accent text-foreground" : "border-transparent text-default-500 hover:text-foreground"
+            a.id === ativa
+              ? "border-accent text-foreground"
+              : "border-transparent text-default-500 hover:text-foreground"
           }`}
         >
           {a.rotulo}

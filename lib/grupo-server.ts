@@ -42,7 +42,11 @@ export const carregarGrupo = cache(async function carregarGrupo(slug: string): P
  * and Server Actions resolve the Grupo here, so neither trusts a Grupo id
  * from the browser.
  */
-export async function resolverGrupo(supabase: SupabaseClient, userId: string, slug: string): Promise<Participacao | null> {
+export async function resolverGrupo(
+  supabase: SupabaseClient,
+  userId: string,
+  slug: string,
+): Promise<Participacao | null> {
   const { data } = await supabase
     .from("grupo_membros")
     .select("papel, grupos!inner(id, slug, nome)")

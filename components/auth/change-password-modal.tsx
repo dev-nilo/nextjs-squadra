@@ -3,11 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import {
-  applySessaoToast,
-  changePassword,
-  toSessaoAuth,
-} from "@/lib/sessao";
+import { applySessaoToast, changePassword, toSessaoAuth } from "@/lib/sessao";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -18,11 +14,7 @@ interface ChangePasswordModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ChangePasswordModal({
-  open,
-  email,
-  onOpenChange,
-}: ChangePasswordModalProps) {
+export function ChangePasswordModal({ open, email, onOpenChange }: ChangePasswordModalProps) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

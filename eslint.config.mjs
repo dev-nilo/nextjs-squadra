@@ -1,4 +1,5 @@
 import nextConfig from "eslint-config-next";
+import prettierConfig from "eslint-config-prettier/flat";
 
 // DESIGN.md: only design tokens. Bans raw Tailwind palette colors,
 // arbitrary hex colors and arbitrary pixel font sizes in class strings.
@@ -21,10 +22,15 @@ const eslintConfig = [
         "error",
         ...designTokenRule(RAW_PALETTE, "Use a design token (see DESIGN.md), not a raw Tailwind palette color."),
         ...designTokenRule(ARBITRARY_HEX, "Use a design token (see DESIGN.md), not an arbitrary hex color."),
-        ...designTokenRule(ARBITRARY_FONT_SIZE, "Use the type scale (see DESIGN.md), e.g. text-2xs, not an arbitrary font size."),
+        ...designTokenRule(
+          ARBITRARY_FONT_SIZE,
+          "Use the type scale (see DESIGN.md), e.g. text-2xs, not an arbitrary font size.",
+        ),
       ],
     },
   },
+  // Last, so it turns off any style rule above that Prettier now owns.
+  prettierConfig,
 ];
 
 export default eslintConfig;

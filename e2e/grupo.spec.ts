@@ -39,9 +39,20 @@ test("a user with no Grupo names it on first access", async ({ page }) => {
 
     // The fut opens with its name, and the user is its dono.
     await expect(page.getByText("Fut de Quinta", { exact: true })).toBeVisible();
-    const { data: grupo } = await service.from("grupos").select("id, slug").eq("criado_por", userId).single().throwOnError();
+    const { data: grupo } = await service
+      .from("grupos")
+      .select("id, slug")
+      .eq("criado_por", userId)
+      .single()
+      .throwOnError();
     expect(grupo?.slug).toMatch(/^fut-de-quinta(-[0-9a-f]{6})?$/);
-    const { data: membro } = await service.from("grupo_membros").select("papel").eq("grupo_id", grupo!.id).eq("user_id", userId).single().throwOnError();
+    const { data: membro } = await service
+      .from("grupo_membros")
+      .select("papel")
+      .eq("grupo_id", grupo!.id)
+      .eq("user_id", userId)
+      .single()
+      .throwOnError();
     expect(membro?.papel).toBe("dono");
 
     // The first Jogador lands in the new Grupo, and the naming screen doesn't come back.
@@ -53,7 +64,12 @@ test("a user with no Grupo names it on first access", async ({ page }) => {
     await modal.getByLabel("Posição").selectOption("ALA");
     await modal.getByRole("button", { name: "Criar carta" }).click();
     await expect(card(page, jogador)).toBeVisible();
-    const { data: player } = await service.from("players").select("grupo_id").eq("user_id", userId).single().throwOnError();
+    const { data: player } = await service
+      .from("players")
+      .select("grupo_id")
+      .eq("user_id", userId)
+      .single()
+      .throwOnError();
     expect(player?.grupo_id).toBe(grupo?.id);
 
     await page.reload();

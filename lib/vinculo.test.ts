@@ -8,7 +8,16 @@ const jogador = (name: string, conta_id?: string): Player => ({
   position: "ALA",
   nationality: "BR",
   image: null,
-  attributes: { velocidade: 60, resistencia: 60, chute: 60, posicionamento: 60, defesa: 60, drible: 60, passe: 60, fisico: 60 },
+  attributes: {
+    velocidade: 60,
+    resistencia: 60,
+    chute: 60,
+    posicionamento: 60,
+    defesa: 60,
+    drible: 60,
+    passe: 60,
+    fisico: 60,
+  },
   rating: 60,
   conta_id,
 });

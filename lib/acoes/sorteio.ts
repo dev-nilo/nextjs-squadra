@@ -13,7 +13,11 @@ import {
 } from "@/lib/sorteio-partida";
 import { exigir, idSchema, noGrupo, recusar, validar } from "./executar";
 
-const paraTimeSchema = z.number().int().min(0).max(MAX_TIMES - 1);
+const paraTimeSchema = z
+  .number()
+  .int()
+  .min(0)
+  .max(MAX_TIMES - 1);
 const sorteadoEmSchema = z.string().datetime({ offset: true });
 
 /**
@@ -26,7 +30,11 @@ export const sortearDaPartida = (supabase: SupabaseClient, slug: unknown, partid
   noGrupo(
     supabase,
     slug,
-    { acao: "sortearDaPartida", generica: "Não deu pra salvar o sorteio agora. Tenta de novo.", motivos: MOTIVO_DO_SORTEIO },
+    {
+      acao: "sortearDaPartida",
+      generica: "Não deu pra salvar o sorteio agora. Tenta de novo.",
+      motivos: MOTIVO_DO_SORTEIO,
+    },
     async () => {
       const partida = validar(idSchema, partidaId, "Partida inválida.");
       const quantos = validar(numeroDeTimesSchema, numTimes, "Número de times inválido.");
@@ -42,7 +50,9 @@ export const sortearDaPartida = (supabase: SupabaseClient, slug: unknown, partid
         c.players ? [jogadorDaLinha(c.players)] : [],
       );
       if (!cabeNoSorteio(jogadores.length, quantos)) {
-        recusar(`Pra ${quantos} Times precisa de pelo menos ${minimoDeConfirmados(quantos)} confirmados (tem ${jogadores.length}).`);
+        recusar(
+          `Pra ${quantos} Times precisa de pelo menos ${minimoDeConfirmados(quantos)} confirmados (tem ${jogadores.length}).`,
+        );
       }
 
       exigir(await supabase.rpc("salvar_sorteio", { partida, times: atribuicao(sortearTimes(jogadores, quantos)) }));

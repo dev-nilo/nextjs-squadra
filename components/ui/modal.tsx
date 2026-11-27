@@ -88,16 +88,8 @@ export function Modal({ isOpen, onClose, children, className = "max-w-md", onSub
   );
 }
 
-export const ModalHeader = ({
-  className = "",
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) => (
-  <div className={`shrink-0 border-b border-divider px-4 py-4 sm:px-6 ${className}`}>
-    {children}
-  </div>
+export const ModalHeader = ({ className = "", children }: { className?: string; children: React.ReactNode }) => (
+  <div className={`shrink-0 border-b border-divider px-4 py-4 sm:px-6 ${className}`}>{children}</div>
 );
 
 export const ModalBody = ({
@@ -108,19 +100,9 @@ export const ModalBody = ({
   className?: string;
   padded?: boolean;
   children: React.ReactNode;
-}) => (
-  <div className={`flex-1 overflow-y-auto ${padded ? "px-4 py-4 sm:px-6" : ""} ${className}`}>
-    {children}
-  </div>
-);
+}) => <div className={`flex-1 overflow-y-auto ${padded ? "px-4 py-4 sm:px-6" : ""} ${className}`}>{children}</div>;
 
-export const ModalFooter = ({
-  className = "",
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) => (
+export const ModalFooter = ({ className = "", children }: { className?: string; children: React.ReactNode }) => (
   <div
     className={`flex shrink-0 flex-col-reverse gap-2 border-t border-divider px-4 py-4 sm:flex-row sm:px-6 ${className}`}
   >

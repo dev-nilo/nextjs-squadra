@@ -42,7 +42,10 @@ describe("the error table", () => {
   it("says the Sessão expired for both ways Supabase reports it", async () => {
     expect(await mensagemPara(doBanco({ code: "28000" }))).toBe(SESSAO_EXPIRADA);
     expect(await mensagemPara(doBanco({ code: "PGRST301" }))).toBe(SESSAO_EXPIRADA);
-    expect(await comSessao(cliente(null), opcoes, async () => "nunca roda")).toEqual({ ok: false, message: SESSAO_EXPIRADA });
+    expect(await comSessao(cliente(null), opcoes, async () => "nunca roda")).toEqual({
+      ok: false,
+      message: SESSAO_EXPIRADA,
+    });
   });
 
   it("uses the action's motivos, by HINT first and then by Postgres code", async () => {
@@ -59,7 +62,9 @@ describe("the error table", () => {
 
   it("shows a refusal as is, without telling Sentry", async () => {
     expect(await mensagemPara(() => recusar("Diz onde vai ser."))).toBe("Diz onde vai ser.");
-    expect(await mensagemPara(() => validar(z.string().min(1, "Diz onde vai ser."), "", "Confira."))).toBe("Diz onde vai ser.");
+    expect(await mensagemPara(() => validar(z.string().min(1, "Diz onde vai ser."), "", "Confira."))).toBe(
+      "Diz onde vai ser.",
+    );
     expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 
@@ -79,8 +84,14 @@ describe("the error table", () => {
 describe("noGrupo", () => {
   it("refuses a slug that can't be a Grupo's before asking anyone", async () => {
     const supabase = cliente({ id: "u1" });
-    expect(await noGrupo(supabase, "Não É Slug", opcoes, async () => "nunca roda")).toEqual({ ok: false, message: FUT_NAO_ENCONTRADO });
-    expect(await noGrupo(supabase, 42, opcoes, async () => "nunca roda")).toEqual({ ok: false, message: FUT_NAO_ENCONTRADO });
+    expect(await noGrupo(supabase, "Não É Slug", opcoes, async () => "nunca roda")).toEqual({
+      ok: false,
+      message: FUT_NAO_ENCONTRADO,
+    });
+    expect(await noGrupo(supabase, 42, opcoes, async () => "nunca roda")).toEqual({
+      ok: false,
+      message: FUT_NAO_ENCONTRADO,
+    });
     expect(supabase.auth.getUser).not.toHaveBeenCalled();
   });
 });

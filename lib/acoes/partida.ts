@@ -21,7 +21,13 @@ export const criarPartida = (supabase: SupabaseClient, slug: unknown, dados: unk
     { acao: "criarPartida", generica: "Não deu pra criar a partida agora. Tenta de novo.", motivos: MOTIVOS },
     async ({ grupo }) => {
       const valores = dadosValidos(dados);
-      const { id } = exigir(await supabase.from("partidas").insert({ grupo_id: grupo.id, ...valores }).select("id").single());
+      const { id } = exigir(
+        await supabase
+          .from("partidas")
+          .insert({ grupo_id: grupo.id, ...valores })
+          .select("id")
+          .single(),
+      );
       return { id: id as string };
     },
   );
@@ -42,22 +48,33 @@ export const editarPartida = (supabase: SupabaseClient, slug: unknown, partidaId
 
 /** Cancels a Partida. Its presence list stays, frozen. */
 export const cancelarPartida = (supabase: SupabaseClient, slug: unknown, partidaId: unknown) =>
-  noGrupo(supabase, slug, { acao: "cancelarPartida", generica: "Não deu pra cancelar agora. Tenta de novo." }, async ({ grupo }) => {
-    const id = validar(idSchema, partidaId, "Partida inválida.");
-    exigirLinhas(
-      await supabase
-        .from("partidas")
-        .update({ cancelada_em: new Date().toISOString() })
-        .eq("id", id)
-        .eq("grupo_id", grupo.id)
-        .is("cancelada_em", null)
-        .select("id"),
-    );
-    return null;
-  });
+  noGrupo(
+    supabase,
+    slug,
+    { acao: "cancelarPartida", generica: "Não deu pra cancelar agora. Tenta de novo." },
+    async ({ grupo }) => {
+      const id = validar(idSchema, partidaId, "Partida inválida.");
+      exigirLinhas(
+        await supabase
+          .from("partidas")
+          .update({ cancelada_em: new Date().toISOString() })
+          .eq("id", id)
+          .eq("grupo_id", grupo.id)
+          .is("cancelada_em", null)
+          .select("id"),
+      );
+      return null;
+    },
+  );
 
 /** Vou / não vou, through responder_presenca (the Partida's row lock decides the last vaga). */
-export const responderPresenca = (supabase: SupabaseClient, slug: unknown, partidaId: unknown, jogadorId: unknown, vou: unknown) =>
+export const responderPresenca = (
+  supabase: SupabaseClient,
+  slug: unknown,
+  partidaId: unknown,
+  jogadorId: unknown,
+  vou: unknown,
+) =>
   noGrupo(
     supabase,
     slug,

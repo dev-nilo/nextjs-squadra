@@ -25,7 +25,10 @@ async function futProprio(dono: string, outros: [string, "admin" | "membro"][] =
     .throwOnError();
   await admin()
     .from("grupo_membros")
-    .insert([{ grupo_id: grupo!.id, user_id: dono, papel: "dono" }, ...outros.map(([user_id, papel]) => ({ grupo_id: grupo!.id, user_id, papel }))])
+    .insert([
+      { grupo_id: grupo!.id, user_id: dono, papel: "dono" },
+      ...outros.map(([user_id, papel]) => ({ grupo_id: grupo!.id, user_id, papel })),
+    ])
     .throwOnError();
   return { id: grupo!.id as string, slug: grupo!.slug as string, nome };
 }
@@ -38,14 +41,20 @@ async function abrirPessoas(page: Page) {
 
 test("the dono makes someone admin and removes them, from Pessoas", { tag: "@mobile" }, async ({ page }) => {
   const amigo = await conta("amigo");
-  await admin().from("grupo_membros").insert({ grupo_id: FUT_DO_DEV, user_id: amigo.id, papel: "membro" }).throwOnError();
+  await admin()
+    .from("grupo_membros")
+    .insert({ grupo_id: FUT_DO_DEV, user_id: amigo.id, papel: "membro" })
+    .throwOnError();
   try {
     await signIn(page, DEV_USER);
     await page.goto("/g/fut-do-dev");
     await abrirPessoas(page);
 
     // With no Jogador, the dono knows them by email.
-    await page.getByRole("region", { name: "Membros" }).getByRole("button", { name: `${amigo.email}, membro` }).click();
+    await page
+      .getByRole("region", { name: "Membros" })
+      .getByRole("button", { name: `${amigo.email}, membro` })
+      .click();
     const folha = page.getByRole("dialog");
     await folha.getByRole("radio", { name: /^Admin/ }).click();
     await expect(page.getByRole("region", { name: "Quem organiza" }).getByText(amigo.email)).toBeVisible();
@@ -54,7 +63,11 @@ test("the dono makes someone admin and removes them, from Pessoas", { tag: "@mob
     page.once("dialog", (d) => d.accept());
     await folha.getByRole("button", { name: "Remover do fut" }).click();
     await expect(page.getByRole("region", { name: "Quem organiza" }).getByText(amigo.email)).toHaveCount(0);
-    const { data } = await admin().from("grupo_membros").select("user_id").eq("grupo_id", FUT_DO_DEV).eq("user_id", amigo.id);
+    const { data } = await admin()
+      .from("grupo_membros")
+      .select("user_id")
+      .eq("grupo_id", FUT_DO_DEV)
+      .eq("user_id", amigo.id);
     expect(data).toEqual([]);
   } finally {
     await apagar(amigo.id);
@@ -63,7 +76,10 @@ test("the dono makes someone admin and removes them, from Pessoas", { tag: "@mob
 
 test("a membro sees who's in, can't manage anyone, and leaves from Você", { tag: "@mobile" }, async ({ page }) => {
   const membro = await conta("membro");
-  await admin().from("grupo_membros").insert({ grupo_id: FUT_DO_DEV, user_id: membro.id, papel: "membro" }).throwOnError();
+  await admin()
+    .from("grupo_membros")
+    .insert({ grupo_id: FUT_DO_DEV, user_id: membro.id, papel: "membro" })
+    .throwOnError();
   try {
     await signIn(page, membro.email);
     await page.goto("/g/fut-do-dev/voce");
@@ -87,7 +103,11 @@ test("a membro sees who's in, can't manage anyone, and leaves from Você", { tag
     await expect(page.getByRole("heading", { name: "Dê um nome pro seu fut" })).toBeVisible();
     // With no signal later, the app won't open the fut they left.
     expect(await salva(page, "/g/fut-do-dev/voce")).toBe(false);
-    const { data } = await admin().from("grupo_membros").select("user_id").eq("grupo_id", FUT_DO_DEV).eq("user_id", membro.id);
+    const { data } = await admin()
+      .from("grupo_membros")
+      .select("user_id")
+      .eq("grupo_id", FUT_DO_DEV)
+      .eq("user_id", membro.id);
     expect(data).toEqual([]);
   } finally {
     await apagar(membro.id);
@@ -105,7 +125,10 @@ test("the dono hands the fut to an admin and becomes an admin", async ({ page })
     await page.getByRole("link", { name: /^Pessoas/ }).click();
 
     await page.getByRole("button", { name: `${outro.email}, admin` }).click();
-    await page.getByRole("dialog").getByRole("button", { name: `Passar o fut pra ${outro.email}` }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: `Passar o fut pra ${outro.email}` })
+      .click();
     // The confirmation opens over the sheet.
     const confirmar = page.getByRole("dialog").last();
     const passar = confirmar.getByRole("button", { name: "Passar o fut" });

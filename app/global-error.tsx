@@ -6,13 +6,7 @@ import { TelaDeAviso } from "@/components/ui/tela-de-aviso";
 import "./globals.css";
 
 /** Last-resort boundary: replaces the root layout when it throws, and reports to Sentry. */
-export default function GlobalError({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
+export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
     Sentry.captureException(error);
   }, [error]);

@@ -90,7 +90,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       {...props}
     >
       {isIconOnly ? (
-        isLoading ? spinner : children
+        isLoading ? (
+          spinner
+        ) : (
+          children
+        )
       ) : (
         <>
           {isLoading ? spinner : startContent}

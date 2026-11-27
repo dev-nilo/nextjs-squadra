@@ -40,7 +40,11 @@ export function PessoasView({ grupo, pessoas, userId }: { grupo: Participacao; p
               pessoa={pessoa}
               eVoce={pessoa.user_id === userId}
               mostraEmail={pode.veEmails}
-              onAbrir={pode.gerePessoas && pessoa.user_id !== userId && pessoa.papel !== "dono" ? () => setAbertaId(pessoa.user_id) : undefined}
+              onAbrir={
+                pode.gerePessoas && pessoa.user_id !== userId && pessoa.papel !== "dono"
+                  ? () => setAbertaId(pessoa.user_id)
+                  : undefined
+              }
             />
           ))}
         </ul>
@@ -50,13 +54,18 @@ export function PessoasView({ grupo, pessoas, userId }: { grupo: Participacao; p
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
       <div className="flex flex-col gap-3">
-        <Link href={caminhoDaAba(grupo.slug, "voce")} className="flex w-fit items-center gap-1 text-sm font-medium text-default-500 hover:text-foreground area-de-toque rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <Link
+          href={caminhoDaAba(grupo.slug, "voce")}
+          className="flex w-fit items-center gap-1 text-sm font-medium text-default-500 hover:text-foreground area-de-toque rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
           <ArrowLeft size={16} aria-hidden="true" /> Você
         </Link>
         <h1 className="text-title">
           Pessoas <span className="tabular-nums text-default-400">{pessoas.length}</span>
         </h1>
-        {pode.gerePessoas && <p className="text-sm text-default-500">Toque em alguém pra mudar o papel, passar o fut ou remover.</p>}
+        {pode.gerePessoas && (
+          <p className="text-sm text-default-500">Toque em alguém pra mudar o papel, passar o fut ou remover.</p>
+        )}
       </div>
 
       {lista("Quem organiza", organizam)}
@@ -83,7 +92,13 @@ function LinhaDaPessoa({
 }) {
   const nome = nomeDaPessoa(pessoa);
   // The second line: the email when the name is the Jogador's (organizers only), or why there's no name.
-  const detalhe = pessoa.jogador_nome ? (mostraEmail ? pessoa.email : null) : mostraEmail ? "Sem jogador no elenco" : null;
+  const detalhe = pessoa.jogador_nome
+    ? mostraEmail
+      ? pessoa.email
+      : null
+    : mostraEmail
+      ? "Sem jogador no elenco"
+      : null;
   const conteudo = (
     <>
       <span
@@ -94,13 +109,21 @@ function LinhaDaPessoa({
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate font-semibold text-foreground">{pessoa.jogador_nome ?? (mostraEmail ? pessoa.email : "Sem jogador")}</span>
-          {eVoce && <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-accent-foreground">você</span>}
+          <span className="truncate font-semibold text-foreground">
+            {pessoa.jogador_nome ?? (mostraEmail ? pessoa.email : "Sem jogador")}
+          </span>
+          {eVoce && (
+            <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-accent-foreground">
+              você
+            </span>
+          )}
         </span>
         {detalhe && <span className="truncate text-xs text-default-500">{detalhe}</span>}
       </span>
       {pessoa.papel !== "membro" && (
-        <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{O_QUE_O_PAPEL_FAZ[pessoa.papel].nome}</span>
+        <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+          {O_QUE_O_PAPEL_FAZ[pessoa.papel].nome}
+        </span>
       )}
       {onAbrir && <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-default-400" />}
     </>

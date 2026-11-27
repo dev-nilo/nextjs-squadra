@@ -28,9 +28,7 @@ function PitchPicture() {
       <KickableBall />
       <p className="text-display flex max-w-xl items-start gap-3 text-balance baixa:text-2xl">
         <Logo className="mt-0.5 h-7 w-7 sm:h-9 sm:w-9" />
-        <span>
-          Pelada boa começa com time equilibrado.
-        </span>
+        <span>Pelada boa começa com time equilibrado.</span>
       </p>
     </aside>
   );
@@ -73,10 +71,26 @@ function NightPitch({ id, className }: { id: string; className: string }) {
 
       {/* rolling light and shadow, like terrain under floodlights */}
       <g filter={`url(#${soft})`}>
-        <path d="M-100 40 C 200 -20, 460 140, 900 30 L 900 140 C 460 250, 200 110, -100 170 Z" fill="black" fillOpacity="0.4" />
-        <path d="M-100 210 C 150 120, 420 300, 900 170 L 900 300 C 460 410, 170 240, -100 340 Z" fill="currentColor" fillOpacity="0.2" />
-        <path d="M-100 430 C 220 350, 500 560, 900 410 L 900 540 C 520 670, 200 500, -100 580 Z" fill="black" fillOpacity="0.5" />
-        <path d="M-100 650 C 200 590, 520 760, 900 630 L 900 750 C 520 870, 220 730, -100 790 Z" fill="currentColor" fillOpacity="0.16" />
+        <path
+          d="M-100 40 C 200 -20, 460 140, 900 30 L 900 140 C 460 250, 200 110, -100 170 Z"
+          fill="black"
+          fillOpacity="0.4"
+        />
+        <path
+          d="M-100 210 C 150 120, 420 300, 900 170 L 900 300 C 460 410, 170 240, -100 340 Z"
+          fill="currentColor"
+          fillOpacity="0.2"
+        />
+        <path
+          d="M-100 430 C 220 350, 500 560, 900 410 L 900 540 C 520 670, 200 500, -100 580 Z"
+          fill="black"
+          fillOpacity="0.5"
+        />
+        <path
+          d="M-100 650 C 200 590, 520 760, 900 630 L 900 750 C 520 870, 220 730, -100 790 Z"
+          fill="currentColor"
+          fillOpacity="0.16"
+        />
         <path d="M-100 850 C 260 790, 540 960, 900 850 L 900 1100 L -100 1100 Z" fill="black" fillOpacity="0.5" />
       </g>
       <rect width="800" height="1000" fill={`url(#${flood})`} />
@@ -89,7 +103,6 @@ function NightPitch({ id, className }: { id: string; className: string }) {
         <path d="M0 500 H800" />
         <circle cx="400" cy="500" r="120" />
       </g>
-
     </svg>
   );
 }

@@ -33,7 +33,12 @@ async function membroComJogador(grupoId: string, label: string, papel: "admin" |
 async function partida(quem: TestUser, grupoId: string, vagas: number) {
   const { data, error } = await quem.client
     .from("partidas")
-    .insert({ grupo_id: grupoId, inicio: new Date(Date.now() + 86_400_000).toISOString(), local: "Quadra do Zé", vagas })
+    .insert({
+      grupo_id: grupoId,
+      inicio: new Date(Date.now() + 86_400_000).toISOString(),
+      local: "Quadra do Zé",
+      vagas,
+    })
     .select("id")
     .single();
   if (error) throw error;
@@ -68,7 +73,11 @@ describe("who sees and runs Partidas", () => {
 
     const porMembro = await membro.client.from("partidas").update({ local: "Outro lugar" }).eq("id", id).select("id");
     expect(porMembro.data ?? []).toEqual([]);
-    const porDono = await dono.client.from("partidas").update({ local: "Society da Vila" }).eq("id", id).select("local");
+    const porDono = await dono.client
+      .from("partidas")
+      .update({ local: "Society da Vila" })
+      .eq("id", id)
+      .select("local");
     expect(porDono.data).toEqual([{ local: "Society da Vila" }]);
   });
 
@@ -81,7 +90,9 @@ describe("who sees and runs Partidas", () => {
     await responder(membro, id, jogadorId, true);
 
     expect((await membro.client.from("partidas").select("id").eq("id", id)).data).toHaveLength(1);
-    expect((await membro.client.from("presencas").select("situacao").eq("partida_id", id)).data).toEqual([{ situacao: "confirmado" }]);
+    expect((await membro.client.from("presencas").select("situacao").eq("partida_id", id)).data).toEqual([
+      { situacao: "confirmado" },
+    ]);
     expect((await deFora.client.from("partidas").select("id").eq("id", id)).data).toEqual([]);
     expect((await deFora.client.from("presencas").select("situacao").eq("partida_id", id)).data).toEqual([]);
   });
@@ -91,9 +102,12 @@ describe("who sees and runs Partidas", () => {
     const grupoId = await grupoCom(dono);
     const { data: jogador } = await addJogador(dono, grupoId, "Craque");
     const id = await partida(dono, grupoId, 10);
-    const { error } = await dono.client
-      .from("presencas")
-      .insert({ partida_id: id, jogador_id: jogador!.id, situacao: "confirmado", pediu_vaga_em: new Date().toISOString() });
+    const { error } = await dono.client.from("presencas").insert({
+      partida_id: id,
+      jogador_id: jogador!.id,
+      situacao: "confirmado",
+      pediu_vaga_em: new Date().toISOString(),
+    });
     expect(error).not.toBeNull();
   });
 });
@@ -147,7 +161,11 @@ describe("vou / não vou", () => {
     expect((await responder(ze.u, id, ze.jogadorId, true)).error).toBeNull();
 
     // The game started an hour ago.
-    await service().from("partidas").update({ inicio: new Date(Date.now() - 3_600_000).toISOString() }).eq("id", id).throwOnError();
+    await service()
+      .from("partidas")
+      .update({ inicio: new Date(Date.now() - 3_600_000).toISOString() })
+      .eq("id", id)
+      .throwOnError();
 
     expect((await responder(ze.u, id, ze.jogadorId, false)).error?.hint).toBe("ja-comecou");
     expect(await situacaoDe(id, ze.jogadorId)).toBe("confirmado");
@@ -198,7 +216,12 @@ describe("dropping out", () => {
 
     const depois = await lista(id);
     const de = (j: string) => depois.find((p) => p.jogador_id === j)?.situacao;
-    expect([de(a.jogadorId), de(b.jogadorId), de(c.jogadorId), de(d.jogadorId)]).toEqual(["nao_vou", "confirmado", "confirmado", "espera"]);
+    expect([de(a.jogadorId), de(b.jogadorId), de(c.jogadorId), de(d.jogadorId)]).toEqual([
+      "nao_vou",
+      "confirmado",
+      "confirmado",
+      "espera",
+    ]);
   });
 
   it("leaving the lista de espera promotes nobody", async () => {
@@ -222,7 +245,10 @@ describe("dropping out", () => {
     // b drops out (c takes the vaga), then says vou again: behind d.
     await responder(b.u, id, b.jogadorId, false);
     await responder(b.u, id, b.jogadorId, true);
-    expect((await lista(id)).filter((p) => p.situacao === "espera").map((p) => p.jogador_id)).toEqual([d.jogadorId, b.jogadorId]);
+    expect((await lista(id)).filter((p) => p.situacao === "espera").map((p) => p.jogador_id)).toEqual([
+      d.jogadorId,
+      b.jogadorId,
+    ]);
   });
 
   it("deleting a confirmed Jogador hands their vaga to the first in line, not to whoever answers next", async () => {
@@ -246,7 +272,11 @@ describe("dropping out", () => {
     const [a, b, c] = await Promise.all(["a", "b", "c"].map((n) => membroComJogador(grupoId, n)));
     const id = await partida(dono, grupoId, 2);
     for (const m of [a, b, c]) await responder(m.u, id, m.jogadorId, true);
-    await service().from("partidas").update({ inicio: new Date(Date.now() - 3_600_000).toISOString() }).eq("id", id).throwOnError();
+    await service()
+      .from("partidas")
+      .update({ inicio: new Date(Date.now() - 3_600_000).toISOString() })
+      .eq("id", id)
+      .throwOnError();
 
     await dono.client.rpc("excluir_jogador", { grupo: grupoId, jogador: a.jogadorId }).throwOnError();
     expect(await situacaoDe(id, c.jogadorId)).toBe("espera");
@@ -298,7 +328,10 @@ describe("cancelling is final (#87)", () => {
       ["local", "Outra quadra"],
       ["vagas", 3],
     ] as const) {
-      const { error } = await dono.client.from("partidas").update({ [campo]: valor }).eq("id", id);
+      const { error } = await dono.client
+        .from("partidas")
+        .update({ [campo]: valor })
+        .eq("id", id);
       expect(error?.hint, campo).toBe("cancelada");
     }
 

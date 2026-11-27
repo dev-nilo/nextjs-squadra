@@ -37,9 +37,12 @@ const dia = (ms: number) => new Date(ms).toLocaleDateString("pt-BR", { timeZone:
  * "13/11, 20h15" from another day.
  */
 export function quandoFoiSalvo(salvoEm: number, agora: number): string {
-  const partes = new Intl.DateTimeFormat("pt-BR", { timeZone: FUSO, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(
-    new Date(salvoEm),
-  );
+  const partes = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: FUSO,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(salvoEm));
   const hora = partes.find((p) => p.type === "hour")?.value ?? "00";
   const minuto = partes.find((p) => p.type === "minute")?.value ?? "00";
   const horario = `${hora}h${minuto}`;

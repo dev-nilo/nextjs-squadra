@@ -48,7 +48,9 @@ function useCartaPequena() {
   useEffect(() => {
     const el = ref.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    const observador = new ResizeObserver(([entrada]) => setPequena(entrada.contentRect.width < LARGURA_DE_CARTA_PEQUENA));
+    const observador = new ResizeObserver(([entrada]) =>
+      setPequena(entrada.contentRect.width < LARGURA_DE_CARTA_PEQUENA),
+    );
     observador.observe(el);
     return () => observador.disconnect();
   }, []);
@@ -83,7 +85,15 @@ export function pontosFortes(atributos: Record<Atributo, number>): Set<Atributo>
  * (the album on a very small phone) shows only its face and turns on a tap,
  * photo or not, with its attributes in larger type on the back.
  */
-export const PlayerCard = ({ player, isMine = false, isSelected = false, selecting = false, onSelect, acoes = [], completa = false }: PlayerCardProps) => {
+export const PlayerCard = ({
+  player,
+  isMine = false,
+  isSelected = false,
+  selecting = false,
+  onSelect,
+  acoes = [],
+  completa = false,
+}: PlayerCardProps) => {
   const [virada, setVirada] = useState(false);
   const { ref: cartaRef, pequena } = useCartaPequena();
   const labels = player.position === "GOL" ? GK_LABELS : OUTFIELD_LABELS;
@@ -126,7 +136,10 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
   );
 
   const voce = isMine && (
-    <span aria-hidden="true" className="shrink-0 rounded-full bg-accent px-[2.5cqw] py-[0.4cqw] text-[5cqw] font-bold text-accent-foreground">
+    <span
+      aria-hidden="true"
+      className="shrink-0 rounded-full bg-accent px-[2.5cqw] py-[0.4cqw] text-[5cqw] font-bold text-accent-foreground"
+    >
       você
     </span>
   );
@@ -141,7 +154,9 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
         const forte = fortes.has(chave);
         return (
           <div key={chave} className="flex items-baseline justify-between py-[0.5cqw]">
-            <dt className={`${grande ? "text-[8cqw]" : "text-[5.5cqw]"} font-medium text-paper-foreground/70`}>{labels[chave].toLowerCase()}</dt>
+            <dt className={`${grande ? "text-[8cqw]" : "text-[5.5cqw]"} font-medium text-paper-foreground/70`}>
+              {labels[chave].toLowerCase()}
+            </dt>
             <dd
               className={`${grande ? "text-[9.5cqw]" : "text-[7cqw]"} tabular-nums ${forte ? "font-extrabold text-paper-foreground" : "font-medium text-paper-foreground/70"}`}
             >
@@ -177,7 +192,14 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
             <>
               <div className={`relative isolate bg-paper ${completa ? "aspect-[4/5]" : "min-h-0 flex-1"}`}>
                 {/* Duotone: the photo in grey multiplied onto Papel, then the navy ink lightened in, so black prints navy. */}
-                <img src={player.image!} alt="" crossOrigin="anonymous" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover object-top mix-blend-multiply grayscale contrast-125" />
+                <img
+                  src={player.image!}
+                  alt=""
+                  crossOrigin="anonymous"
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 h-full w-full object-cover object-top mix-blend-multiply grayscale contrast-125"
+                />
                 <div aria-hidden="true" className="absolute inset-0 bg-paper-foreground mix-blend-lighten" />
                 {vira && (
                   // The back of the sticker: the attributes over the photo, on hover or after a tap.
@@ -192,7 +214,10 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
                 )}
               </div>
               {/* The rule under the photo; a brilhante's stops inside its gold frame. */}
-              <div aria-hidden="true" className={`shrink-0 border-t-[0.6cqw] ${regua} ${brilhante ? "mx-[3cqw]" : ""}`} />
+              <div
+                aria-hidden="true"
+                className={`shrink-0 border-t-[0.6cqw] ${regua} ${brilhante ? "mx-[3cqw]" : ""}`}
+              />
               <div className="flex shrink-0 items-center gap-[3.5cqw] px-[5cqw] py-[3.5cqw]">
                 <span className={`text-numeral text-[22cqw] leading-[0.82] ${tinta}`}>{player.rating}</span>
                 <div className="flex min-w-0 flex-col gap-[1cqw]">
@@ -210,7 +235,9 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
               <span className={`text-numeral -ml-[1cqw] text-[54cqw] leading-[0.82] ${tinta}`}>{player.rating}</span>
               <span className="mt-[2.5cqw]">{posicao}</span>
               <div className="mt-auto flex items-end gap-[2.5cqw]">
-                <p className="line-clamp-2 min-w-0 text-[9.5cqw] font-bold leading-[1.02] tracking-tight [overflow-wrap:anywhere]">{player.name}</p>
+                <p className="line-clamp-2 min-w-0 text-[9.5cqw] font-bold leading-[1.02] tracking-tight [overflow-wrap:anywhere]">
+                  {player.name}
+                </p>
                 {voce && <span className="mb-[1cqw]">{voce}</span>}
               </div>
               {/* On a small card the table hides (CSS, so the first paint is right too) and the back shows it. */}
@@ -231,7 +258,10 @@ export const PlayerCard = ({ player, isMine = false, isSelected = false, selecti
 
           {brilhante && (
             // The brilhante's frame: a double rule in gold ink, inside the paper.
-            <div aria-hidden="true" className="pointer-events-none absolute inset-[1.8cqw] rounded-[2.5cqw] border-[1.2cqw] border-double border-paper-ouro" />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-[1.8cqw] rounded-[2.5cqw] border-[1.2cqw] border-double border-paper-ouro"
+            />
           )}
         </div>
       </div>

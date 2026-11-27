@@ -50,7 +50,11 @@ function semErro<T>({ data, error }: { data: T; error: Erro }, leitura: string):
 }
 
 /** The live part of a Partida of the Grupo, or null when there's none the caller can see. */
-export async function lerPartidaAoVivo(supabase: SupabaseClient, grupoId: string, id: string): Promise<PartidaAoVivo | null> {
+export async function lerPartidaAoVivo(
+  supabase: SupabaseClient,
+  grupoId: string,
+  id: string,
+): Promise<PartidaAoVivo | null> {
   const [partida, presencas, sorteio] = await Promise.all([
     supabase.from("partidas").select(PARTIDA).eq("id", id).eq("grupo_id", grupoId).maybeSingle(),
     supabase.from("presencas").select(PRESENCA).eq("partida_id", id),
@@ -70,7 +74,11 @@ export async function lerPartidaAoVivo(supabase: SupabaseClient, grupoId: string
  * The Grupo's next Partida: the soonest one not cancelled and not started at
  * `agora`. Null when none is scheduled. The fut's home page opens it.
  */
-export async function lerProximaPartida(supabase: SupabaseClient, grupoId: string, agora: number): Promise<string | null> {
+export async function lerProximaPartida(
+  supabase: SupabaseClient,
+  grupoId: string,
+  agora: number,
+): Promise<string | null> {
   const proxima = semErro(
     await supabase
       .from("partidas")
@@ -87,7 +95,11 @@ export async function lerProximaPartida(supabase: SupabaseClient, grupoId: strin
 }
 
 /** Everything the Partida page shows, or null when there's no such Partida for the caller. */
-export async function lerPartida(supabase: SupabaseClient, grupoId: string, id: string): Promise<LeituraDaPartida | null> {
+export async function lerPartida(
+  supabase: SupabaseClient,
+  grupoId: string,
+  id: string,
+): Promise<LeituraDaPartida | null> {
   const [aoVivo, jogadores] = await Promise.all([
     lerPartidaAoVivo(supabase, grupoId, id),
     supabase.from("players").select(COLUNAS_DO_JOGADOR).eq("grupo_id", grupoId).order("name"),
@@ -136,7 +148,9 @@ export async function lerHistorico(supabase: SupabaseClient, grupoId: string): P
   for (const c of semErro(confirmados, "confirmados") ?? []) {
     quemFoi.set(c.partida_id, [...(quemFoi.get(c.partida_id) ?? []), nomeDe(c.jogador_id)]);
   }
-  const timesDe = new Map((semErro(sorteios, "sorteios") ?? []).map((s) => [s.partida_id as string, s.times as TimeSalvo[]]));
+  const timesDe = new Map(
+    (semErro(sorteios, "sorteios") ?? []).map((s) => [s.partida_id as string, s.times as TimeSalvo[]]),
+  );
 
   return {
     partidas: partidas.map((p) => {
@@ -155,7 +169,12 @@ export async function lerHistorico(supabase: SupabaseClient, grupoId: string): P
     }),
     frequencia: (semErro(frequencias, "frequencia") ?? [])
       .filter((f) => f.partidas > 0)
-      .map((f) => ({ nome: nomeDe(f.jogador_id), partidas: f.partidas, presencas: f.presencas, frequencia: f.frequencia ?? 0 }))
+      .map((f) => ({
+        nome: nomeDe(f.jogador_id),
+        partidas: f.partidas,
+        presencas: f.presencas,
+        frequencia: f.frequencia ?? 0,
+      }))
       .sort((a, b) => b.frequencia - a.frequencia || porNome(a.nome, b.nome)),
   };
 }

@@ -11,23 +11,27 @@ const MOTIVOS = { "limite-de-grupos": "Você já organiza 5 futs, o limite por c
  * and moves their Jogadores that have no Grupo into it, in one transaction.
  */
 export const criarGrupo = (supabase: SupabaseClient, nome: string) =>
-  comSessao(supabase, { acao: "criarGrupo", generica: "Não deu pra criar o fut agora. Tenta de novo.", motivos: MOTIVOS }, async ({ user }): Promise<Participacao> => {
-    const validacao = validarNomeDoGrupo(nome);
-    if (!validacao.ok) recusar(validacao.message);
+  comSessao(
+    supabase,
+    { acao: "criarGrupo", generica: "Não deu pra criar o fut agora. Tenta de novo.", motivos: MOTIVOS },
+    async ({ user }): Promise<Participacao> => {
+      const validacao = validarNomeDoGrupo(nome);
+      if (!validacao.ok) recusar(validacao.message);
 
-    // A second submit (another tab, a retry after a lost response) must not
-    // create a second Grupo: hand back the one this user already owns.
-    const { data: existente } = await supabase
-      .from("grupo_membros")
-      .select("grupos(id, slug, nome)")
-      .eq("user_id", user.id)
-      .eq("papel", "dono")
-      .order("created_at")
-      .limit(1)
-      .maybeSingle();
-    const jaTem = existente?.grupos as { id: string; slug: string; nome: string } | null | undefined;
-    if (jaTem) return { ...jaTem, papel: "dono" };
+      // A second submit (another tab, a retry after a lost response) must not
+      // create a second Grupo: hand back the one this user already owns.
+      const { data: existente } = await supabase
+        .from("grupo_membros")
+        .select("grupos(id, slug, nome)")
+        .eq("user_id", user.id)
+        .eq("papel", "dono")
+        .order("created_at")
+        .limit(1)
+        .maybeSingle();
+      const jaTem = existente?.grupos as { id: string; slug: string; nome: string } | null | undefined;
+      if (jaTem) return { ...jaTem, papel: "dono" };
 
-    const criado = exigir(await supabase.rpc("criar_grupo", { nome_do_grupo: validacao.nome }));
-    return { id: criado.id, slug: criado.slug, nome: criado.nome, papel: "dono" };
-  });
+      const criado = exigir(await supabase.rpc("criar_grupo", { nome_do_grupo: validacao.nome }));
+      return { id: criado.id, slug: criado.slug, nome: criado.nome, papel: "dono" };
+    },
+  );

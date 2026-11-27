@@ -43,10 +43,7 @@ describe("grupoAtual", () => {
   });
 
   it("picks the oldest among the same kind", () => {
-    const atual = grupoAtual([
-      grupo("novo", "admin", "2026-05-01"),
-      grupo("antigo", "membro", "2026-02-01"),
-    ]);
+    const atual = grupoAtual([grupo("novo", "admin", "2026-05-01"), grupo("antigo", "membro", "2026-02-01")]);
     expect(atual?.slug).toBe("antigo");
   });
 });

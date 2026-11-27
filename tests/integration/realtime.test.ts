@@ -27,13 +27,19 @@ afterEach(async () => {
 type Evento = { table: string; eventType: string };
 
 /** Subscribes `quem` with their own token and resolves once the channel is live. */
-async function ouvir(quem: TestUser, nome: string, assinaturas: { table: string; event: "*" | "UPDATE"; filter?: string }[]) {
+async function ouvir(
+  quem: TestUser,
+  nome: string,
+  assinaturas: { table: string; event: "*" | "UPDATE"; filter?: string }[],
+) {
   const { data } = await quem.client.auth.getSession();
   quem.client.realtime.setAuth(data.session!.access_token);
   const eventos: Evento[] = [];
   let canal = quem.client.channel(`${nome}:${Math.random()}`);
   for (const a of assinaturas) {
-    canal = canal.on("postgres_changes", { schema: "public", ...a }, (p) => eventos.push({ table: p.table, eventType: p.eventType }));
+    canal = canal.on("postgres_changes", { schema: "public", ...a }, (p) =>
+      eventos.push({ table: p.table, eventType: p.eventType }),
+    );
   }
   canais.push(canal);
   await new Promise<void>((pronto, falha) => {
@@ -108,7 +114,13 @@ describe("Realtime", { timeout: 60_000 }, () => {
       { table: "sorteios", event: "*" },
       { table: "partidas", event: "*" },
     ]);
-    await jaOuve(ouvidos, (vez) => outro.dono.client.from("partidas").update({ local: `Quadra ${vez}` }).eq("id", outro.partida).throwOnError());
+    await jaOuve(ouvidos, (vez) =>
+      outro.dono.client
+        .from("partidas")
+        .update({ local: `Quadra ${vez}` })
+        .eq("id", outro.partida)
+        .throwOnError(),
+    );
 
     await aqui.dono.client.rpc("excluir_jogador", { grupo: aqui.grupo, jogador: aqui.jogador }).throwOnError();
 
@@ -122,7 +134,13 @@ describe("Realtime", { timeout: 60_000 }, () => {
     const membro = await user("pagina-membro");
     await addMembro(aqui.grupo, membro, "membro");
     const ouvidos = await ouvir(membro, "pagina", daPagina(aqui.partida));
-    await jaOuve(ouvidos, (vez) => aqui.dono.client.from("partidas").update({ local: `Quadra ${vez}` }).eq("id", aqui.partida).throwOnError());
+    await jaOuve(ouvidos, (vez) =>
+      aqui.dono.client
+        .from("partidas")
+        .update({ local: `Quadra ${vez}` })
+        .eq("id", aqui.partida)
+        .throwOnError(),
+    );
 
     await aqui.dono.client.rpc("excluir_jogador", { grupo: aqui.grupo, jogador: aqui.jogador }).throwOnError();
 
@@ -139,10 +157,14 @@ describe("Realtime", { timeout: 60_000 }, () => {
     const deFora = await ouvir(outro.dono, "tudo", [{ table: "presencas", event: "*" }]);
     // Answering alternates, so each call changes the row.
     await jaOuve(deFora, (vez) =>
-      outro.dono.client.rpc("responder_presenca", { partida: outro.partida, jogador: outro.jogador, vou: vez % 2 === 1 }).throwOnError(),
+      outro.dono.client
+        .rpc("responder_presenca", { partida: outro.partida, jogador: outro.jogador, vou: vez % 2 === 1 })
+        .throwOnError(),
     );
 
-    await aqui.dono.client.rpc("responder_presenca", { partida: aqui.partida, jogador: dele!.id, vou: true }).throwOnError();
+    await aqui.dono.client
+      .rpc("responder_presenca", { partida: aqui.partida, jogador: dele!.id, vou: true })
+      .throwOnError();
 
     expect(await chega(naPagina)).toContainEqual({ table: "presencas", eventType: "INSERT" });
     await espera(1_000);

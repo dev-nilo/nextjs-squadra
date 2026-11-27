@@ -1,5 +1,15 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { addJogador, addMembro, admin, anon, chamarComo, conexaoDireta, newUser, removeUsers, type TestUser } from "./support";
+import {
+  addJogador,
+  addMembro,
+  admin,
+  anon,
+  chamarComo,
+  conexaoDireta,
+  newUser,
+  removeUsers,
+  type TestUser,
+} from "./support";
 
 let users: TestUser[] = [];
 const user = async (label: string) => {

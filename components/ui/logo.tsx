@@ -46,7 +46,9 @@ export function BrandLockup({
   return (
     <div className={`flex items-center gap-1.5 ${className}`}>
       <Logo className="h-9 w-9" />
-      <span className={`text-lg font-black tracking-tight text-brand leading-none ${compactOnMobile ? "sr-only sm:not-sr-only" : ""}`}>
+      <span
+        className={`text-lg font-black tracking-tight text-brand leading-none ${compactOnMobile ? "sr-only sm:not-sr-only" : ""}`}
+      >
         Squadra
       </span>
     </div>

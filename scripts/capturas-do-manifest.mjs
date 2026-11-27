@@ -15,15 +15,38 @@ const SAIDA = new URL("../public/screenshots/", import.meta.url).pathname;
 
 const CAPTURAS = [
   // Phones: the next Partida (what people open the app for), then the Elenco.
-  { arquivo: "partida-celular.png", caminho: "/g/fut-do-dev", viewport: { width: 390, height: 844 }, escala: 2, titulo: /./ },
-  { arquivo: "elenco-celular.png", caminho: "/g/fut-do-dev/elenco", viewport: { width: 390, height: 844 }, escala: 2, titulo: "Elenco" },
+  {
+    arquivo: "partida-celular.png",
+    caminho: "/g/fut-do-dev",
+    viewport: { width: 390, height: 844 },
+    escala: 2,
+    titulo: /./,
+  },
+  {
+    arquivo: "elenco-celular.png",
+    caminho: "/g/fut-do-dev/elenco",
+    viewport: { width: 390, height: 844 },
+    escala: 2,
+    titulo: "Elenco",
+  },
   // Desktop: the Elenco as an album.
-  { arquivo: "elenco-tela-larga.png", caminho: "/g/fut-do-dev/elenco", viewport: { width: 1280, height: 800 }, escala: 1, titulo: "Elenco" },
+  {
+    arquivo: "elenco-tela-larga.png",
+    caminho: "/g/fut-do-dev/elenco",
+    viewport: { width: 1280, height: 800 },
+    escala: 1,
+    titulo: "Elenco",
+  },
 ];
 
 const browser = await chromium.launch();
 for (const c of CAPTURAS) {
-  const context = await browser.newContext({ viewport: c.viewport, deviceScaleFactor: c.escala, colorScheme: "light", locale: "pt-BR" });
+  const context = await browser.newContext({
+    viewport: c.viewport,
+    deviceScaleFactor: c.escala,
+    colorScheme: "light",
+    locale: "pt-BR",
+  });
   const page = await context.newPage();
   await page.goto(base + "/");
   await page.getByPlaceholder("Email").fill("dev@squadra.test");

@@ -1,8 +1,31 @@
 import { describe, expect, it } from "vitest";
-import { atribuicao, cabeNoSorteio, OPCOES_DE_TIMES, sorteioEstaEmDia, timesDoSorteio, type TimeSalvo } from "./sorteio-partida";
+import {
+  atribuicao,
+  cabeNoSorteio,
+  OPCOES_DE_TIMES,
+  sorteioEstaEmDia,
+  timesDoSorteio,
+  type TimeSalvo,
+} from "./sorteio-partida";
 
-const attrs = (n: number) => ({ velocidade: n, resistencia: n, chute: n, posicionamento: n, defesa: n, drible: n, passe: n, fisico: n });
-const j = (id: string, rating: number) => ({ id, name: id, position: "ALA" as const, rating, image: null, attributes: attrs(rating) });
+const attrs = (n: number) => ({
+  velocidade: n,
+  resistencia: n,
+  chute: n,
+  posicionamento: n,
+  defesa: n,
+  drible: n,
+  passe: n,
+  fisico: n,
+});
+const j = (id: string, rating: number) => ({
+  id,
+  name: id,
+  position: "ALA" as const,
+  rating,
+  image: null,
+  attributes: attrs(rating),
+});
 
 const salvo: TimeSalvo[] = [
   { nome: "Time 1", jogadores: [j("a", 80), j("b", 60)] },
