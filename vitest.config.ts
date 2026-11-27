@@ -1,5 +1,5 @@
-import path from "node:path";
 import { configDefaults, defineConfig } from "vitest/config";
+import { aliases } from "./vitest.aliases";
 
 export default defineConfig({
   test: {
@@ -7,10 +7,5 @@ export default defineConfig({
     // Playwright owns e2e/; tests/integration/ needs a running Supabase (npm run test:integration).
     exclude: [...configDefaults.exclude, "e2e/**", "tests/integration/**"],
   },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "."),
-      "server-only": path.resolve(__dirname, "tests/stubs/server-only.ts"),
-    },
-  },
+  resolve: { alias: aliases },
 });
