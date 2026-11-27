@@ -3,7 +3,8 @@
 *.md
 
 # SQL is not a Prettier language; migrations are history and never change.
-supabase/
+# Rooted, so lib/supabase/ is still formatted.
+/supabase/
 
 # HTML is either an email template Supabase sends as written
 # (supabase/templates) or the offline page, kept as written.
