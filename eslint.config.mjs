@@ -1,4 +1,5 @@
 import nextConfig from "eslint-config-next";
+import prettierConfig from "eslint-config-prettier/flat";
 
 // DESIGN.md: only design tokens. Bans raw Tailwind palette colors,
 // arbitrary hex colors and arbitrary pixel font sizes in class strings.
@@ -25,6 +26,8 @@ const eslintConfig = [
       ],
     },
   },
+  // Last, so it turns off any style rule above that Prettier now owns.
+  prettierConfig,
 ];
 
 export default eslintConfig;

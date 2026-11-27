@@ -1,0 +1,19 @@
+# Prose stays hand-wrapped: Prettier would realign every Markdown table on
+# each edit, and the docs read better as written.
+*.md
+
+# SQL is not a Prettier language; migrations are history and never change.
+supabase/
+
+# HTML is either an email template Supabase sends as written
+# (supabase/templates) or the offline page, kept as written.
+*.html
+
+# Generated or vendored.
+package-lock.json
+skills-lock.json
+next-env.d.ts
+.claude/
+.referencia/
+test-results/
+playwright-report/
