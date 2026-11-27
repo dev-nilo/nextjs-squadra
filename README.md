@@ -22,6 +22,8 @@ Squadra runs a weekly pickup-football game, a *pelada*. It keeps the group's ros
 
 ## Architecture
 
+The full picture, with the read and write paths, the data model and the target structure, is in [`docs/architecture.md`](docs/architecture.md).
+
 ```mermaid
 flowchart LR
   subgraph Browser
@@ -203,6 +205,7 @@ The issues found by the read-only audits of the schema and of these docs, and by
 
 ## More docs
 
+- [`docs/architecture.md`](docs/architecture.md): the whole system design: containers, read and write paths, data model, RBAC, concurrency, where each invariant is enforced, and the target structure of the rewrite.
 - [`docs/staging.md`](docs/staging.md): environments, secrets, and how migrations reach each one.
 - [`docs/auth-email.md`](docs/auth-email.md): Supabase Auth URLs and the confirmation email template.
 - [`DESIGN.md`](DESIGN.md): UI and design decisions.
