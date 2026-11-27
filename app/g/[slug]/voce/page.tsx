@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { MarcaOffline } from "@/components/fut/marca-offline";
 import { VoceView } from "@/components/voce/voce-view";
 import { carregarGrupo } from "@/lib/grupo-server";
-import { COLUNAS_DO_JOGADOR, jogadorDaLinha, type LinhaDoJogador } from "@/lib/jogador";
+import { frequenciaDaLinha } from "@/lib/leitura-da-partida";
+import { COLUNAS_DO_JOGADOR, jogadorDaLinha } from "@/lib/jogador";
 
 export const metadata: Metadata = { title: "Você · Squadra" };
 
@@ -20,7 +21,7 @@ export default async function VocePage({ params }: { params: Promise<{ slug: str
   const { supabase, user, grupo } = ctx;
   const { data: linhas, error } = await supabase.from("players").select(COLUNAS_DO_JOGADOR).eq("grupo_id", grupo.id);
   if (error) throw new Error(`Could not load the Elenco: ${error.message}`);
-  const jogadores = ((linhas ?? []) as unknown as LinhaDoJogador[]).map(jogadorDaLinha);
+  const jogadores = (linhas ?? []).map(jogadorDaLinha);
   const meu = jogadores.find((j) => j.conta_id === user.id) ?? null;
 
   const { data: frequencia } = meu
@@ -45,11 +46,7 @@ export default async function VocePage({ params }: { params: Promise<{ slug: str
         jogadores={jogadores}
         meu={meu}
         email={user.email ?? ""}
-        frequencia={
-          frequencia && frequencia.partidas > 0
-            ? (frequencia as { partidas: number; presencas: number; frequencia: number })
-            : null
-        }
+        frequencia={frequenciaDaLinha(frequencia)}
       />
     </>
   );

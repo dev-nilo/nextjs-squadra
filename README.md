@@ -166,10 +166,11 @@ Then run `npm run dev` and open http://localhost:3000. The seed users all use th
 | `npm run lint` / `npm run typecheck` | |
 | `npm run format` / `npm run format:check` | Format with Prettier, or only check (CI runs the check). Markdown, SQL and HTML are left as written (`.prettierignore`) |
 | `npm run db:reset` | Rebuild the local database from migrations and seed |
+| `npm run db:types` | Regenerate `lib/supabase/tipos-do-banco.ts` from the local database. Run it after every migration; CI fails when the file is out of date |
 
 `test:local` reads the URL and keys from `supabase status` and blanks the Sentry variables. That matters if your `.env.local` came from `vercel env pull`: it then holds the real Sentry token and DSN, so a plain `npm run build` uploads source maps and a plain E2E run reports its errors to Sentry, tagged `development`. Next never overrides a variable that is already set, even an empty one, so the script's values win over `.env.local`.
 
-Schema changes are always a new migration (`npx supabase migration new <name>`), never SQL run by hand on a dashboard.
+Schema changes are always a new migration (`npx supabase migration new <name>`), never SQL run by hand on a dashboard. After `npm run db:reset`, run `npm run db:types` and commit the regenerated types with the migration.
 
 ## Glossary
 

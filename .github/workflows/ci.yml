@@ -58,6 +58,15 @@ jobs:
         run: npx supabase start --exclude studio,imgproxy,edge-runtime,logflare,vector,supavisor
       - name: Lint the schema
         run: npx supabase db lint --level warning --fail-on error
+      # The types in lib/supabase/tipos-do-banco.ts come from the migrations.
+      # A migration that changes the schema without `npm run db:types` fails here.
+      - name: Check the generated database types are up to date
+        run: |
+          npm run db:types
+          git diff --exit-code lib/supabase/tipos-do-banco.ts || {
+            echo "::error file=lib/supabase/tipos-do-banco.ts::Out of date with the migrations. Run npm run db:types and commit it."
+            exit 1
+          }
       - name: Check the seed landed
         run: |
           count=$(psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -tAc "select count(*) from public.players")

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { COLUNAS_DO_JOGADOR, jogadorDaLinha, type LinhaDoJogador } from "@/lib/jogador";
+import type { Database } from "@/lib/supabase/tipos-do-banco";
+import { COLUNAS_DO_JOGADOR, jogadorDaLinha } from "@/lib/jogador";
 import type { Partida, Presenca } from "@/lib/partida";
 import type { SorteioSalvo, TimeSalvo } from "@/lib/sorteio-partida";
 import type { Player } from "@/types";
@@ -36,6 +37,19 @@ export type FrequenciaDoJogador = { nome: string; partidas: number; presencas: n
 
 export type Historico = { partidas: ResumoDaPartida[]; frequencia: FrequenciaDoJogador[] };
 
+/** A frequencia_jogadores row. Postgres types every view column as nullable. */
+type LinhaDaFrequencia = { partidas: number | null; presencas: number | null; frequencia: number | null };
+
+/**
+ * A Jogador's Frequência, or null before their first counted Partida. The
+ * view's counts are never null (count()::int), and its percentage is null
+ * only when there's no Partida, so null here means "nothing to show yet".
+ */
+export function frequenciaDaLinha(linha: LinhaDaFrequencia | null): Omit<FrequenciaDoJogador, "nome"> | null {
+  if (!linha?.partidas) return null;
+  return { partidas: linha.partidas, presencas: linha.presencas ?? 0, frequencia: linha.frequencia ?? 0 };
+}
+
 const PARTIDA = "id, grupo_id, inicio, local, vagas, cancelada_em";
 const PRESENCA = "jogador_id, situacao, pediu_vaga_em";
 const SORTEIO = "times, publicado_em, sorteado_em";
@@ -51,7 +65,7 @@ function semErro<T>({ data, error }: { data: T; error: Erro }, leitura: string):
 
 /** The live part of a Partida of the Grupo, or null when there's none the caller can see. */
 export async function lerPartidaAoVivo(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   grupoId: string,
   id: string,
 ): Promise<PartidaAoVivo | null> {
@@ -64,8 +78,8 @@ export async function lerPartidaAoVivo(
   const lida = semErro(partida, "partida");
   if (!lida) return null;
   return {
-    partida: lida as Partida,
-    presencas: (semErro(presencas, "presencas") ?? []) as Presenca[],
+    partida: lida,
+    presencas: semErro(presencas, "presencas") ?? [],
     sorteio: (semErro(sorteio, "sorteio") ?? null) as SorteioSalvo | null,
   };
 }
@@ -75,7 +89,7 @@ export async function lerPartidaAoVivo(
  * `agora`. Null when none is scheduled. The fut's home page opens it.
  */
 export async function lerProximaPartida(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   grupoId: string,
   agora: number,
 ): Promise<string | null> {
@@ -91,12 +105,12 @@ export async function lerProximaPartida(
       .maybeSingle(),
     "proxima partida",
   );
-  return (proxima?.id as string | undefined) ?? null;
+  return proxima?.id ?? null;
 }
 
 /** Everything the Partida page shows, or null when there's no such Partida for the caller. */
 export async function lerPartida(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   grupoId: string,
   id: string,
 ): Promise<LeituraDaPartida | null> {
@@ -105,7 +119,7 @@ export async function lerPartida(
     supabase.from("players").select(COLUNAS_DO_JOGADOR).eq("grupo_id", grupoId).order("name"),
   ]);
   if (!aoVivo) return null;
-  const linhas = (semErro(jogadores, "jogadores") ?? []) as unknown as LinhaDoJogador[];
+  const linhas = semErro(jogadores, "jogadores") ?? [];
   return { ...aoVivo, jogadores: linhas.map(jogadorDaLinha) };
 }
 
@@ -116,7 +130,7 @@ const porNome = (a: string, b: string) => a.localeCompare(b, "pt-BR");
  * name) and its published Times; and each Jogador's Frequência, highest
  * first, leaving out whoever had no Partida to count yet.
  */
-export async function lerHistorico(supabase: SupabaseClient, grupoId: string): Promise<Historico> {
+export async function lerHistorico(supabase: SupabaseClient<Database>, grupoId: string): Promise<Historico> {
   const partidas =
     semErro(
       await supabase
@@ -128,7 +142,7 @@ export async function lerHistorico(supabase: SupabaseClient, grupoId: string): P
       "partidas",
     ) ?? [];
 
-  const ids = partidas.map((p) => p.id as string);
+  const ids = partidas.map((p) => p.id);
   const [confirmados, sorteios, jogadores, frequencias] = await Promise.all([
     ids.length
       ? supabase.from("presencas").select("partida_id, jogador_id").in("partida_id", ids).eq("situacao", "confirmado")
@@ -141,16 +155,14 @@ export async function lerHistorico(supabase: SupabaseClient, grupoId: string): P
     supabase.from("frequencia_jogadores").select("jogador_id, partidas, presencas, frequencia").eq("grupo_id", grupoId),
   ]);
 
-  const nome = new Map((semErro(jogadores, "jogadores") ?? []).map((j) => [j.id as string, j.name as string]));
+  const nome = new Map((semErro(jogadores, "jogadores") ?? []).map((j) => [j.id, j.name]));
   const nomeDe = (id: string) => nome.get(id) ?? "Jogador";
 
   const quemFoi = new Map<string, string[]>();
   for (const c of semErro(confirmados, "confirmados") ?? []) {
     quemFoi.set(c.partida_id, [...(quemFoi.get(c.partida_id) ?? []), nomeDe(c.jogador_id)]);
   }
-  const timesDe = new Map(
-    (semErro(sorteios, "sorteios") ?? []).map((s) => [s.partida_id as string, s.times as TimeSalvo[]]),
-  );
+  const timesDe = new Map((semErro(sorteios, "sorteios") ?? []).map((s) => [s.partida_id, s.times as TimeSalvo[]]));
 
   return {
     partidas: partidas.map((p) => {
@@ -168,13 +180,10 @@ export async function lerHistorico(supabase: SupabaseClient, grupoId: string): P
       };
     }),
     frequencia: (semErro(frequencias, "frequencia") ?? [])
-      .filter((f) => f.partidas > 0)
-      .map((f) => ({
-        nome: nomeDe(f.jogador_id),
-        partidas: f.partidas,
-        presencas: f.presencas,
-        frequencia: f.frequencia ?? 0,
-      }))
+      .flatMap((f) => {
+        const daLinha = frequenciaDaLinha(f);
+        return daLinha && f.jogador_id ? [{ nome: nomeDe(f.jogador_id), ...daLinha }] : [];
+      })
       .sort((a, b) => b.frequencia - a.frequencia || porNome(a.nome, b.nome)),
   };
 }

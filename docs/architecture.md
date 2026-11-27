@@ -137,7 +137,7 @@ sequenceDiagram
 1. [proxy.ts:34](../proxy.ts#L34) refreshes the session.
 2. The layout calls `carregarGrupo(slug)` ([lib/grupo-server.ts:27](../lib/grupo-server.ts#L27)). It is wrapped in `React.cache`, so the layout and the page share one lookup. It returns a status union: `sem-sessao`, `nao-encontrado` or `pronto` with the user, their papel and the client.
 3. `resolverGrupo` ([lib/grupo-server.ts:45](../lib/grupo-server.ts#L45)) joins `grupo_membros` and `grupos` by slug. RLS only returns Grupos you belong to, so someone else's slug reads exactly like a slug that doesn't exist.
-4. The page queries `players` inline ([app/g/[slug]/elenco/page.tsx:17](../app/g/%5Bslug%5D/elenco/page.tsx#L17)), casts the rows (`as unknown as LinhaDoJogador[]`, line 28) and maps them with `jogadorDaLinha` ([lib/jogador.ts:46](../lib/jogador.ts#L46)).
+4. The page queries `players` inline ([app/g/[slug]/elenco/page.tsx:17](../app/g/%5Bslug%5D/elenco/page.tsx#L17)), and maps the rows with `jogadorDaLinha` ([lib/jogador.ts:60](../lib/jogador.ts#L60)). The client is typed with the generated `Database`, so the rows already have their columns' types.
 
 The Partida pages go through a read model instead, `lib/leitura-da-partida.ts`. The Elenco, Você and Pessoas pages query inline, which Part 2 removes.
 
@@ -335,10 +335,11 @@ These are what the rewrite exists to fix.
 - `lib/` is flat and mixes domain, read models, infrastructure and client-only hooks (`lib/pwa/*` is `"use client"`).
 - God modules: `lib/sessao.ts` (733 lines: config, auth flows, redirect safety, error decoding, about 150 lines of toast copy); `components/partida/partida-view.tsx` (550, five components and PWA install logic); `components/elenco/elenco-view.tsx` (368, four modals, Storage calls, filter and sort); `DrawTeamsModal.tsx` (298); `PlayerModal.tsx` (280).
 - Supabase is called from UI code: `elenco-view` (Storage), `convites-do-fut` (reads `convites` in a `useEffect`, against ADR 0006), `auth-form`, `change-password-modal`, `use-auth`, `use-partida-ao-vivo`. No lint rule prevents it.
-- Inline page queries (`elenco`, `voce`, `pessoas`) duplicate the `players.select(COLUNAS_DO_JOGADOR)` → cast → `jogadorDaLinha` sequence in four places.
+- Inline page queries (`elenco`, `voce`, `pessoas`) duplicate the `players.select(COLUNAS_DO_JOGADOR)` → `jogadorDaLinha` sequence in four places.
 
 **Types**
-- No generated database types: clients are untyped, about 11 row casts, RPC names and arguments are unchecked strings, and enums are copied by hand (the position list lives in six places).
+- The position list lives in several places (`PlayerPosition`, `POSITIONS`, a Zod enum, the `players_posicao_conhecida` check). The column is text with a check, so the generated types can't supply it. (Since #132 the clients are typed with the generated `Database`, row casts are gone, `rpc` names and arguments are checked, and `Papel` and `SituacaoPresenca` come from the database enums.)
+- `sorteios.times` is `jsonb`, so its generated type is `Json`, and the two reads of it cast to `SorteioSalvo` and `TimeSalvo[]` ([lib/leitura-da-partida.ts](../lib/leitura-da-partida.ts)). Nothing checks the shape at runtime yet (M3).
 - Two different types are both called `ContextoDoGrupo` (`lib/grupo-server.ts`, `lib/acoes/executar.ts`).
 
 **Naming**

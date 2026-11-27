@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/tipos-do-banco";
 import { validarNomeDoGrupo, type Participacao } from "@/lib/grupo";
 import { comSessao, exigir, recusar } from "./executar";
 
@@ -10,7 +11,7 @@ const MOTIVOS = { "limite-de-grupos": "Você já organiza 5 futs, o limite por c
  * First access: the user names their Grupo. `criar_grupo` makes them its dono
  * and moves their Jogadores that have no Grupo into it, in one transaction.
  */
-export const criarGrupo = (supabase: SupabaseClient, nome: string) =>
+export const criarGrupo = (supabase: SupabaseClient<Database>, nome: string) =>
   comSessao(
     supabase,
     { acao: "criarGrupo", generica: "Não deu pra criar o fut agora. Tenta de novo.", motivos: MOTIVOS },
@@ -28,7 +29,7 @@ export const criarGrupo = (supabase: SupabaseClient, nome: string) =>
         .order("created_at")
         .limit(1)
         .maybeSingle();
-      const jaTem = existente?.grupos as { id: string; slug: string; nome: string } | null | undefined;
+      const jaTem = existente?.grupos;
       if (jaTem) return { ...jaTem, papel: "dono" };
 
       const criado = exigir(await supabase.rpc("criar_grupo", { nome_do_grupo: validacao.nome }));

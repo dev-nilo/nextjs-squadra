@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/tipos-do-banco";
 import { MOTIVO_DO_VINCULO, meuJogadorSchema } from "@/lib/vinculo";
 import { exigir, idSchema, noGrupo, validar } from "./executar";
 
@@ -11,7 +12,7 @@ const MOTIVOS = {
 };
 
 /** "Sou esse aqui": link the signed-in account to a Jogador with none. */
-export const vincularJogador = (supabase: SupabaseClient, slug: unknown, jogadorId: unknown) =>
+export const vincularJogador = (supabase: SupabaseClient<Database>, slug: unknown, jogadorId: unknown) =>
   noGrupo(
     supabase,
     slug,
@@ -24,7 +25,7 @@ export const vincularJogador = (supabase: SupabaseClient, slug: unknown, jogador
   );
 
 /** "Não estou na lista": add the signed-in user to the Elenco, already linked. */
-export const criarMeuJogador = (supabase: SupabaseClient, slug: unknown, nome: unknown, posicao: unknown) =>
+export const criarMeuJogador = (supabase: SupabaseClient<Database>, slug: unknown, nome: unknown, posicao: unknown) =>
   noGrupo(
     supabase,
     slug,
@@ -37,7 +38,7 @@ export const criarMeuJogador = (supabase: SupabaseClient, slug: unknown, nome: u
   );
 
 /** Unlink a Jogador from its account (dono, admin, or the person themselves). */
-export const desvincularJogador = (supabase: SupabaseClient, slug: unknown, jogadorId: unknown) =>
+export const desvincularJogador = (supabase: SupabaseClient<Database>, slug: unknown, jogadorId: unknown) =>
   noGrupo(
     supabase,
     slug,

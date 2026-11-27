@@ -1,7 +1,8 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/tipos-do-banco";
 import { z } from "zod";
-import { COLUNAS_DO_JOGADOR, jogadorDaLinha, type LinhaDoJogador } from "@/lib/jogador";
+import { COLUNAS_DO_JOGADOR, jogadorDaLinha } from "@/lib/jogador";
 import { sortearTimes } from "@/lib/sorteio";
 import {
   atribuicao,
@@ -26,7 +27,12 @@ const sorteadoEmSchema = z.string().datetime({ offset: true });
  * ratings, so nobody can fake a rating from DevTools. An admin calling
  * salvar_sorteio directly can still choose the split, as moving Jogadores does.
  */
-export const sortearDaPartida = (supabase: SupabaseClient, slug: unknown, partidaId: unknown, numTimes: unknown) =>
+export const sortearDaPartida = (
+  supabase: SupabaseClient<Database>,
+  slug: unknown,
+  partidaId: unknown,
+  numTimes: unknown,
+) =>
   noGrupo(
     supabase,
     slug,
@@ -46,9 +52,7 @@ export const sortearDaPartida = (supabase: SupabaseClient, slug: unknown, partid
           .eq("partida_id", partida)
           .eq("situacao", "confirmado"),
       );
-      const jogadores = (confirmados as unknown as { players: LinhaDoJogador | null }[]).flatMap((c) =>
-        c.players ? [jogadorDaLinha(c.players)] : [],
-      );
+      const jogadores = confirmados.flatMap((c) => (c.players ? [jogadorDaLinha(c.players)] : []));
       if (!cabeNoSorteio(jogadores.length, quantos)) {
         recusar(
           `Pra ${quantos} Times precisa de pelo menos ${minimoDeConfirmados(quantos)} confirmados (tem ${jogadores.length}).`,
@@ -67,7 +71,7 @@ export const sortearDaPartida = (supabase: SupabaseClient, slug: unknown, partid
  * admin is looking at: if the Times were drawn again since, it's refused.
  */
 export const moverNoSorteio = (
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   slug: unknown,
   partidaId: unknown,
   jogadorId: unknown,
@@ -89,7 +93,7 @@ export const moverNoSorteio = (
   );
 
 /** Shows the Times to every Membro and freezes them. */
-export const publicarSorteio = (supabase: SupabaseClient, slug: unknown, partidaId: unknown) =>
+export const publicarSorteio = (supabase: SupabaseClient<Database>, slug: unknown, partidaId: unknown) =>
   noGrupo(
     supabase,
     slug,

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/tipos-do-banco";
 
 export const PLAYER_IMAGES_BUCKET = "player-images";
 
@@ -29,7 +30,7 @@ export function isDataUrlImage(value: string | null | undefined): boolean {
  * at an hour: a file never changes, but a deleted photo should stop loading.
  */
 export async function uploadPlayerImage(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   grupoId: string,
   playerId: string,
   dataUrl: string,
@@ -59,7 +60,7 @@ export async function uploadPlayerImage(
  * certainly refused. Nothing points at it: its path is new and only this
  * upload knows it. Best effort: a leftover file costs storage, not correctness.
  */
-export async function apagarFotoEnviada(supabase: SupabaseClient, caminho: string) {
+export async function apagarFotoEnviada(supabase: SupabaseClient<Database>, caminho: string) {
   try {
     const { data, error } = await supabase.storage.from(PLAYER_IMAGES_BUCKET).remove([caminho]);
     if (error) throw error;

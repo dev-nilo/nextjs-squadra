@@ -1,6 +1,8 @@
 import { z } from "zod";
+import type { Enums } from "@/lib/supabase/tipos-do-banco";
 
-export type SituacaoPresenca = "confirmado" | "espera" | "nao_vou";
+/** The situacao_presenca enum in the database. */
+export type SituacaoPresenca = Enums<"situacao_presenca">;
 
 export type Partida = {
   id: string;

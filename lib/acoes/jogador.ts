@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/tipos-do-banco";
 import { z } from "zod";
 import { caminhoDaFoto, caminhoDaFotoDoJogador, ehFotoDoGrupo, jogadorParaLinha, jogadorSchema } from "@/lib/jogador";
 import { PLAYER_IMAGES_BUCKET } from "@/lib/player-image";
@@ -33,7 +34,7 @@ const urlDoSupabase = () => process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
  * row changed, and best effort: a leftover file costs storage, not
  * correctness, so a failure here never fails the action.
  */
-async function apagarFoto(supabase: SupabaseClient, caminho: string) {
+async function apagarFoto(supabase: SupabaseClient<Database>, caminho: string) {
   try {
     const { error } = await supabase.storage.from(PLAYER_IMAGES_BUCKET).remove([caminho]);
     if (error) throw error;
@@ -52,7 +53,7 @@ async function apagarFoto(supabase: SupabaseClient, caminho: string) {
  * at (#89): a stale save is refused before it writes, so the photo cleanup
  * only follows a save that replaced exactly the row it read.
  */
-export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: unknown) =>
+export const salvarJogador = (supabase: SupabaseClient<Database>, slug: unknown, dados: unknown) =>
   noGrupo(
     supabase,
     slug,
@@ -128,7 +129,7 @@ export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: un
  * Through excluir_jogador, which only lets the dono and admins, and takes the
  * Jogador's Partidas before the Jogador so it can't deadlock with an answer.
  */
-export const excluirJogador = (supabase: SupabaseClient, slug: unknown, jogadorId: unknown) =>
+export const excluirJogador = (supabase: SupabaseClient<Database>, slug: unknown, jogadorId: unknown) =>
   noGrupo(
     supabase,
     slug,
@@ -146,7 +147,7 @@ export const excluirJogador = (supabase: SupabaseClient, slug: unknown, jogadorI
   );
 
 /** Adds the Jogadores from a CSV in one insert: all of them or none. */
-export const importarJogadores = (supabase: SupabaseClient, slug: unknown, dados: unknown) =>
+export const importarJogadores = (supabase: SupabaseClient<Database>, slug: unknown, dados: unknown) =>
   noGrupo(
     supabase,
     slug,
