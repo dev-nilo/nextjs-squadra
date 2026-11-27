@@ -2,5 +2,6 @@
 #   git config blame.ignoreRevsFile .git-blame-ignore-revs
 # (GitHub reads this file on its own.)
 
-# Format the repository with Prettier (#130)
-bf7711eaa1d365f28a331bad88a6645c511d7d74
+# Add Prettier and format the repository once (#139). Squashed, so it also
+# holds the Prettier config, a few lines next to 117 reformatted files.
+a53bca1582d13c85b9b266bccdfb69985fcf5f5b
