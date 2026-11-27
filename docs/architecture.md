@@ -402,7 +402,7 @@ flowchart TB
   APL --> CAPL[compartilhado/aplicacao]
 ```
 
-**The dependency rule.** Arrows point inward. `dominio` depends on nothing but other domain code. `ui` never imports `infra`: it reaches the server through Server Actions. Another module is used only through its `index.ts`. `eslint-plugin-boundaries` enforces all of it (M1, ADR 0009).
+**The dependency rule.** Arrows point inward. `dominio` depends on nothing but other domain code. `ui` never imports `infra`: it reaches the server through Server Actions. Another module is used only through its `index.ts`. `eslint-plugin-boundaries` enforces all of it (M1). The decision and the alternatives rejected are in [ADR 0009](adr/0009-modules-by-context-with-layers.md).
 
 **What stays in SQL.** Authorization, concurrency, and the invariants that need a transaction or must hold for any client: RLS, the security-definer functions, the triggers, the lock order. Clean architecture usually puts every rule in the domain layer. Here that would mean moving the last-vaga lock into application code, which can't give the same guarantee. So the TypeScript domain holds the algorithms (Sorteio balancing), the shaping of what screens show, validation for fast feedback, and the rules for what the UI offers. The database holds the rules that must never break.
 
