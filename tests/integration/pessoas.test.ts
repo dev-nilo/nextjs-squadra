@@ -22,9 +22,14 @@ type Elenco = {
 let gente: Elenco;
 
 beforeAll(async () => {
-  const [dono, admin, membro, outroMembro, outroAdmin, deFora] = await Promise.all(
-    ["dono", "admin", "membro", "outro-membro", "outro-admin", "fora"].map((l) => newUser(`pessoas-${l}`)),
-  );
+  const [dono, admin, membro, outroMembro, outroAdmin, deFora] = await Promise.all([
+    newUser("pessoas-dono"),
+    newUser("pessoas-admin"),
+    newUser("pessoas-membro"),
+    newUser("pessoas-outro-membro"),
+    newUser("pessoas-outro-admin"),
+    newUser("pessoas-fora"),
+  ]);
   gente = { dono, admin, membro, outroMembro, outroAdmin, deFora };
 });
 

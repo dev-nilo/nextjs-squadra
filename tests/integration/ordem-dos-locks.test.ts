@@ -29,9 +29,12 @@ let db: pg.Client;
 let segura: number;
 
 beforeAll(async () => {
-  [dono, admin, membro, deFora] = await Promise.all(
-    ["dono", "admin", "membro", "fora"].map((l) => newUser(`locks-${l}`)),
-  );
+  [dono, admin, membro, deFora] = await Promise.all([
+    newUser("locks-dono"),
+    newUser("locks-admin"),
+    newUser("locks-membro"),
+    newUser("locks-fora"),
+  ]);
   db = await conexaoDireta();
   segura = await pidDe(db);
 });

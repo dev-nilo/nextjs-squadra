@@ -46,11 +46,11 @@ describe("importPlayersFromCsv", () => {
     expect(players).toHaveLength(2);
 
     const celta = players[0];
-    expect(celta.name).toBe("CELTA");
-    expect(celta.attributes.velocidade).toBe(90);
-    expect(celta.attributes.passe).toBe(85);
-    expect(celta.attributes.posicionamento).toBe(85);
-    expect(celta.rating).toBe(83);
+    expect(celta?.name).toBe("CELTA");
+    expect(celta?.attributes.velocidade).toBe(90);
+    expect(celta?.attributes.passe).toBe(85);
+    expect(celta?.attributes.posicionamento).toBe(85);
+    expect(celta?.rating).toBe(83);
   });
 
   it("maps PAS→passe and POS→posicionamento regardless of column order", () => {
@@ -64,10 +64,10 @@ B,10,30,40,20`;
     const fromCsv = importPlayersFromCsv(csvOrder).players[0];
     const fromUi = importPlayersFromCsv(uiOrder).players[0];
 
-    expect(fromCsv.attributes.passe).toBe(20);
-    expect(fromCsv.attributes.posicionamento).toBe(30);
-    expect(fromUi.attributes.passe).toBe(20);
-    expect(fromUi.attributes.posicionamento).toBe(30);
+    expect(fromCsv?.attributes.passe).toBe(20);
+    expect(fromCsv?.attributes.posicionamento).toBe(30);
+    expect(fromUi?.attributes.passe).toBe(20);
+    expect(fromUi?.attributes.posicionamento).toBe(30);
   });
 
   it("skips title rows before the JOGADOR header", () => {
@@ -77,16 +77,16 @@ B,10,30,40,20`;
     const { players, errors } = importPlayersFromCsv(csv);
     expect(errors).toHaveLength(0);
     expect(players).toHaveLength(1);
-    expect(players[0].name).toBe("CELTA");
-    expect(players[0].attributes.passe).toBe(85);
-    expect(players[0].attributes.posicionamento).toBe(85);
+    expect(players[0]?.name).toBe("CELTA");
+    expect(players[0]?.attributes.passe).toBe(85);
+    expect(players[0]?.attributes.posicionamento).toBe(85);
   });
 
   it("skips rows without a player name", () => {
     const csv = `JOGADOR,VEL\n,90\nOK,70`;
     const { players, skippedRows } = importPlayersFromCsv(csv);
     expect(players).toHaveLength(1);
-    expect(players[0].name).toBe("OK");
+    expect(players[0]?.name).toBe("OK");
     expect(skippedRows).toBe(1);
   });
 
@@ -99,9 +99,9 @@ B,10,30,40,20`;
   it("accepts optional position and nationality columns", () => {
     const csv = `JOGADOR,POSIÇÃO,NACIONALIDADE,VEL\nAna,GOL,AR,88`;
     const { players } = importPlayersFromCsv(csv);
-    expect(players[0].position).toBe("GOL");
-    expect(players[0].nationality).toBe("AR");
-    expect(players[0].attributes.velocidade).toBe(88);
+    expect(players[0]?.position).toBe("GOL");
+    expect(players[0]?.nationality).toBe("AR");
+    expect(players[0]?.attributes.velocidade).toBe(88);
   });
 });
 

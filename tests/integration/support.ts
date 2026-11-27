@@ -37,7 +37,7 @@ export async function conexaoDireta(): Promise<pg.Client> {
 /** The server process behind a direct connection, to tell its locks from anyone else's. */
 export async function pidDe(db: pg.Client): Promise<number> {
   const { rows } = await db.query<{ pid: number }>("select pg_backend_pid() as pid");
-  return rows[0].pid;
+  return em(rows, 0).pid;
 }
 
 /**
@@ -83,10 +83,21 @@ export async function esperarTravados(db: pg.Client, por: number[], n = 1, ms = 
       "select count(*)::int as n from pg_stat_activity where pg_blocking_pids(pid) && $1::int[]",
       [por],
     );
-    if (rows[0].n >= n) return;
-    if (Date.now() > ate) throw new Error(`Expected ${n} sessions waiting on ${por.join(", ")}, saw ${rows[0].n}`);
+    const travados = em(rows, 0).n;
+    if (travados >= n) return;
+    if (Date.now() > ate) throw new Error(`Expected ${n} sessions waiting on ${por.join(", ")}, saw ${travados}`);
     await new Promise((r) => setTimeout(r, 50));
   }
+}
+
+/**
+ * The item at `i`. An index past the end is a broken fixture, so it fails the
+ * test right there instead of as an `undefined` further on.
+ */
+export function em<T>(lista: readonly T[], i: number): T {
+  const item = lista[i];
+  if (item === undefined) throw new Error(`Expected an item at ${i}, the list has ${lista.length}`);
+  return item;
 }
 
 export type TestUser = { id: string; email: string; client: SupabaseClient };

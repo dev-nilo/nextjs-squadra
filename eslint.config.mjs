@@ -29,6 +29,25 @@ const eslintConfig = [
       ],
     },
   },
+  {
+    // Unused code is checked here, not with tsc's noUnusedLocals: tsconfig
+    // includes the route types Next generates (.next/types), and those import
+    // names they don't always use. A leading underscore marks one on purpose.
+    files: ["**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          args: "after-used",
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+    },
+  },
   // Last, so it turns off any style rule above that Prettier now owns.
   prettierConfig,
 ];

@@ -31,7 +31,7 @@ export const O_QUE_O_PAPEL_FAZ: Record<Papel, { nome: string; descricao: string 
 };
 
 /** Why the database refused, from the function's HINT. */
-export const MOTIVO_DAS_PESSOAS: Record<string, string> = {
+export const MOTIVO_DAS_PESSOAS = {
   "sem-permissao": "Só o dono do fut pode fazer isso.",
   "nao-membro": "Esse fut não existe, ou você não faz parte dele.",
   "pessoa-fora": "Essa pessoa não está mais no fut.",
@@ -41,7 +41,7 @@ export const MOTIVO_DAS_PESSOAS: Record<string, string> = {
   "dono-nao-sai": "Passe o fut pra um admin antes de sair.",
   "nome-nao-confere": "O nome digitado não confere com o do fut.",
   "22023": "Confira o que foi digitado.",
-};
+} satisfies Record<string, string>;
 
 /** The papéis the dono hands out. Nobody becomes dono this way: only by `passar_posse`. */
 export const papelDadoSchema = z.enum(["admin", "membro"], { message: "Papel inválido." });

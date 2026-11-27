@@ -48,9 +48,9 @@ function useCartaPequena() {
   useEffect(() => {
     const el = ref.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    const observador = new ResizeObserver(([entrada]) =>
-      setPequena(entrada.contentRect.width < LARGURA_DE_CARTA_PEQUENA),
-    );
+    const observador = new ResizeObserver(([entrada]) => {
+      if (entrada) setPequena(entrada.contentRect.width < LARGURA_DE_CARTA_PEQUENA);
+    });
     observador.observe(el);
     return () => observador.disconnect();
   }, []);

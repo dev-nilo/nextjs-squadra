@@ -37,8 +37,8 @@ describe("sortearTimes (Sorteio seam)", () => {
     const times = sortearTimes(players, 2, { random: alwaysZero });
 
     expect(times).toHaveLength(2);
-    expect(times[0].name).toBe("Time 1");
-    expect(times[1].name).toBe("Time 2");
+    expect(times[0]?.name).toBe("Time 1");
+    expect(times[1]?.name).toBe("Time 2");
   });
 
   it("partitions every Jogador across Times exactly once", () => {
@@ -75,10 +75,10 @@ describe("sortearTimes (Sorteio seam)", () => {
 
     // With equal attribute values, assignment alternates; alwaysZero picks lowest index on ties.
     // Order after tier sort (ratings 90→60): a,b,c,d → teams [a,c] and [b,d]
-    expect(times[0].members.map((m) => m.id)).toEqual(["a", "c"]);
-    expect(times[1].members.map((m) => m.id)).toEqual(["b", "d"]);
-    expect(times[0].avg).toBe(80); // (90+70)/2
-    expect(times[1].avg).toBe(70); // (80+60)/2
+    expect(times[0]?.members.map((m) => m.id)).toEqual(["a", "c"]);
+    expect(times[1]?.members.map((m) => m.id)).toEqual(["b", "d"]);
+    expect(times[0]?.avg).toBe(80); // (90+70)/2
+    expect(times[1]?.avg).toBe(70); // (80+60)/2
   });
 
   it("balances by attribute sum: stronger attributes avoid stacking on one Time", () => {
@@ -122,10 +122,10 @@ describe("moveMember", () => {
     const teams = buildTeams();
     const result = moveMember(teams, "a", 0, 1);
 
-    expect(result[0].members.map((p) => p.id)).toEqual(["b"]);
-    expect(result[0].avg).toBe(60);
-    expect(result[1].members.map((p) => p.id)).toEqual(["c", "a"]);
-    expect(result[1].avg).toBe(85); // (90+80)/2
+    expect(result[0]?.members.map((p) => p.id)).toEqual(["b"]);
+    expect(result[0]?.avg).toBe(60);
+    expect(result[1]?.members.map((p) => p.id)).toEqual(["c", "a"]);
+    expect(result[1]?.avg).toBe(85); // (90+80)/2
   });
 
   it("keeps unaffected Times at the same reference", () => {
@@ -173,6 +173,6 @@ describe("membrosPorNome", () => {
       { name: "Jogador 2" },
     ];
     expect(membrosPorNome(membros).map((m) => m.name)).toEqual(["álvaro", "Bia", "Jogador 2", "Jogador 10", "Zé"]);
-    expect(membros[0].name).toBe("Zé");
+    expect(membros[0]?.name).toBe("Zé");
   });
 });

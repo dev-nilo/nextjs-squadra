@@ -65,8 +65,9 @@ export async function linkDeConfirmacao(email: string): Promise<string> {
     const busca = await fetch(`${MAIL}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}`).catch(() => null);
     if (busca?.ok) {
       const { messages } = (await busca.json()) as { messages?: { ID: string }[] };
-      if (messages?.length) {
-        const mensagem = (await (await fetch(`${MAIL}/api/v1/message/${messages[0].ID}`)).json()) as { HTML: string };
+      const [ultima] = messages ?? [];
+      if (ultima) {
+        const mensagem = (await (await fetch(`${MAIL}/api/v1/message/${ultima.ID}`)).json()) as { HTML: string };
         const link = achar(mensagem.HTML);
         if (link) return link;
       }

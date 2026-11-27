@@ -352,10 +352,10 @@ These are what the rewrite exists to fix.
 - The Sorteio snapshot doesn't store nationality, so the UI fills in `"BR"`.
 
 **Tooling**
-- No formatter, only baseline `strict` in TypeScript, no boundary lint, no component tests.
+- No boundary lint, no component tests. (Prettier came in #139 and the stricter TypeScript checks in #131.)
 
 **Leftovers**
-- `components/theme-provider.tsx` (unused), `TEAM_COLORS` (internal only), `GK_LABELS` and `OUTFIELD_LABELS` (identical), `America/Sao_Paulo` written three times, constants copied by hand between `public/sw.js` and `lib/pwa/paginas.ts`, and comments that mention a removed backfill and a dropped policy.
+- `TEAM_COLORS` (internal only), `GK_LABELS` and `OUTFIELD_LABELS` (identical), `America/Sao_Paulo` written three times, constants copied by hand between `public/sw.js` and `lib/pwa/paginas.ts`, and comments that mention a removed backfill and a dropped policy.
 
 ---
 
@@ -417,6 +417,8 @@ flowchart TB
 - **One name per concept** (CONTEXT.md): Membro, Grupo (fut only in UI copy), cancelar (Convite too), carta.
 - **Technical words stay English**: `use…` hooks, `props`, `schema`, `index.ts`, `Resultado` stays as it is.
 - Files are kebab-case.
+- **TypeScript** runs `strict` plus `noUncheckedIndexedAccess`, `noFallthroughCasesInSwitch` and `noImplicitOverride`. Narrow, don't assert: destructure (`const [primeiro] = lista; if (!primeiro) …`) or use `?.`. Unused code fails ESLint (`@typescript-eslint/no-unused-vars`, `_` marks it on purpose). It isn't tsc's `noUnusedLocals`, because tsconfig includes the route types Next generates in `.next/types`, and those import names they don't always use.
+- **`exactOptionalPropertyTypes` stays off.** Trying it in #131 gave 13 errors, all one shape: an optional prop receiving a value that may be `undefined`, which here always means "not given". The fixes would be `| undefined` added to our types, or conditional spreads around library types (Next's `LinkProps`, `SentryBuildOptions`). The case the flag guards, a key present as `undefined` versus missing, doesn't arise either: supabase-js sends JSON, which drops `undefined` keys.
 
 ## 14. UI and design system
 

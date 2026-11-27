@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { Logo } from "@/components/ui/logo";
-import { Player, Time } from "@/types";
+import { Time } from "@/types";
 import { membrosPorNome } from "@/lib/sorteio";
 import { getTeamPresentation } from "@/lib/constants";
 import { ArrowLeftRight, Shuffle } from "lucide-react";

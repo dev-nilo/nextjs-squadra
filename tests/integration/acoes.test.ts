@@ -13,6 +13,7 @@ import { moverNoSorteio, publicarSorteio, sortearDaPartida } from "@/lib/acoes/s
 import { criarMeuJogador, desvincularJogador, vincularJogador } from "@/lib/acoes/vinculo";
 import {
   addMembro,
+  em,
   admin as service,
   anon,
   conexaoDireta,
@@ -449,7 +450,7 @@ describe("a Partida and its Sorteio", () => {
       .select("times, sorteado_em")
       .eq("partida_id", partida)
       .single();
-    const daOrigem = (sorteio!.times as { jogadores: { id: string }[] }[])[0].jogadores[0].id;
+    const daOrigem = em(em(sorteio!.times as { jogadores: { id: string }[] }[], 0).jogadores, 0).id;
 
     valor(await moverNoSorteio(dono.client, grupo.slug, partida, daOrigem, 1, sorteio!.sorteado_em));
     valor(await publicarSorteio(dono.client, grupo.slug, partida));
@@ -530,7 +531,7 @@ describe("people and the fut", () => {
       [dono.id, "dono"],
       [amigo.id, "admin"],
     ]);
-    expect(pessoas[1].email).toBe(amigo.email);
+    expect(pessoas[1]?.email).toBe(amigo.email);
 
     expect(valor(await renomearFut(dono.client, grupo.slug, "Fut Renomeado"))).toEqual({ nome: "Fut Renomeado" });
     valor(await passarPosse(dono.client, grupo.slug, amigo.id));

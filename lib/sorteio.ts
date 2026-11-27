@@ -18,14 +18,25 @@ const EMPTY_ATTRIBUTES: Attributes = {
   fisico: 0,
 };
 
-const shuffleArray = <T>(array: T[], random: RandomFn): T[] => {
+const shuffleArray = <T extends object>(array: T[], random: RandomFn): T[] => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    const a = shuffled[i];
+    const b = shuffled[j];
+    if (!a || !b) continue; // never: 0 <= j <= i < length, and T holds no undefined
+    shuffled[i] = b;
+    shuffled[j] = a;
   }
   return shuffled;
 };
+
+/** A rating's tier, strongest first: the draw deals the Jogadores tier by tier. */
+const faixaDoRating = (rating: number): number =>
+  rating >= 90 ? 0 : rating >= 80 ? 1 : rating >= 70 ? 2 : rating >= 60 ? 3 : 4;
+
+const somaDosAtributos = (a: Attributes): number =>
+  a.velocidade + a.resistencia + a.chute + a.posicionamento + a.defesa + a.drible + a.passe + a.fisico;
 
 export const teamAverage = (members: Player[]): number =>
   members.length ? Math.round(members.reduce((sum, p) => sum + (p.rating ?? 0), 0) / members.length) : 0;
@@ -62,45 +73,28 @@ export const moveMember = (teams: Time[], playerId: string, fromTeam: number, to
 export const sortearTimes = (selectedPlayers: Player[], numTeams: number, options: SorteioOptions = {}): Time[] => {
   const random = options.random ?? Math.random;
 
-  const shuffledPlayers = shuffleArray(selectedPlayers, random);
-  const ratingTiers: Player[][] = [[], [], [], [], []];
-
-  shuffledPlayers.forEach((player) => {
-    if (player.rating >= 90) ratingTiers[0].push(player);
-    else if (player.rating >= 80) ratingTiers[1].push(player);
-    else if (player.rating >= 70) ratingTiers[2].push(player);
-    else if (player.rating >= 60) ratingTiers[3].push(player);
-    else ratingTiers[4].push(player);
-  });
-
-  const sortedPlayers = ratingTiers.flat();
-  const teams: Player[][] = Array.from({ length: numTeams }, () => []);
-
-  const teamAttributeSums = Array.from({ length: numTeams }, () => ({
-    ...EMPTY_ATTRIBUTES,
+  // Shuffled, then dealt strongest tier first. The sort is stable, so each
+  // tier keeps its shuffled order.
+  const sortedPlayers = shuffleArray(selectedPlayers, random).sort(
+    (a, b) => faixaDoRating(a.rating) - faixaDoRating(b.rating),
+  );
+  const teams = Array.from({ length: numTeams }, (): { members: Player[]; total: number } => ({
+    members: [],
+    total: 0,
   }));
 
-  sortedPlayers.forEach((player) => {
-    const teamTotals = teamAttributeSums.map((sums) => Object.values(sums).reduce((a, b) => a + b, 0));
+  // Each Jogador goes to the Time with the lowest attribute total so far, a
+  // random one among ties.
+  for (const player of sortedPlayers) {
+    const minTotal = Math.min(...teams.map((t) => t.total));
+    const tied = teams.filter((t) => t.total === minTotal);
+    const team = tied[Math.floor(random() * tied.length)];
+    if (!team) throw new RangeError("Sorteio needs at least one Time.");
+    team.members.push(player);
+    team.total += somaDosAtributos(player.attributes ?? EMPTY_ATTRIBUTES);
+  }
 
-    const minTotal = Math.min(...teamTotals);
-    const teamsWithMinTotal = teamTotals.map((total, idx) => ({ total, idx })).filter((t) => t.total === minTotal);
-
-    const minIndex = teamsWithMinTotal[Math.floor(random() * teamsWithMinTotal.length)].idx;
-    teams[minIndex].push(player);
-
-    const attrs = player.attributes ?? EMPTY_ATTRIBUTES;
-    teamAttributeSums[minIndex].velocidade += attrs.velocidade;
-    teamAttributeSums[minIndex].resistencia += attrs.resistencia;
-    teamAttributeSums[minIndex].chute += attrs.chute;
-    teamAttributeSums[minIndex].posicionamento += attrs.posicionamento;
-    teamAttributeSums[minIndex].defesa += attrs.defesa;
-    teamAttributeSums[minIndex].drible += attrs.drible;
-    teamAttributeSums[minIndex].passe += attrs.passe;
-    teamAttributeSums[minIndex].fisico += attrs.fisico;
-  });
-
-  return teams.map((members, idx) => ({
+  return teams.map(({ members }, idx) => ({
     name: `Time ${idx + 1}`,
     members,
     avg: teamAverage(members),

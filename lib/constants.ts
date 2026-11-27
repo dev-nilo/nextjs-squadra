@@ -32,8 +32,8 @@ export const TEAM_COLORS = [
   { crest: "bg-team-4", ring: "ring-team-4" },
   { crest: "bg-team-5", ring: "ring-team-5" },
   { crest: "bg-team-6", ring: "ring-team-6" },
-];
+] as const;
 
 export function getTeamPresentation(index: number) {
-  return TEAM_COLORS[index % TEAM_COLORS.length];
+  return TEAM_COLORS[index % TEAM_COLORS.length] ?? TEAM_COLORS[0];
 }
