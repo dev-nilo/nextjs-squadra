@@ -11,7 +11,17 @@ import { excluirFut, mudarPapel, passarPosse, removerDoFut, renomearFut, sairDoF
 import { apagarFotoEnviada, uploadPlayerImage } from "@/lib/player-image";
 import { moverNoSorteio, publicarSorteio, sortearDaPartida } from "@/lib/acoes/sorteio";
 import { criarMeuJogador, desvincularJogador, vincularJogador } from "@/lib/acoes/vinculo";
-import { addMembro, admin as service, anon, conexaoDireta, esperarTravados, newUser, pidDe, removeUsers, type TestUser } from "./support";
+import {
+  addMembro,
+  admin as service,
+  anon,
+  conexaoDireta,
+  esperarTravados,
+  newUser,
+  pidDe,
+  removeUsers,
+  type TestUser,
+} from "./support";
 
 // The Server Actions' bodies, called the way the adapters in app/actions call
 // them, with a signed-in client against the local Supabase: the error table
@@ -38,7 +48,16 @@ function valor<T>(resultado: Resultado<T>): T {
 }
 const mensagem = (resultado: Resultado<unknown>) => (resultado.ok ? "ok" : resultado.message);
 
-const attrs = { velocidade: 70, resistencia: 70, chute: 70, posicionamento: 70, defesa: 70, drible: 70, passe: 70, fisico: 70 };
+const attrs = {
+  velocidade: 70,
+  resistencia: 70,
+  chute: 70,
+  posicionamento: 70,
+  defesa: 70,
+  drible: 70,
+  passe: 70,
+  fisico: 70,
+};
 const carta = (name: string, extra: Record<string, unknown> = {}) => ({
   id: randomUUID(),
   name,
@@ -50,7 +69,8 @@ const carta = (name: string, extra: Record<string, unknown> = {}) => ({
 });
 /** The card's version now, as the Elenco page would read it before an edit. */
 const versaoDe = async (id: string) =>
-  ((await service().from("players").select("versao").eq("id", id).single().throwOnError()).data as { versao: number }).versao;
+  ((await service().from("players").select("versao").eq("id", id).single().throwOnError()).data as { versao: number })
+    .versao;
 
 const amanha = () => new Date(Date.now() + 86_400_000).toISOString();
 
@@ -66,7 +86,9 @@ describe("resolving the Grupo", () => {
 
     expect(mensagem(await salvarJogador(anon(), slug, carta("Sem sessão")))).toBe(SESSAO_EXPIRADA);
     expect(mensagem(await salvarJogador(deFora.client, slug, carta("Intruso")))).toBe(FUT_NAO_ENCONTRADO);
-    expect(mensagem(await criarPartida(deFora.client, slug, { inicio: amanha(), local: "Quadra", vagas: 10 }))).toBe(FUT_NAO_ENCONTRADO);
+    expect(mensagem(await criarPartida(deFora.client, slug, { inicio: amanha(), local: "Quadra", vagas: 10 }))).toBe(
+      FUT_NAO_ENCONTRADO,
+    );
     expect(mensagem(await salvarJogador(dono.client, "fut-que-nao-existe", carta("Perdido")))).toBe(FUT_NAO_ENCONTRADO);
     expect(Sentry.captureException).not.toHaveBeenCalled();
   });
@@ -111,7 +133,9 @@ describe("the Elenco", () => {
 
     expect(mensagem(await salvarJogador(membro.client, grupo.slug, carta("Do membro")))).toBe(SEM_PERMISSAO);
     expect(mensagem(await excluirJogador(membro.client, grupo.slug, nova.id))).toBe(SEM_PERMISSAO);
-    expect(mensagem(await salvarJogador(dono.client, grupo.slug, carta("", { attributes: attrs })))).toBe("Dê um nome pro jogador.");
+    expect(mensagem(await salvarJogador(dono.client, grupo.slug, carta("", { attributes: attrs })))).toBe(
+      "Dê um nome pro jogador.",
+    );
 
     valor(await excluirJogador(dono.client, grupo.slug, nova.id));
     const { data } = await service().from("players").select("name").eq("grupo_id", grupo.id).order("name");
@@ -147,7 +171,13 @@ describe("the Elenco", () => {
       const outra = carta("Outra");
       const daOutra = `${grupo.id}/${outra.id}.jpg`;
       valor(await salvarJogador(dono.client, grupo.slug, { ...outra, image: await enviar(daOutra) }));
-      valor(await salvarJogador(dono.client, grupo.slug, { ...outra, image: await enviar(daOutra), versao: await versaoDe(outra.id) }));
+      valor(
+        await salvarJogador(dono.client, grupo.slug, {
+          ...outra,
+          image: await enviar(daOutra),
+          versao: await versaoDe(outra.id),
+        }),
+      );
       expect(await existe(daOutra)).toBe(true);
       valor(await salvarJogador(dono.client, grupo.slug, { ...outra, image: null, versao: await versaoDe(outra.id) }));
       expect(await existe(daOutra)).toBe(false);
@@ -175,7 +205,10 @@ describe("the Elenco", () => {
     const enviados: string[] = [];
     const enviar = async (caminho: string, tipo: string) => {
       enviados.push(caminho);
-      const { error } = await fotos.upload(caminho, new Blob([new Uint8Array([1, 2, 3])], { type: tipo }), { upsert: true, contentType: tipo });
+      const { error } = await fotos.upload(caminho, new Blob([new Uint8Array([1, 2, 3])], { type: tipo }), {
+        upsert: true,
+        contentType: tipo,
+      });
       if (error) throw error;
       return fotos.getPublicUrl(caminho).data.publicUrl;
     };
@@ -203,7 +236,9 @@ describe("the Elenco", () => {
       expect(await existe(nova)).toBe(true);
 
       // A save that sends no version (a page from before this change) is refused too.
-      expect(mensagem(await salvarJogador(dono.client, grupo.slug, { ...aberta, image: urlNova, versao: undefined }))).toBe(CARTA_MUDOU);
+      expect(
+        mensagem(await salvarJogador(dono.client, grupo.slug, { ...aberta, image: urlNova, versao: undefined })),
+      ).toBe(CARTA_MUDOU);
     } finally {
       await service().storage.from("player-images").remove(enviados);
     }
@@ -236,7 +271,9 @@ describe("the Elenco", () => {
       // Tab A renames the card; tab B, still at the old version, picks a new photo.
       valor(await salvarJogador(dono.client, grupo.slug, { ...aberta, name: "Aba A" }));
       const daAbaB = await enviar(cartaInicial.id, OUTRA);
-      expect(mensagem(await salvarJogador(dono.client, grupo.slug, { ...aberta, image: daAbaB.url }))).toBe(CARTA_MUDOU);
+      expect(mensagem(await salvarJogador(dono.client, grupo.slug, { ...aberta, image: daAbaB.url }))).toBe(
+        CARTA_MUDOU,
+      );
       await apagarFotoEnviada(dono.client, daAbaB.caminho);
 
       // Before #116 tab B's upload had replaced this very file.
@@ -245,7 +282,13 @@ describe("the Elenco", () => {
 
       // A save that goes through with a new photo deletes the one it replaced.
       const nova = await enviar(cartaInicial.id, OUTRA);
-      valor(await salvarJogador(dono.client, grupo.slug, { ...aberta, image: nova.url, versao: await versaoDe(cartaInicial.id) }));
+      valor(
+        await salvarJogador(dono.client, grupo.slug, {
+          ...aberta,
+          image: nova.url,
+          versao: await versaoDe(cartaInicial.id),
+        }),
+      );
       expect(await baixar(primeira.caminho)).toBeNull();
       expect(await baixar(nova.caminho)).toBe(OUTRA.split(",")[1]);
     } finally {
@@ -271,7 +314,10 @@ describe("the Elenco", () => {
       auth: { persistSession: false, autoRefreshToken: false },
       global: { fetch: perde },
     });
-    await cliente.auth.setSession({ access_token: sessao.session!.access_token, refresh_token: sessao.session!.refresh_token });
+    await cliente.auth.setSession({
+      access_token: sessao.session!.access_token,
+      refresh_token: sessao.session!.refresh_token,
+    });
 
     const resultado = await salvarJogador(cliente, grupo.slug, aberta);
     expect(resultado).toMatchObject({ ok: false, inesperado: true });
@@ -327,14 +373,22 @@ describe("the Elenco", () => {
     const cartaInicial = carta("Forjada");
     const { data } = await dono.client
       .from("players")
-      .insert({ id: cartaInicial.id, grupo_id: grupo.id, user_id: dono.id, name: "Forjada", position: "ALA", nationality: "BR", versao: 0 })
+      .insert({
+        id: cartaInicial.id,
+        grupo_id: grupo.id,
+        user_id: dono.id,
+        name: "Forjada",
+        position: "ALA",
+        nationality: "BR",
+        versao: 0,
+      })
       .select("versao")
       .single()
       .throwOnError();
     expect(data?.versao).toBe(1);
   });
 
-  it("someone saying \"sou eu\" doesn't make an open card stale", async () => {
+  it('someone saying "sou eu" doesn\'t make an open card stale', async () => {
     const dono = await user("dono");
     const grupo = await grupoDe(dono);
     const membro = await user("membro");
@@ -345,7 +399,9 @@ describe("the Elenco", () => {
 
     await membro.client.rpc("vincular_jogador", { jogador: cartaInicial.id }).throwOnError();
 
-    expect(valor(await salvarJogador(dono.client, grupo.slug, { ...aberta, name: "Vinculado II" }))).toEqual({ criado: false });
+    expect(valor(await salvarJogador(dono.client, grupo.slug, { ...aberta, name: "Vinculado II" }))).toEqual({
+      criado: false,
+    });
     expect(await versaoDe(cartaInicial.id)).toBe(aberta.versao + 1);
   });
 });
@@ -356,24 +412,43 @@ describe("a Partida and its Sorteio", () => {
     const grupo = await grupoDe(dono);
     const membro = await user("membro");
     await addMembro(grupo.id, membro, "membro");
-    const ids = (await Promise.all(["J0", "J1", "J2", "J3"].map(async (n) => {
-      const c = carta(n);
-      valor(await salvarJogador(dono.client, grupo.slug, c));
-      return c.id;
-    })));
+    const ids = await Promise.all(
+      ["J0", "J1", "J2", "J3"].map(async (n) => {
+        const c = carta(n);
+        valor(await salvarJogador(dono.client, grupo.slug, c));
+        return c.id;
+      }),
+    );
 
-    expect(mensagem(await criarPartida(membro.client, grupo.slug, { inicio: amanha(), local: "Quadra", vagas: 10 }))).toBe(SEM_PERMISSAO);
-    const { id: partida } = valor(await criarPartida(dono.client, grupo.slug, { inicio: amanha(), local: "Quadra", vagas: 10 }));
+    expect(
+      mensagem(await criarPartida(membro.client, grupo.slug, { inicio: amanha(), local: "Quadra", vagas: 10 })),
+    ).toBe(SEM_PERMISSAO);
+    const { id: partida } = valor(
+      await criarPartida(dono.client, grupo.slug, { inicio: amanha(), local: "Quadra", vagas: 10 }),
+    );
     valor(await editarPartida(dono.client, grupo.slug, partida, { inicio: amanha(), local: "Ginásio", vagas: 12 }));
-    expect(mensagem(await editarPartida(dono.client, grupo.slug, partida, { inicio: amanha(), local: "", vagas: 12 }))).toBe("Diz onde vai ser.");
+    expect(
+      mensagem(await editarPartida(dono.client, grupo.slug, partida, { inicio: amanha(), local: "", vagas: 12 })),
+    ).toBe("Diz onde vai ser.");
 
-    for (const id of ids) expect(valor(await responderPresenca(dono.client, grupo.slug, partida, id, true))).toEqual({ situacao: "confirmado" });
+    for (const id of ids)
+      expect(valor(await responderPresenca(dono.client, grupo.slug, partida, id, true))).toEqual({
+        situacao: "confirmado",
+      });
     // A membro answering for someone else's Jogador gets the Presença's own reason.
-    expect(mensagem(await responderPresenca(membro.client, grupo.slug, partida, ids[0], false))).toBe("Você só responde pelo seu jogador.");
+    expect(mensagem(await responderPresenca(membro.client, grupo.slug, partida, ids[0], false))).toBe(
+      "Você só responde pelo seu jogador.",
+    );
 
-    expect(mensagem(await sortearDaPartida(dono.client, grupo.slug, partida, 3))).toBe("Pra 3 Times precisa de pelo menos 6 confirmados (tem 4).");
+    expect(mensagem(await sortearDaPartida(dono.client, grupo.slug, partida, 3))).toBe(
+      "Pra 3 Times precisa de pelo menos 6 confirmados (tem 4).",
+    );
     valor(await sortearDaPartida(dono.client, grupo.slug, partida, 2));
-    const { data: sorteio } = await service().from("sorteios").select("times, sorteado_em").eq("partida_id", partida).single();
+    const { data: sorteio } = await service()
+      .from("sorteios")
+      .select("times, sorteado_em")
+      .eq("partida_id", partida)
+      .single();
     const daOrigem = (sorteio!.times as { jogadores: { id: string }[] }[])[0].jogadores[0].id;
 
     valor(await moverNoSorteio(dono.client, grupo.slug, partida, daOrigem, 1, sorteio!.sorteado_em));
@@ -383,7 +458,9 @@ describe("a Partida and its Sorteio", () => {
     );
 
     valor(await cancelarPartida(dono.client, grupo.slug, partida));
-    expect(mensagem(await responderPresenca(dono.client, grupo.slug, partida, ids[0], false))).toBe("Essa partida foi cancelada.");
+    expect(mensagem(await responderPresenca(dono.client, grupo.slug, partida, ids[0], false))).toBe(
+      "Essa partida foi cancelada.",
+    );
     expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 });
@@ -400,8 +477,15 @@ describe("Convites and vínculos", () => {
     expect(mensagem(await revogarConvite(novato.client, grupo.slug, convite.id))).toBe(SEM_PERMISSAO);
 
     valor(await criarMeuJogador(novato.client, grupo.slug, "Novato", "ATA"));
-    expect(mensagem(await criarMeuJogador(novato.client, grupo.slug, "De novo", "ATA"))).toBe("Você já tem um jogador nesse fut.");
-    const { data: meu } = await service().from("players").select("id").eq("grupo_id", grupo.id).eq("conta_id", novato.id).single();
+    expect(mensagem(await criarMeuJogador(novato.client, grupo.slug, "De novo", "ATA"))).toBe(
+      "Você já tem um jogador nesse fut.",
+    );
+    const { data: meu } = await service()
+      .from("players")
+      .select("id")
+      .eq("grupo_id", grupo.id)
+      .eq("conta_id", novato.id)
+      .single();
     valor(await desvincularJogador(novato.client, grupo.slug, meu!.id));
     valor(await vincularJogador(novato.client, grupo.slug, meu!.id));
 
@@ -430,9 +514,13 @@ describe("people and the fut", () => {
     await addMembro(grupo.id, amigo, "membro");
 
     // A membro can't, and hears why in plain words.
-    expect(mensagem(await mudarPapel(amigo.client, grupo.slug, dono.id, "membro"))).toBe("Só o dono do fut pode fazer isso.");
+    expect(mensagem(await mudarPapel(amigo.client, grupo.slug, dono.id, "membro"))).toBe(
+      "Só o dono do fut pode fazer isso.",
+    );
     expect(mensagem(await mudarPapel(dono.client, grupo.slug, amigo.id, "dono"))).toBe("Papel inválido.");
-    expect(mensagem(await passarPosse(dono.client, grupo.slug, amigo.id))).toBe("O fut só pode passar pra um admin. Torne a pessoa admin primeiro.");
+    expect(mensagem(await passarPosse(dono.client, grupo.slug, amigo.id))).toBe(
+      "O fut só pode passar pra um admin. Torne a pessoa admin primeiro.",
+    );
     expect(mensagem(await sairDoFut(dono.client, grupo.slug))).toBe("Passe o fut pra um admin antes de sair.");
 
     valor(await mudarPapel(dono.client, grupo.slug, amigo.id, "admin"));
@@ -456,8 +544,12 @@ describe("people and the fut", () => {
     const grupo = await grupoDe(dono, "Fut Que Some");
     await addMembro(grupo.id, admin, "admin");
 
-    expect(mensagem(await excluirFut(admin.client, grupo.slug, "Fut Que Some"))).toBe("Só o dono do fut pode fazer isso.");
-    expect(mensagem(await excluirFut(dono.client, grupo.slug, "Outro"))).toBe("O nome digitado não confere com o do fut.");
+    expect(mensagem(await excluirFut(admin.client, grupo.slug, "Fut Que Some"))).toBe(
+      "Só o dono do fut pode fazer isso.",
+    );
+    expect(mensagem(await excluirFut(dono.client, grupo.slug, "Outro"))).toBe(
+      "O nome digitado não confere com o do fut.",
+    );
     expect(valor(await excluirFut(dono.client, grupo.slug, "fut que some"))).toEqual({ nome: "Fut Que Some" });
     expect(mensagem(await renomearFut(dono.client, grupo.slug, "Fantasma"))).toBe(FUT_NAO_ENCONTRADO);
     expect(Sentry.captureException).not.toHaveBeenCalled();

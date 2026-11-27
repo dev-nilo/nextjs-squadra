@@ -85,10 +85,20 @@ test("a membro answers for their own Jogador only", { tag: "@mobile" }, async ({
   const { data: criado } = await service.auth.admin.createUser({ email, password: SEED_PASSWORD, email_confirm: true });
   const userId = criado.user!.id;
   await service.from("grupo_membros").insert({ grupo_id: FUT_DO_DEV, user_id: userId, papel: "membro" }).throwOnError();
-  await service.from("players").update({ conta_id: userId }).eq("grupo_id", FUT_DO_DEV).eq("name", "Canhota").throwOnError();
+  await service
+    .from("players")
+    .update({ conta_id: userId })
+    .eq("grupo_id", FUT_DO_DEV)
+    .eq("name", "Canhota")
+    .throwOnError();
   const { data: partida } = await service
     .from("partidas")
-    .insert({ grupo_id: FUT_DO_DEV, inicio: new Date(Date.now() + 3 * 86_400_000).toISOString(), local: "E2E Membro", vagas: 10 })
+    .insert({
+      grupo_id: FUT_DO_DEV,
+      inicio: new Date(Date.now() + 3 * 86_400_000).toISOString(),
+      local: "E2E Membro",
+      vagas: 10,
+    })
     .select("id")
     .single()
     .throwOnError();

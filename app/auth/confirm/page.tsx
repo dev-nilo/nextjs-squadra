@@ -43,8 +43,8 @@ function ConfirmContent() {
         <div className="flex flex-col gap-1">
           <h1 className="text-title">{recuperacao ? "Trocar a senha" : "Confirmar email"}</h1>
           <p className="text-muted">
-            {recuperacao ? "Toque em Continuar pra criar a senha nova." : "Toque no botão pra ativar sua conta."} O link só
-            vale nesse toque, assim o programa de email não o gasta antes de você.
+            {recuperacao ? "Toque em Continuar pra criar a senha nova." : "Toque no botão pra ativar sua conta."} O link
+            só vale nesse toque, assim o programa de email não o gasta antes de você.
           </p>
         </div>
       </div>

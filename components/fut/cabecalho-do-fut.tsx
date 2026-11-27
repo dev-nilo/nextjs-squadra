@@ -13,7 +13,13 @@ import { AbasNoTopo } from "./abas-do-fut";
  * One slim row on every fut page: the mark (home), the fut switcher, and on
  * wider screens the tabs. Clears the iPhone's status bar when installed.
  */
-export function CabecalhoDoFut({ grupo, participacoes }: { grupo: Participacao; participacoes: readonly Participacao[] }) {
+export function CabecalhoDoFut({
+  grupo,
+  participacoes,
+}: {
+  grupo: Participacao;
+  participacoes: readonly Participacao[];
+}) {
   const router = useRouter();
   const pathname = usePathname() ?? "";
   const trocar = useCallback((slug: string) => router.push(caminhoNoOutroFut(pathname, slug)), [router, pathname]);

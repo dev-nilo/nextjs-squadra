@@ -73,7 +73,11 @@ export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: un
 
       // The photo stays as it was, is removed, or is one uploaded for this Grupo.
       const supabaseUrl = urlDoSupabase();
-      if (jogador.image !== null && jogador.image !== atual?.image_url && !ehFotoDoGrupo(jogador.image, grupo.id, supabaseUrl)) {
+      if (
+        jogador.image !== null &&
+        jogador.image !== atual?.image_url &&
+        !ehFotoDoGrupo(jogador.image, grupo.id, supabaseUrl)
+      ) {
         recusar("Não deu pra usar essa foto. Envie de novo.");
       }
 
@@ -91,7 +95,11 @@ export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: un
         // No row: another save got in between the read and this update, or RLS
         // refused (a membro can read the card but not write it).
         if (salvo.length === 0) {
-          const { data: agora, error: erroAgora } = await supabase.from("players").select("versao").eq("id", jogador.id).maybeSingle();
+          const { data: agora, error: erroAgora } = await supabase
+            .from("players")
+            .select("versao")
+            .eq("id", jogador.id)
+            .maybeSingle();
           if (erroAgora) exigir({ data: null, error: erroAgora });
           if (!agora) recusar(CARTA_EXCLUIDA);
           recusar(agora.versao !== atual.versao ? CARTA_MUDOU : SEM_PERMISSAO);
@@ -100,7 +108,8 @@ export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: un
         // over the same file, changing only the URL's ?v=, and that file is the
         // one now in use. Since #116 every upload is a new path.
         const antiga = caminhoDaFotoDoJogador(atual.image_url, grupo.id, jogador.id, supabaseUrl);
-        if (antiga && antiga !== caminhoDaFoto(jogador.image, grupo.id, supabaseUrl)) await apagarFoto(supabase, antiga);
+        if (antiga && antiga !== caminhoDaFoto(jogador.image, grupo.id, supabaseUrl))
+          await apagarFoto(supabase, antiga);
       } else {
         exigir(
           await supabase
@@ -120,16 +129,21 @@ export const salvarJogador = (supabase: SupabaseClient, slug: unknown, dados: un
  * Jogador's Partidas before the Jogador so it can't deadlock with an answer.
  */
 export const excluirJogador = (supabase: SupabaseClient, slug: unknown, jogadorId: unknown) =>
-  noGrupo(supabase, slug, { acao: "excluirJogador", generica: "Não deu pra excluir a carta agora. Tenta de novo." }, async ({ grupo }) => {
-    const id = validar(idSchema, jogadorId, "Jogador inválido.");
-    const excluido = exigir<{ image_url: string | null } | null>(
-      await supabase.rpc("excluir_jogador", { grupo: grupo.id, jogador: id }),
-    );
-    // Only once the row is gone, so a refused delete never touches Storage.
-    const foto = caminhoDaFotoDoJogador(excluido.image_url, grupo.id, id, urlDoSupabase());
-    if (foto) await apagarFoto(supabase, foto);
-    return null;
-  });
+  noGrupo(
+    supabase,
+    slug,
+    { acao: "excluirJogador", generica: "Não deu pra excluir a carta agora. Tenta de novo." },
+    async ({ grupo }) => {
+      const id = validar(idSchema, jogadorId, "Jogador inválido.");
+      const excluido = exigir<{ image_url: string | null } | null>(
+        await supabase.rpc("excluir_jogador", { grupo: grupo.id, jogador: id }),
+      );
+      // Only once the row is gone, so a refused delete never touches Storage.
+      const foto = caminhoDaFotoDoJogador(excluido.image_url, grupo.id, id, urlDoSupabase());
+      if (foto) await apagarFoto(supabase, foto);
+      return null;
+    },
+  );
 
 /** Adds the Jogadores from a CSV in one insert: all of them or none. */
 export const importarJogadores = (supabase: SupabaseClient, slug: unknown, dados: unknown) =>

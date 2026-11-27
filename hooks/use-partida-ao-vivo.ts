@@ -44,8 +44,16 @@ export function usePartidaAoVivo(grupoId: string, inicial: PartidaAoVivo, agoraD
       const mudou = () => void recarregar();
       canal = supabase
         .channel(`partida:${id}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "presencas", filter: `partida_id=eq.${id}` }, mudou)
-        .on("postgres_changes", { event: "*", schema: "public", table: "sorteios", filter: `partida_id=eq.${id}` }, mudou)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "presencas", filter: `partida_id=eq.${id}` },
+          mudou,
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "sorteios", filter: `partida_id=eq.${id}` },
+          mudou,
+        )
         .on("postgres_changes", { event: "UPDATE", schema: "public", table: "partidas", filter: `id=eq.${id}` }, mudou)
         .subscribe((status) => {
           setAoVivo(status === "SUBSCRIBED");

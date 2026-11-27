@@ -12,7 +12,9 @@ const REGRAS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 async function semViolacoes(page: Page) {
   const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
   // One line per problem and element, so a failure says what to fix and where.
-  const problemas = violations.flatMap((v) => v.nodes.map((n) => `${v.id} (${v.impact}): ${n.target.join(" ")} | ${v.help}`));
+  const problemas = violations.flatMap((v) =>
+    v.nodes.map((n) => `${v.id} (${v.impact}): ${n.target.join(" ")} | ${v.help}`),
+  );
   expect(problemas, problemas.join("\n")).toEqual([]);
 }
 

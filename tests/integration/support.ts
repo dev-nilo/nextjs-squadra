@@ -9,7 +9,9 @@ import pg from "pg";
 function env(name: string): string {
   const value = process.env[name];
   if (!value) {
-    throw new Error(`${name} is not set. Start Supabase with \`npm run db:start\` and export it from \`npx supabase status\`.`);
+    throw new Error(
+      `${name} is not set. Start Supabase with \`npm run db:start\` and export it from \`npx supabase status\`.`,
+    );
   }
   return value;
 }

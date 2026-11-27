@@ -70,7 +70,6 @@ export function ElencoView({
   jogadores: Player[];
   userId: string;
 }) {
-
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawModalOpen, setIsDrawModalOpen] = useState(false);
@@ -86,7 +85,10 @@ export function ElencoView({
   // What the papel allows. RLS enforces it; this only hides what would fail.
   const semConexao = useSemConexao();
   // With no signal the album is read-only: no new cards, no edits, no claiming.
-  const pode = useMemo(() => (semConexao ? SO_LEITURA : capacidades(grupo.papel, userId)), [semConexao, grupo.papel, userId]);
+  const pode = useMemo(
+    () => (semConexao ? SO_LEITURA : capacidades(grupo.papel, userId)),
+    [semConexao, grupo.papel, userId],
+  );
 
   const sorteio = useSorteioRapido(players);
   const { selectedIds, todosMarcados, alternar: toggleSelect } = sorteio;
@@ -104,12 +106,18 @@ export function ElencoView({
 
   /** What this person can do to a card, in its ⋯ (none with no signal: SO_LEITURA). */
   const acoesDa = (player: Player): AcaoDoMenu[] => [
-    ...(!meu && !player.conta_id && !semConexao ? [{ rotulo: "Sou eu", icone: <UserCheck size={16} />, onSelect: () => void souEu(player) }] : []),
-    ...(pode.editaElenco ? [{ rotulo: "Editar", icone: <Pencil size={16} />, onSelect: () => handleEdit(player) }] : []),
+    ...(!meu && !player.conta_id && !semConexao
+      ? [{ rotulo: "Sou eu", icone: <UserCheck size={16} />, onSelect: () => void souEu(player) }]
+      : []),
+    ...(pode.editaElenco
+      ? [{ rotulo: "Editar", icone: <Pencil size={16} />, onSelect: () => handleEdit(player) }]
+      : []),
     ...(player.conta_id && pode.desvincula(player)
       ? [{ rotulo: "Desvincular conta", icone: <Unlink size={16} />, onSelect: () => void handleDesvincular(player) }]
       : []),
-    ...(pode.editaElenco ? [{ rotulo: "Excluir", icone: <Trash2 size={16} />, onSelect: () => void excluir(player), perigo: true }] : []),
+    ...(pode.editaElenco
+      ? [{ rotulo: "Excluir", icone: <Trash2 size={16} />, onSelect: () => void excluir(player), perigo: true }]
+      : []),
   ];
 
   const salvar = useCallback(
@@ -216,10 +224,14 @@ export function ElencoView({
     const result = players.filter((player) => player.name.toLowerCase().includes(searchQuery.toLowerCase()));
     result.sort((a, b) => {
       switch (sortBy) {
-        case "name": return a.name.localeCompare(b.name);
-        case "rating": return b.rating - a.rating;
-        case "position": return a.position.localeCompare(b.position);
-        default: return 0;
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "rating":
+          return b.rating - a.rating;
+        case "position":
+          return a.position.localeCompare(b.position);
+        default:
+          return 0;
       }
     });
     return result;
@@ -245,7 +257,9 @@ export function ElencoView({
               nome="Mais ações do elenco"
               acoes={[
                 { rotulo: "Sortear rápido", icone: <Shuffle size={16} />, onSelect: () => setSelecionando(true) },
-                ...(pode.editaElenco ? [{ rotulo: "Importar CSV", icone: <FileUp size={16} />, onSelect: () => setIsImportCsvOpen(true) }] : []),
+                ...(pode.editaElenco
+                  ? [{ rotulo: "Importar CSV", icone: <FileUp size={16} />, onSelect: () => setIsImportCsvOpen(true) }]
+                  : []),
               ]}
             />
           </div>
@@ -264,7 +278,12 @@ export function ElencoView({
                 startContent={<Search size={18} className="shrink-0 text-default-400" />}
               />
             </div>
-            <Select value={sortBy} onChange={(e) => ordenar(e.target.value)} className="w-32 shrink-0 sm:w-40 max-[339px]:w-full" aria-label="Ordenar por">
+            <Select
+              value={sortBy}
+              onChange={(e) => ordenar(e.target.value)}
+              className="w-32 shrink-0 sm:w-40 max-[339px]:w-full"
+              aria-label="Ordenar por"
+            >
               <option value="rating">Maior OVR</option>
               <option value="name">Nome</option>
               <option value="position">Posição</option>
@@ -275,7 +294,9 @@ export function ElencoView({
         {filteredPlayers.length === 0 ? (
           searchQuery ? (
             <div className="flex flex-col items-center gap-3 px-2 py-12 text-center sm:py-16">
-              <p className="text-muted [overflow-wrap:anywhere]">Nenhum jogador com &ldquo;{searchQuery.trim()}&rdquo;.</p>
+              <p className="text-muted [overflow-wrap:anywhere]">
+                Nenhum jogador com &ldquo;{searchQuery.trim()}&rdquo;.
+              </p>
               <Button variant="flat" size="sm" onClick={() => setSearchQuery("")}>
                 Limpar busca
               </Button>
@@ -337,8 +358,12 @@ export function ElencoView({
         </section>
       )}
 
-
-      <PlayerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={salvar} initialData={editingPlayer} />
+      <PlayerModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={salvar}
+        initialData={editingPlayer}
+      />
 
       {/* Mounted only while open, so its copy of the Grupo's name isn't on the page otherwise. */}
 

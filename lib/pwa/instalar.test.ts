@@ -32,10 +32,14 @@ describe("ehNavegadorDeApp", () => {
       ),
     ).toBe(false);
     expect(
-      ehNavegadorDeApp("Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36"),
+      ehNavegadorDeApp(
+        "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
+      ),
     ).toBe(false);
     expect(
-      ehNavegadorDeApp("Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/122.0 Mobile Safari/537.36"),
+      ehNavegadorDeApp(
+        "Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/122.0 Mobile Safari/537.36",
+      ),
     ).toBe(false);
   });
 });

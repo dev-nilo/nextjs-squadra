@@ -206,7 +206,9 @@ html [data-sonner-toaster][data-theme] {
   }
   /* Printed numerals: OVR, "8 de 14", Time averages. Bricolage condensed at display size. */
   .text-numeral {
-    font-variation-settings: "wdth" 75, "opsz" 96;
+    font-variation-settings:
+      "wdth" 75,
+      "opsz" 96;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;

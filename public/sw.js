@@ -68,7 +68,9 @@ self.addEventListener("activate", (event) => {
       // The page's request starts while the worker wakes up, instead of after.
       if (self.registration.navigationPreload) await self.registration.navigationPreload.enable();
       const nomes = await caches.keys();
-      await Promise.all(nomes.filter((n) => n.startsWith("squadra-") && !CACHES.includes(n)).map((n) => caches.delete(n)));
+      await Promise.all(
+        nomes.filter((n) => n.startsWith("squadra-") && !CACHES.includes(n)).map((n) => caches.delete(n)),
+      );
       await self.clients.claim();
     })(),
   );

@@ -14,11 +14,7 @@ const attrs = (n: number): Attributes => ({
   fisico: n,
 });
 
-const player = (
-  id: string,
-  rating: number,
-  attributeValue: number,
-): Player => ({
+const player = (id: string, rating: number, attributeValue: number): Player => ({
   id,
   name: id,
   position: "ATA",
@@ -36,12 +32,7 @@ const preserveOrder = () => 0.999999;
 
 describe("sortearTimes (Sorteio seam)", () => {
   it("returns the requested number of Times, named Time 1, Time 2… like a saved Sorteio", () => {
-    const players = [
-      player("p1", 80, 80),
-      player("p2", 70, 70),
-      player("p3", 60, 60),
-      player("p4", 50, 50),
-    ];
+    const players = [player("p1", 80, 80), player("p2", 70, 70), player("p3", 60, 60), player("p4", 50, 50)];
 
     const times = sortearTimes(players, 2, { random: alwaysZero });
 
@@ -67,11 +58,7 @@ describe("sortearTimes (Sorteio seam)", () => {
   });
 
   it("exposes only domain fields on Time (no presentation tokens)", () => {
-    const times = sortearTimes(
-      [player("a", 70, 70), player("b", 70, 70)],
-      2,
-      { random: alwaysZero },
-    );
+    const times = sortearTimes([player("a", 70, 70), player("b", 70, 70)], 2, { random: alwaysZero });
 
     for (const time of times) {
       expect(Object.keys(time).sort()).toEqual(["avg", "members", "name"]);
@@ -82,12 +69,7 @@ describe("sortearTimes (Sorteio seam)", () => {
   });
 
   it("sets avg to the rounded mean of member ratings", () => {
-    const players = [
-      player("a", 90, 10),
-      player("b", 80, 10),
-      player("c", 70, 10),
-      player("d", 60, 10),
-    ];
+    const players = [player("a", 90, 10), player("b", 80, 10), player("c", 70, 10), player("d", 60, 10)];
 
     const times = sortearTimes(players, 2, { random: alwaysZero });
 
@@ -110,10 +92,7 @@ describe("sortearTimes (Sorteio seam)", () => {
 
     const times = sortearTimes(players, 2, { random: preserveOrder });
     const sums = times.map((t) =>
-      t.members.reduce(
-        (s, p) => s + Object.values(p.attributes).reduce((a, b) => a + b, 0),
-        0,
-      ),
+      t.members.reduce((s, p) => s + Object.values(p.attributes).reduce((a, b) => a + b, 0), 0),
     );
 
     // Two strong (800 each) and two weak (80 each) → each Time gets one of each → 880
@@ -128,12 +107,7 @@ describe("teamAverage", () => {
   });
 
   it("rounds the mean of ratings", () => {
-    expect(
-      teamAverage([
-        player("a", 70, 70),
-        player("b", 71, 71),
-      ]),
-    ).toBe(71);
+    expect(teamAverage([player("a", 70, 70), player("b", 71, 71)])).toBe(71);
   });
 });
 
@@ -141,7 +115,7 @@ describe("moveMember", () => {
   const buildTeams = (): Time[] => [
     { name: "TIME A", members: [player("a", 80, 80), player("b", 60, 60)], avg: 70 },
     { name: "TIME B", members: [player("c", 90, 90)], avg: 90 },
-    { name: "TIME C", members: [] as (ReturnType<typeof player>)[], avg: 0 },
+    { name: "TIME C", members: [] as ReturnType<typeof player>[], avg: 0 },
   ];
 
   it("moves the player and recomputes avg on both sides", () => {
@@ -191,7 +165,13 @@ describe("faltamParaSortear", () => {
 
 describe("membrosPorNome", () => {
   it("lists by name, ignoring case and accents, with numbers in numeric order, without touching the input", () => {
-    const membros = [{ name: "Zé" }, { name: "álvaro" }, { name: "Bia" }, { name: "Jogador 10" }, { name: "Jogador 2" }];
+    const membros = [
+      { name: "Zé" },
+      { name: "álvaro" },
+      { name: "Bia" },
+      { name: "Jogador 10" },
+      { name: "Jogador 2" },
+    ];
     expect(membrosPorNome(membros).map((m) => m.name)).toEqual(["álvaro", "Bia", "Jogador 2", "Jogador 10", "Zé"]);
     expect(membros[0].name).toBe("Zé");
   });

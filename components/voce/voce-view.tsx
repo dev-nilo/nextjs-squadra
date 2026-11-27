@@ -179,7 +179,12 @@ function EsteFut({ grupo, pessoas, semConexao }: { grupo: Participacao; pessoas:
   const podeSair = capacidades(grupo.papel, null).saiDoFut;
 
   const sair = async () => {
-    if (!window.confirm(`Sair do ${grupo.nome}? Seu jogador continua no elenco, sem a sua conta. Pra voltar, só com um link de convite novo.`)) return;
+    if (
+      !window.confirm(
+        `Sair do ${grupo.nome}? Seu jogador continua no elenco, sem a sua conta. Pra voltar, só com um link de convite novo.`,
+      )
+    )
+      return;
     const resultado = await sairDoFut(grupo.slug);
     if (!resultado.ok) {
       toast.error("Não deu pra sair", { description: resultado.message });

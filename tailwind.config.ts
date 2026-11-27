@@ -4,11 +4,7 @@ import plugin from "tailwindcss/plugin";
 const config = {
   // Hover styles only where there's a mouse: on a phone they'd stick after a tap.
   future: { hoverOnlyWhenSupported: true },
-  content: [
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./lib/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ["./app/**/*.{js,ts,jsx,tsx,mdx}", "./components/**/*.{js,ts,jsx,tsx,mdx}", "./lib/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       fontFamily: {

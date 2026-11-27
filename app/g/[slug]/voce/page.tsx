@@ -24,10 +24,17 @@ export default async function VocePage({ params }: { params: Promise<{ slug: str
   const meu = jogadores.find((j) => j.conta_id === user.id) ?? null;
 
   const { data: frequencia } = meu
-    ? await supabase.from("frequencia_jogadores").select("partidas, presencas, frequencia").eq("jogador_id", meu.id).maybeSingle()
+    ? await supabase
+        .from("frequencia_jogadores")
+        .select("partidas, presencas, frequencia")
+        .eq("jogador_id", meu.id)
+        .maybeSingle()
     : { data: null };
 
-  const { count: pessoas } = await supabase.from("grupo_membros").select("user_id", { count: "exact", head: true }).eq("grupo_id", grupo.id);
+  const { count: pessoas } = await supabase
+    .from("grupo_membros")
+    .select("user_id", { count: "exact", head: true })
+    .eq("grupo_id", grupo.id);
 
   return (
     <>
@@ -38,7 +45,11 @@ export default async function VocePage({ params }: { params: Promise<{ slug: str
         jogadores={jogadores}
         meu={meu}
         email={user.email ?? ""}
-        frequencia={frequencia && frequencia.partidas > 0 ? (frequencia as { partidas: number; presencas: number; frequencia: number }) : null}
+        frequencia={
+          frequencia && frequencia.partidas > 0
+            ? (frequencia as { partidas: number; presencas: number; frequencia: number })
+            : null
+        }
       />
     </>
   );

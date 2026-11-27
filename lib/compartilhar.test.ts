@@ -49,7 +49,9 @@ describe("compartilharTexto", () => {
   });
 
   it("fails when copying fails too", async () => {
-    navegador(false, { clipboard: { writeText: vi.fn().mockRejectedValue(new Error("denied")) } } as unknown as Navigator);
+    navegador(false, {
+      clipboard: { writeText: vi.fn().mockRejectedValue(new Error("denied")) },
+    } as unknown as Navigator);
     await expect(compartilharTexto("lista")).resolves.toBe("falhou");
   });
 });

@@ -6,15 +6,8 @@ export type SupabaseEnv = {
 };
 
 export type SessaoAuth = {
-  signInWithPassword: (creds: {
-    email: string;
-    password: string;
-  }) => Promise<{ error: { message: string } | null }>;
-  signUp: (args: {
-    email: string;
-    password: string;
-    options?: { emailRedirectTo?: string };
-  }) => Promise<{
+  signInWithPassword: (creds: { email: string; password: string }) => Promise<{ error: { message: string } | null }>;
+  signUp: (args: { email: string; password: string; options?: { emailRedirectTo?: string } }) => Promise<{
     data: { user: { id: string; identities?: unknown[] | null } | null };
     error: { message: string } | null;
   }>;
@@ -32,16 +25,9 @@ export type SessaoAuth = {
     data: { session: { access_token?: string } | null };
     error: { message: string } | null;
   }>;
-  exchangeCodeForSession: (
-    code: string,
-  ) => Promise<{ error: { message: string } | null }>;
-  verifyOtp: (args: {
-    token_hash: string;
-    type: EmailOtpType;
-  }) => Promise<{ error: { message: string } | null }>;
-  updateUser: (attrs: {
-    password: string;
-  }) => Promise<{ error: { message: string } | null }>;
+  exchangeCodeForSession: (code: string) => Promise<{ error: { message: string } | null }>;
+  verifyOtp: (args: { token_hash: string; type: EmailOtpType }) => Promise<{ error: { message: string } | null }>;
+  updateUser: (attrs: { password: string }) => Promise<{ error: { message: string } | null }>;
   resetPasswordForEmail: (
     email: string,
     options?: { redirectTo?: string },
@@ -50,12 +36,9 @@ export type SessaoAuth = {
     data: { claims: { amr?: unknown } } | null;
     error: { message: string } | null;
   }>;
-  onAuthStateChange: (
-    callback: (
-      event: string,
-      session: { user: User | null } | null,
-    ) => void,
-  ) => { data: { subscription: { unsubscribe: () => void } } };
+  onAuthStateChange: (callback: (event: string, session: { user: User | null } | null) => void) => {
+    data: { subscription: { unsubscribe: () => void } };
+  };
 };
 
 /** Every outcome a Sessão flow can end in. sessaoToast has a case for each, checked by the compiler. */
@@ -139,10 +122,10 @@ export function isEmailUnconfirmedError(message: string): boolean {
   return lower.includes("email not confirmed") || lower.includes("not confirmed");
 }
 
-export function classifyAuthUrlError(input: {
-  errorCode: string | null;
-  errorDescription: string | null;
-}): { kind: "expired_link" | "auth_error"; message: string } {
+export function classifyAuthUrlError(input: { errorCode: string | null; errorDescription: string | null }): {
+  kind: "expired_link" | "auth_error";
+  message: string;
+} {
   const message = decodeAuthDescription(input.errorDescription);
   const isExpired =
     input.errorCode === "otp_expired" ||
@@ -204,10 +187,7 @@ export async function signup(
     if (error) {
       return { ok: false, code: "signup_failed", message: error.message };
     }
-    if (
-      data.user &&
-      (!data.user.identities || data.user.identities.length === 0)
-    ) {
+    if (data.user && (!data.user.identities || data.user.identities.length === 0)) {
       return { ok: false, code: "email_taken" };
     }
     return { ok: true, code: "signed_up" };
@@ -373,7 +353,9 @@ export function veioDeUmLink(amr: unknown, agoraEmSegundos: number): boolean {
   );
   if (entradas.length === 0) return false;
   const ultima = entradas.reduce((a, b) => (b.timestamp > a.timestamp ? b : a));
-  return (ultima.method === "recovery" || ultima.method === "otp") && agoraEmSegundos - ultima.timestamp <= JANELA_DO_LINK_S;
+  return (
+    (ultima.method === "recovery" || ultima.method === "otp") && agoraEmSegundos - ultima.timestamp <= JANELA_DO_LINK_S
+  );
 }
 
 /**
@@ -469,7 +451,10 @@ export function erroDaUrl(url: URL): SessaoErr | null {
  * through RETORNO_DA_RECUPERACAO, with next = NOVA_SENHA.
  */
 export function ehRecuperacao(url: URL): boolean {
-  return url.searchParams.get("type") === "recovery" || caminhoSeguro(url.searchParams.get("next"), url.origin) === NOVA_SENHA;
+  return (
+    url.searchParams.get("type") === "recovery" ||
+    caminhoSeguro(url.searchParams.get("next"), url.origin) === NOVA_SENHA
+  );
 }
 
 async function confirmar(auth: SessaoAuth, url: URL, recuperacao: boolean): Promise<SessaoResult> {
@@ -537,20 +522,26 @@ const SEM_RESPOSTA = "Confira a conexão e tente de novo.";
  */
 export function explicarErro(mensagem: string | null | undefined): string {
   const m = (mensagem ?? "").toLowerCase();
-  if (m.includes("invalid login credentials")) return "Email ou senha errados. Confira os dois, ou use Esqueci minha senha.";
+  if (m.includes("invalid login credentials"))
+    return "Email ou senha errados. Confira os dois, ou use Esqueci minha senha.";
   if (m.includes("not confirmed")) return "Falta confirmar o email: abra o link que enviamos.";
-  if (m.includes("already registered") || m.includes("already been registered")) return "Esse email já tem conta. Entre com ele, ou use Esqueci minha senha.";
+  if (m.includes("already registered") || m.includes("already been registered"))
+    return "Esse email já tem conta. Entre com ele, ou use Esqueci minha senha.";
   if (m.includes("different from the old")) return "A senha nova precisa ser diferente da atual.";
-  if (m.includes("weak") || m.includes("pwned") || m.includes("easy to guess")) return "Essa senha é fácil de adivinhar. Escolha outra.";
-  if (m.includes("password should be") || m.includes("at least 6")) return "A senha precisa de pelo menos 6 caracteres.";
+  if (m.includes("weak") || m.includes("pwned") || m.includes("easy to guess"))
+    return "Essa senha é fácil de adivinhar. Escolha outra.";
+  if (m.includes("password should be") || m.includes("at least 6"))
+    return "A senha precisa de pelo menos 6 caracteres.";
   if (m.includes("rate limit") || m.includes("for security purposes") || m.includes("too many")) {
     return "Muitas tentativas seguidas. Espere um minuto e tente de novo.";
   }
-  if (m.includes("expired") || m.includes("link is invalid") || m.includes("token")) return "O link venceu ou já foi usado. Peça outro.";
+  if (m.includes("expired") || m.includes("link is invalid") || m.includes("token"))
+    return "O link venceu ou já foi usado. Peça outro.";
   if (m.includes("invalid format") || m.includes("validate email") || m.includes("invalid email")) {
     return "Esse email não parece certo. Confira se digitou direito.";
   }
-  if (m.includes("signups not allowed") || m.includes("signup is disabled")) return "Contas novas estão fechadas no momento.";
+  if (m.includes("signups not allowed") || m.includes("signup is disabled"))
+    return "Contas novas estão fechadas no momento.";
   if (m.includes("session missing") || m.includes("session not found")) return "Sua sessão acabou. Entre de novo.";
   if (m.includes("fetch") || m.includes("network")) return SEM_RESPOSTA;
   return "Tente de novo em instantes.";
@@ -559,14 +550,7 @@ export function explicarErro(mensagem: string | null | undefined): string {
 /** Toast/copy mapping for adapters — single policy for shared codes. */
 export function sessaoToast(
   result: SessaoResult,
-  context:
-    | "login"
-    | "signup"
-    | "resend"
-    | "confirm"
-    | "watcher"
-    | "password"
-    | "recovery" = "login",
+  context: "login" | "signup" | "resend" | "confirm" | "watcher" | "password" | "recovery" = "login",
 ): {
   variant: "success" | "error";
   title: string;
@@ -596,7 +580,8 @@ export function sessaoToast(
         return {
           variant: "success",
           title: "Link enviado.",
-          description: "Se esse email tiver conta no Squadra, chega um link pra criar uma senha nova. Só o mais recente vale.",
+          description:
+            "Se esse email tiver conta no Squadra, chega um link pra criar uma senha nova. Só o mais recente vale.",
           duration: 8000,
         };
       case "recovery_verified":
@@ -615,7 +600,11 @@ export function sessaoToast(
     description: "Peça outro em Esqueci minha senha. Só o mais recente funciona.",
     duration: 8000,
   };
-  const naoConfirmou = (description: string) => ({ variant: "error" as const, title: "Não deu pra confirmar o email.", description });
+  const naoConfirmou = (description: string) => ({
+    variant: "error" as const,
+    title: "Não deu pra confirmar o email.",
+    description,
+  });
 
   switch (result.code) {
     case "recovery_failed":
@@ -648,7 +637,11 @@ export function sessaoToast(
       };
     case "login_failed":
       if ((result.message ?? "").toLowerCase().includes("invalid login credentials")) {
-        return { variant: "error", title: "Email ou senha errados.", description: "Confira os dois, ou use Esqueci minha senha." };
+        return {
+          variant: "error",
+          title: "Email ou senha errados.",
+          description: "Confira os dois, ou use Esqueci minha senha.",
+        };
       }
       return { variant: "error", title: "Não deu pra entrar.", description: explicarErro(result.message) };
     case "login_error":
@@ -668,11 +661,18 @@ export function sessaoToast(
     case "signup_failed":
       return { variant: "error", title: "Não deu pra criar a conta.", description: explicarErro(result.message) };
     case "email_taken":
-      return { variant: "error", title: "Esse email já tem conta.", description: "Entre com ele, ou use Esqueci minha senha." };
+      return {
+        variant: "error",
+        title: "Esse email já tem conta.",
+        description: "Entre com ele, ou use Esqueci minha senha.",
+      };
     case "signup_error":
       return { variant: "error", title: "Não deu pra criar a conta.", description: SEM_RESPOSTA };
     case "email_required":
-      return { variant: "error", title: context === "recovery" ? "Escreva o seu email." : "Escreva o email pra reenviar a confirmação." };
+      return {
+        variant: "error",
+        title: context === "recovery" ? "Escreva o seu email." : "Escreva o email pra reenviar a confirmação.",
+      };
     case "resend_failed":
       return { variant: "error", title: "Não deu pra reenviar.", description: explicarErro(result.message) };
     case "resend_error":
@@ -692,7 +692,10 @@ export function sessaoToast(
     case "pkce_failed":
       if (context === "recovery") {
         // Supabase's default email: the code only works in the browser that asked for the link.
-        return { ...linkDeRecuperacaoVencido, description: "Abra o link no mesmo navegador em que pediu, ou peça outro em Esqueci minha senha." };
+        return {
+          ...linkDeRecuperacaoVencido,
+          description: "Abra o link no mesmo navegador em que pediu, ou peça outro em Esqueci minha senha.",
+        };
       }
       return naoConfirmou("Abra o link no mesmo navegador em que criou a conta, ou peça outro.");
     case "otp_failed":
@@ -728,6 +731,10 @@ export function mostrarAviso(aviso: Aviso, notify: Notificador): void {
   else notify.error(aviso.title, opts);
 }
 
-export function applySessaoToast(result: SessaoResult, context: Parameters<typeof sessaoToast>[1], notify: Notificador): void {
+export function applySessaoToast(
+  result: SessaoResult,
+  context: Parameters<typeof sessaoToast>[1],
+  notify: Notificador,
+): void {
   mostrarAviso(sessaoToast(result, context), notify);
 }

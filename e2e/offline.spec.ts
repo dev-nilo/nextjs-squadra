@@ -16,7 +16,9 @@ test("the next Partida and the Elenco stay readable with no signal", { tag: "@mo
     // Reopened with no signal: the saved Elenco, read-only, saying how old it is.
     await page.reload();
     await expect(page.getByRole("heading", { name: "Elenco", level: 1 })).toBeVisible();
-    await expect(page.getByRole("status").filter({ hasText: /^Sem conexão\. Mostrando a lista de \d{2}h\d{2}\.$/ })).toBeVisible();
+    await expect(
+      page.getByRole("status").filter({ hasText: /^Sem conexão\. Mostrando a lista de \d{2}h\d{2}\.$/ }),
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "Nova carta" })).toHaveCount(0);
 
     // The home too, with nothing to change.
@@ -44,36 +46,42 @@ test("the next Partida and the Elenco stay readable with no signal", { tag: "@mo
   await expect.poll(() => salva(page, "/g/fut-do-dev")).toBe(false);
 });
 
-test("with signal that doesn't carry data, the saved page shows in seconds, read-only, and the live one comes back", { tag: "@mobile" }, async ({ page, context }) => {
-  await signIn(page, DEV_USER);
-  await abrirAba(page, "Elenco");
-  await page.waitForFunction(() => !!navigator.serviceWorker?.controller);
-  await expect.poll(() => salva(page, "/g/fut-do-dev/elenco"), { timeout: 15_000 }).toBe(true);
+test(
+  "with signal that doesn't carry data, the saved page shows in seconds, read-only, and the live one comes back",
+  { tag: "@mobile" },
+  async ({ page, context }) => {
+    await signIn(page, DEV_USER);
+    await abrirAba(page, "Elenco");
+    await page.waitForFunction(() => !!navigator.serviceWorker?.controller);
+    await expect.poll(() => salva(page, "/g/fut-do-dev/elenco"), { timeout: 15_000 }).toBe(true);
 
-  // The phone says it's online, but the Elenco's request never answers. Playwright can't
-  // hold a navigation preload (the browser makes it), so the worker fetches the page itself.
-  await page.evaluate(async () => (await navigator.serviceWorker.ready).navigationPreload.disable());
-  let pendurar = true;
-  await context.route("**/g/fut-do-dev/elenco", async (route) => {
-    if (!pendurar) return route.continue();
-    await new Promise((resolve) => setTimeout(resolve, 30_000));
-    await route.continue().catch(() => {});
-  });
-  try {
-    const inicio = Date.now();
-    await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: "Elenco", level: 1 })).toBeVisible({ timeout: 8_000 });
-    expect(Date.now() - inicio).toBeLessThan(8_000);
+    // The phone says it's online, but the Elenco's request never answers. Playwright can't
+    // hold a navigation preload (the browser makes it), so the worker fetches the page itself.
+    await page.evaluate(async () => (await navigator.serviceWorker.ready).navigationPreload.disable());
+    let pendurar = true;
+    await context.route("**/g/fut-do-dev/elenco", async (route) => {
+      if (!pendurar) return route.continue();
+      await new Promise((resolve) => setTimeout(resolve, 30_000));
+      await route.continue().catch(() => {});
+    });
+    try {
+      const inicio = Date.now();
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect(page.getByRole("heading", { name: "Elenco", level: 1 })).toBeVisible({ timeout: 8_000 });
+      expect(Date.now() - inicio).toBeLessThan(8_000);
 
-    // Not the live list: said so, and nothing can be changed.
-    await expect(page.getByRole("status").filter({ hasText: /^Sem conexão\. Mostrando a lista de \d{2}h\d{2}\.$/ })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Nova carta" })).toHaveCount(0);
-  } finally {
-    pendurar = false;
-  }
+      // Not the live list: said so, and nothing can be changed.
+      await expect(
+        page.getByRole("status").filter({ hasText: /^Sem conexão\. Mostrando a lista de \d{2}h\d{2}\.$/ }),
+      ).toBeVisible();
+      await expect(page.getByRole("button", { name: "Nova carta" })).toHaveCount(0);
+    } finally {
+      pendurar = false;
+    }
 
-  // Once the network answers, the page reloads itself into the live one.
-  await expect(page.getByRole("button", { name: "Nova carta" })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("status").filter({ hasText: "Sem conexão." })).toHaveCount(0);
-  await context.unrouteAll({ behavior: "ignoreErrors" });
-});
+    // Once the network answers, the page reloads itself into the live one.
+    await expect(page.getByRole("button", { name: "Nova carta" })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("status").filter({ hasText: "Sem conexão." })).toHaveCount(0);
+    await context.unrouteAll({ behavior: "ignoreErrors" });
+  },
+);

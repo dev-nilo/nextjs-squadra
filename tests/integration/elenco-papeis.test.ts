@@ -65,10 +65,16 @@ describe("who writes a Grupo's Elenco", () => {
     const criado = await addJogador(admin, grupo.id, "Novo do Admin");
     expect(criado.error).toBeNull();
 
-    const editado = await admin.client.from("players").update({ name: "Editado pelo Admin" }).eq("id", jogadorId).select("name, user_id");
+    const editado = await admin.client
+      .from("players")
+      .update({ name: "Editado pelo Admin" })
+      .eq("id", jogadorId)
+      .select("name, user_id");
     expect(editado.data?.[0]?.name).toBe("Editado pelo Admin");
 
-    const { data: apagado } = await admin.client.rpc("excluir_jogador", { grupo: grupo.id, jogador: jogadorId }).throwOnError();
+    const { data: apagado } = await admin.client
+      .rpc("excluir_jogador", { grupo: grupo.id, jogador: jogadorId })
+      .throwOnError();
     expect(apagado?.id).toBe(jogadorId);
   });
 

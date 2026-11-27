@@ -53,7 +53,13 @@ export function PartidaForm({
       </ModalHeader>
       <ModalBody className="flex flex-col gap-4">
         {erro && <Alert tone="danger">{erro}</Alert>}
-        <Input label="Dia e hora" type="datetime-local" value={inicio} onChange={(e) => setInicio(e.target.value)} isRequired />
+        <Input
+          label="Dia e hora"
+          type="datetime-local"
+          value={inicio}
+          onChange={(e) => setInicio(e.target.value)}
+          isRequired
+        />
         <Input label="Local" value={local} onChange={(e) => setLocal(e.target.value)} maxLength={80} isRequired />
         <Input
           label="Vagas"

@@ -11,7 +11,14 @@ import { admin as service, newUser, removeUsers, type TestUser } from "./support
  * `capacidades()` tells the screens to show.
  */
 
-type Elenco = { dono: TestUser; admin: TestUser; membro: TestUser; outroMembro: TestUser; outroAdmin: TestUser; deFora: TestUser };
+type Elenco = {
+  dono: TestUser;
+  admin: TestUser;
+  membro: TestUser;
+  outroMembro: TestUser;
+  outroAdmin: TestUser;
+  deFora: TestUser;
+};
 let gente: Elenco;
 
 beforeAll(async () => {
@@ -51,20 +58,57 @@ async function fut() {
 }
 
 const papelDe = async (grupo: string, quem: TestUser) => {
-  const { data } = await service().from("grupo_membros").select("papel").eq("grupo_id", grupo).eq("user_id", quem.id).maybeSingle();
+  const { data } = await service()
+    .from("grupo_membros")
+    .select("papel")
+    .eq("grupo_id", grupo)
+    .eq("user_id", quem.id)
+    .maybeSingle();
   return (data?.papel ?? null) as Papel | null;
 };
 
-const QUEM: Record<Papel, () => TestUser> = { dono: () => gente.dono, admin: () => gente.admin, membro: () => gente.membro };
+const QUEM: Record<Papel, () => TestUser> = {
+  dono: () => gente.dono,
+  admin: () => gente.admin,
+  membro: () => gente.membro,
+};
 
 /** Each action, the capability that should allow it, and a call aimed at someone it's allowed on. */
-const ACOES: { nome: string; capacidade: keyof Capacidades; tenta: (quem: TestUser, grupo: string) => PromiseLike<{ error: unknown }> }[] = [
-  { nome: "make a membro admin", capacidade: "gerePessoas", tenta: (q, g) => q.client.rpc("mudar_papel", { grupo: g, pessoa: gente.outroMembro.id, novo: "admin" }) },
-  { nome: "make an admin membro", capacidade: "gerePessoas", tenta: (q, g) => q.client.rpc("mudar_papel", { grupo: g, pessoa: gente.outroAdmin.id, novo: "membro" }) },
-  { nome: "remove someone", capacidade: "gerePessoas", tenta: (q, g) => q.client.rpc("remover_do_grupo", { grupo: g, pessoa: gente.outroMembro.id }) },
-  { nome: "hand the fut to an admin", capacidade: "gereFut", tenta: (q, g) => q.client.rpc("passar_posse", { grupo: g, pessoa: gente.outroAdmin.id }) },
-  { nome: "rename the fut", capacidade: "gereFut", tenta: (q, g) => q.client.rpc("renomear_grupo", { grupo: g, nome: "Novo nome" }) },
-  { nome: "delete the fut", capacidade: "gereFut", tenta: (q, g) => q.client.rpc("excluir_grupo", { grupo: g, confirmacao: NOME }) },
+const ACOES: {
+  nome: string;
+  capacidade: keyof Capacidades;
+  tenta: (quem: TestUser, grupo: string) => PromiseLike<{ error: unknown }>;
+}[] = [
+  {
+    nome: "make a membro admin",
+    capacidade: "gerePessoas",
+    tenta: (q, g) => q.client.rpc("mudar_papel", { grupo: g, pessoa: gente.outroMembro.id, novo: "admin" }),
+  },
+  {
+    nome: "make an admin membro",
+    capacidade: "gerePessoas",
+    tenta: (q, g) => q.client.rpc("mudar_papel", { grupo: g, pessoa: gente.outroAdmin.id, novo: "membro" }),
+  },
+  {
+    nome: "remove someone",
+    capacidade: "gerePessoas",
+    tenta: (q, g) => q.client.rpc("remover_do_grupo", { grupo: g, pessoa: gente.outroMembro.id }),
+  },
+  {
+    nome: "hand the fut to an admin",
+    capacidade: "gereFut",
+    tenta: (q, g) => q.client.rpc("passar_posse", { grupo: g, pessoa: gente.outroAdmin.id }),
+  },
+  {
+    nome: "rename the fut",
+    capacidade: "gereFut",
+    tenta: (q, g) => q.client.rpc("renomear_grupo", { grupo: g, nome: "Novo nome" }),
+  },
+  {
+    nome: "delete the fut",
+    capacidade: "gereFut",
+    tenta: (q, g) => q.client.rpc("excluir_grupo", { grupo: g, confirmacao: NOME }),
+  },
   { nome: "leave the fut", capacidade: "saiDoFut", tenta: (q, g) => q.client.rpc("sair_do_grupo", { grupo: g }) },
 ];
 
@@ -84,7 +128,9 @@ describe("the database accepts exactly what capacidades() shows", () => {
       const grupo = await fut();
       const { data, error } = await QUEM[papel]().client.rpc("pessoas_do_grupo", { grupo });
       expect(error).toBeNull();
-      const doMembro = (data as { user_id: string; email: string | null }[]).find((p) => p.user_id === gente.outroMembro.id);
+      const doMembro = (data as { user_id: string; email: string | null }[]).find(
+        (p) => p.user_id === gente.outroMembro.id,
+      );
       expect(doMembro?.email ?? null).toBe(veEmails ? gente.outroMembro.email : null);
     });
   }
@@ -93,7 +139,17 @@ describe("the database accepts exactly what capacidades() shows", () => {
 describe("pessoas_do_grupo", () => {
   it("lists everyone, dono first then admins, with their Jogador's name", async () => {
     const grupo = await fut();
-    await service().from("players").insert({ user_id: gente.dono.id, grupo_id: grupo, conta_id: gente.membro.id, name: "Canhoto", position: "ALA", nationality: "BR" }).throwOnError();
+    await service()
+      .from("players")
+      .insert({
+        user_id: gente.dono.id,
+        grupo_id: grupo,
+        conta_id: gente.membro.id,
+        name: "Canhoto",
+        position: "ALA",
+        nationality: "BR",
+      })
+      .throwOnError();
 
     const { data } = await gente.membro.client.rpc("pessoas_do_grupo", { grupo });
     const pessoas = data as { user_id: string; papel: Papel; jogador_nome: string | null }[];
@@ -140,7 +196,11 @@ describe("the dono's rules", () => {
     expect(error).toBeNull();
     expect(await papelDe(grupo, gente.admin)).toBe("dono");
     expect(await papelDe(grupo, gente.dono)).toBe("admin");
-    const { count } = await service().from("grupo_membros").select("*", { count: "exact", head: true }).eq("grupo_id", grupo).eq("papel", "dono");
+    const { count } = await service()
+      .from("grupo_membros")
+      .select("*", { count: "exact", head: true })
+      .eq("grupo_id", grupo)
+      .eq("papel", "dono");
     expect(count).toBe(1);
 
     // The old dono is an admin now: no more power over people.
@@ -156,7 +216,11 @@ describe("the dono's rules", () => {
         gente.dono.client.rpc("passar_posse", { grupo, pessoa: gente.outroAdmin.id }),
         gente.outroAdmin.client.rpc("sair_do_grupo", { grupo }),
       ]);
-      const { count } = await service().from("grupo_membros").select("*", { count: "exact", head: true }).eq("grupo_id", grupo).eq("papel", "dono");
+      const { count } = await service()
+        .from("grupo_membros")
+        .select("*", { count: "exact", head: true })
+        .eq("grupo_id", grupo)
+        .eq("papel", "dono");
       expect(count).toBe(1);
     }
   });
@@ -171,14 +235,27 @@ describe("the dono's rules", () => {
   it("deletes the fut only with its name typed (any case, extra spaces), taking everything with it", async () => {
     const grupo = await fut();
     const svc = service();
-    const { data: jogador } = await svc.from("players").insert({ user_id: gente.dono.id, grupo_id: grupo, name: "Some Junto", position: "ALA", nationality: "BR" }).select("id").single().throwOnError();
+    const { data: jogador } = await svc
+      .from("players")
+      .insert({ user_id: gente.dono.id, grupo_id: grupo, name: "Some Junto", position: "ALA", nationality: "BR" })
+      .select("id")
+      .single()
+      .throwOnError();
     const { data: partida } = await svc
       .from("partidas")
       .insert({ grupo_id: grupo, inicio: new Date(Date.now() + 86_400_000).toISOString(), local: "Quadra", vagas: 10 })
       .select("id")
       .single()
       .throwOnError();
-    await svc.from("presencas").insert({ partida_id: partida!.id, jogador_id: jogador!.id, situacao: "confirmado", pediu_vaga_em: new Date().toISOString() }).throwOnError();
+    await svc
+      .from("presencas")
+      .insert({
+        partida_id: partida!.id,
+        jogador_id: jogador!.id,
+        situacao: "confirmado",
+        pediu_vaga_em: new Date().toISOString(),
+      })
+      .throwOnError();
 
     const errado = await gente.dono.client.rpc("excluir_grupo", { grupo, confirmacao: "Outro fut" });
     expect(errado.error?.hint).toBe("nome-nao-confere");
@@ -214,7 +291,14 @@ describe("leaving and being removed", () => {
       const svc = service();
       const { data: jogador } = await svc
         .from("players")
-        .insert({ user_id: gente.dono.id, grupo_id: grupo, conta_id: gente.membro.id, name: `Fica ${como}`, position: "ALA", nationality: "BR" })
+        .insert({
+          user_id: gente.dono.id,
+          grupo_id: grupo,
+          conta_id: gente.membro.id,
+          name: `Fica ${como}`,
+          position: "ALA",
+          nationality: "BR",
+        })
         .select("id")
         .single()
         .throwOnError();
@@ -243,9 +327,19 @@ describe("no direct writes any more", () => {
     const grupo = await fut();
     const c = gente.dono.client;
 
-    const papel = await c.from("grupo_membros").update({ papel: "admin" }).eq("grupo_id", grupo).eq("user_id", gente.membro.id).select("papel");
+    const papel = await c
+      .from("grupo_membros")
+      .update({ papel: "admin" })
+      .eq("grupo_id", grupo)
+      .eq("user_id", gente.membro.id)
+      .select("papel");
     expect(papel.data ?? []).toEqual([]);
-    const remove = await c.from("grupo_membros").delete().eq("grupo_id", grupo).eq("user_id", gente.membro.id).select("user_id");
+    const remove = await c
+      .from("grupo_membros")
+      .delete()
+      .eq("grupo_id", grupo)
+      .eq("user_id", gente.membro.id)
+      .select("user_id");
     expect(remove.data ?? []).toEqual([]);
     const renomeia = await c.from("grupos").update({ nome: "Na mão" }).eq("id", grupo).select("nome");
     expect(renomeia.data ?? []).toEqual([]);
@@ -263,7 +357,9 @@ describe("no direct writes any more", () => {
     // Without a privilege Postgres raises 42501; with one but no policy, RLS returns no rows and no error.
     expect((await c.from("grupos").delete().eq("id", grupo)).error?.code).toBe("42501");
     expect((await c.from("grupos").update({ nome: "Na mão" }).eq("id", grupo)).error?.code).toBe("42501");
-    expect((await c.from("grupo_membros").delete().eq("grupo_id", grupo).eq("user_id", gente.membro.id)).error?.code).toBe("42501");
+    expect(
+      (await c.from("grupo_membros").delete().eq("grupo_id", grupo).eq("user_id", gente.membro.id)).error?.code,
+    ).toBe("42501");
   });
 
   it("nobody calls the internal helpers", async () => {

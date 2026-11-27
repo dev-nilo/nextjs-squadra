@@ -36,7 +36,9 @@ export function AuthPanel({
         <div className="flex flex-col gap-1">
           <h1 className="text-title">{titulo}</h1>
           {modo === "recuperar" && (
-            <p className="text-muted">A gente manda um link pro seu email. Ele abre o Squadra pra você criar uma senha nova.</p>
+            <p className="text-muted">
+              A gente manda um link pro seu email. Ele abre o Squadra pra você criar uma senha nova.
+            </p>
           )}
           <p className="text-sm text-default-500">
             {SUBTITULO[modo]}{" "}

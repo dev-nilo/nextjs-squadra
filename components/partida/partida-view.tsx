@@ -2,7 +2,19 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Check, ChevronRight, Clock, MapPin, Pencil, Share2, UserCheck, Users, X, XCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  ChevronRight,
+  Clock,
+  MapPin,
+  Pencil,
+  Share2,
+  UserCheck,
+  Users,
+  X,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cancelarPartida, editarPartida, responderPresenca } from "@/app/actions/partida";
 import { PartidaForm } from "@/components/partida/partida-form";
@@ -86,7 +98,8 @@ export function PartidaView({
         toast.error("Não deu pra responder", { description: resultado.message });
         return false;
       }
-      if (resultado.valor.situacao === "espera") toast.info("Partida lotada", { description: "Entrou na lista de espera." });
+      if (resultado.valor.situacao === "espera")
+        toast.info("Partida lotada", { description: "Entrou na lista de espera." });
       await recarregar();
       return true;
     } finally {
@@ -121,7 +134,10 @@ export function PartidaView({
     // data-ao-vivo: the list is listening for changes (the E2E suite waits on it).
     <div data-ao-vivo={aoVivo} className={`flex flex-col gap-6 ${temTimes ? "" : "mx-auto w-full max-w-2xl"}`}>
       {!naInicio && (
-        <Link href={`${fut}/partidas`} className="flex w-fit items-center gap-1 text-sm font-medium text-default-500 hover:text-foreground area-de-toque rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <Link
+          href={`${fut}/partidas`}
+          className="flex w-fit items-center gap-1 text-sm font-medium text-default-500 hover:text-foreground area-de-toque rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
           <ArrowLeft size={16} aria-hidden="true" /> Partidas
         </Link>
       )}
@@ -135,7 +151,10 @@ export function PartidaView({
         }
       >
         <div className="flex flex-col gap-6">
-          <section aria-label="Partida" className="flex flex-col gap-4 rounded-2xl border border-divider bg-content1 p-4 sm:p-5">
+          <section
+            aria-label="Partida"
+            className="flex flex-col gap-4 rounded-2xl border border-divider bg-content1 p-4 sm:p-5"
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 flex-col gap-1">
                 {naInicio && <p className="text-label">Próxima partida</p>}
@@ -155,7 +174,13 @@ export function PartidaView({
                     nome="Gerenciar partida"
                     acoes={[
                       ...(estado === "aberta"
-                        ? [{ rotulo: "Responder por alguém", icone: <Users size={16} />, onSelect: () => setRespondendoPorOutros(true) }]
+                        ? [
+                            {
+                              rotulo: "Responder por alguém",
+                              icone: <Users size={16} />,
+                              onSelect: () => setRespondendoPorOutros(true),
+                            },
+                          ]
                         : []),
                       { rotulo: "Editar", icone: <Pencil size={16} />, onSelect: () => setEditando(true) },
                       { rotulo: "Cancelar partida", icone: <XCircle size={16} />, onSelect: cancelar, perigo: true },
@@ -185,7 +210,10 @@ export function PartidaView({
 
           <QuemVai lista={lista} vagas={partida.vagas} nome={nome} meuId={meu?.id ?? null} />
 
-          <Recolhidos naoVao={lista.naoVou.map((p) => nome(p.jogador_id))} semResposta={semResposta.map((j) => j.name)} />
+          <Recolhidos
+            naoVao={lista.naoVou.map((p) => nome(p.jogador_id))}
+            semResposta={semResposta.map((j) => j.name)}
+          />
         </div>
 
         {temTimes && (
@@ -340,7 +368,11 @@ function SuaPresenca({
           </Button>
         </div>
         {mudando && (
-          <button type="button" onClick={() => setMudando(false)} className="self-center text-sm font-medium text-default-500 hover:text-foreground area-de-toque rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <button
+            type="button"
+            onClick={() => setMudando(false)}
+            className="self-center text-sm font-medium text-default-500 hover:text-foreground area-de-toque rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
             Deixar como está
           </button>
         )}
@@ -362,7 +394,11 @@ function SuaPresenca({
     minha.situacao === "confirmado"
       ? { icone: <Check size={18} />, texto: "Você vai", tom: "bg-primary/10 text-primary" }
       : minha.situacao === "espera"
-        ? { icone: <Clock size={18} />, texto: `Você está em ${minha.posicao}º na lista de espera`, tom: "bg-warning/15 text-warning-600" }
+        ? {
+            icone: <Clock size={18} />,
+            texto: `Você está em ${minha.posicao}º na lista de espera`,
+            tom: "bg-warning/15 text-warning-600",
+          }
         : { icone: <X size={18} />, texto: "Você não vai", tom: "bg-default-100 text-default-600" };
 
   return (
@@ -398,7 +434,11 @@ function QuemVai({
     <li key={jogadorId} className="flex items-center gap-3 px-4 py-2.5">
       <span className="w-6 shrink-0 text-right text-sm tabular-nums text-default-500">{numero}</span>
       <span className="min-w-0 truncate font-semibold text-foreground">{nome(jogadorId)}</span>
-      {jogadorId === meuId && <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-accent-foreground">você</span>}
+      {jogadorId === meuId && (
+        <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-accent-foreground">
+          você
+        </span>
+      )}
     </li>
   );
 
@@ -412,7 +452,10 @@ function QuemVai({
           vagas, {quantoFalta(lista)}
         </p>
         <div className="h-2 overflow-hidden rounded-full bg-default-100" aria-hidden="true">
-          <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${Math.min(100, (confirmados / Math.max(1, vagas)) * 100)}%` }} />
+          <div
+            className="h-full rounded-full bg-primary transition-[width]"
+            style={{ width: `${Math.min(100, (confirmados / Math.max(1, vagas)) * 100)}%` }}
+          />
         </div>
       </div>
 
@@ -514,7 +557,13 @@ function ResponderPorAlguem({
       <ModalBody className="flex flex-col gap-3 pb-6">
         {/* One scroller, the modal's: the search stays on top as the list goes by. */}
         <div className="sticky -top-4 z-10 -mx-4 -mt-4 bg-content1 px-4 pb-1 pt-4 sm:-mx-6 sm:px-6">
-          <Input label="Buscar jogador" value={busca} onChange={(e) => setBusca(e.target.value)} size="sm" autoComplete="off" />
+          <Input
+            label="Buscar jogador"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            size="sm"
+            autoComplete="off"
+          />
         </div>
         <ul className="flex flex-col divide-y divide-divider" aria-label="Jogadores do fut">
           {visiveis.map((j) => {
@@ -529,12 +578,24 @@ function ResponderPorAlguem({
                 {podeResponder(j.id) && (
                   <span className="flex shrink-0 gap-1">
                     {vai !== true && (
-                      <Button size="sm" variant="flat" isDisabled={ocupado} aria-label={`Marcar ${j.name}: vou`} onClick={() => responder(j.id, true)}>
+                      <Button
+                        size="sm"
+                        variant="flat"
+                        isDisabled={ocupado}
+                        aria-label={`Marcar ${j.name}: vou`}
+                        onClick={() => responder(j.id, true)}
+                      >
                         Vou
                       </Button>
                     )}
                     {vai !== false && (
-                      <Button size="sm" variant="flat" isDisabled={ocupado} aria-label={`Marcar ${j.name}: não vou`} onClick={() => responder(j.id, false)}>
+                      <Button
+                        size="sm"
+                        variant="flat"
+                        isDisabled={ocupado}
+                        aria-label={`Marcar ${j.name}: não vou`}
+                        onClick={() => responder(j.id, false)}
+                      >
                         Não vou
                       </Button>
                     )}

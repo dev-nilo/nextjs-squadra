@@ -17,7 +17,15 @@ import type { Player } from "@/types";
  * Opened from Você. The action revalidates the fut's pages, which bring the
  * linked Jogador back.
  */
-export function EscolherJogador({ slug, players, onClose }: { slug: string; players: readonly Player[]; onClose: () => void }) {
+export function EscolherJogador({
+  slug,
+  players,
+  onClose,
+}: {
+  slug: string;
+  players: readonly Player[];
+  onClose: () => void;
+}) {
   const [busca, setBusca] = useState("");
   const [nome, setNome] = useState("");
   const [posicao, setPosicao] = useState("ALA");
@@ -52,7 +60,13 @@ export function EscolherJogador({ slug, players, onClose }: { slug: string; play
       <ModalBody className="flex flex-col gap-4">
         {/* One scroller, the modal's: the search stays on top as the list goes by. */}
         <div className="sticky -top-4 z-10 -mx-4 -mt-4 bg-content1 px-4 pb-1 pt-4 sm:-mx-6 sm:px-6">
-          <Input label="Buscar seu nome" value={busca} onChange={(e) => setBusca(e.target.value)} size="sm" autoComplete="off" />
+          <Input
+            label="Buscar seu nome"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            size="sm"
+            autoComplete="off"
+          />
         </div>
 
         {erro && <Alert tone="danger">{erro}</Alert>}
@@ -62,7 +76,10 @@ export function EscolherJogador({ slug, players, onClose }: { slug: string; play
         ) : (
           <ul className="flex flex-col gap-1" aria-label="Jogadores sem conta">
             {livres.map((p) => (
-              <li key={p.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 hover:bg-default-100">
+              <li
+                key={p.id}
+                className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 hover:bg-default-100"
+              >
                 <span className="min-w-0">
                   <span className="block truncate font-semibold text-foreground">{p.name}</span>
                   <span className="text-xs text-default-500">
@@ -94,7 +111,13 @@ export function EscolherJogador({ slug, players, onClose }: { slug: string; play
           <p className="text-sm font-bold text-foreground">Não estou na lista</p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Input label="Seu nome" value={nome} onChange={(e) => setNome(e.target.value)} maxLength={40} size="sm" />
-            <Select label="Posição" value={posicao} onChange={(e) => setPosicao(e.target.value)} size="sm" className="sm:w-32">
+            <Select
+              label="Posição"
+              value={posicao}
+              onChange={(e) => setPosicao(e.target.value)}
+              size="sm"
+              className="sm:w-32"
+            >
               {POSITIONS.map((p) => (
                 <option key={p} value={p}>
                   {p}

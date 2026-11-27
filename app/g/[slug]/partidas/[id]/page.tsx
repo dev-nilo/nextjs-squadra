@@ -38,7 +38,10 @@ function PartidaNaoEncontrada({ slug }: { slug: string }) {
     <div className="flex flex-col items-center gap-2 py-16 text-center">
       <h1 className="text-title">Essa partida não existe</h1>
       <p className="text-muted">Ou ela é de outro fut.</p>
-      <Link href={`/g/${encodeURIComponent(slug)}/partidas`} className="mt-2 font-semibold text-foreground underline-offset-4 hover:underline">
+      <Link
+        href={`/g/${encodeURIComponent(slug)}/partidas`}
+        className="mt-2 font-semibold text-foreground underline-offset-4 hover:underline"
+      >
         Ver as partidas do fut
       </Link>
     </div>

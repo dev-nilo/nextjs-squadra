@@ -40,7 +40,10 @@ export default function NovaSenhaPage() {
     e.preventDefault();
     setSalvando(true);
     try {
-      const resultado = await definirNovaSenha(toSessaoAuth(createClient()), { newPassword: senha, confirmPassword: confirmacao });
+      const resultado = await definirNovaSenha(toSessaoAuth(createClient()), {
+        newPassword: senha,
+        confirmPassword: confirmacao,
+      });
       applySessaoToast(resultado, "recovery", toast);
       if (resultado.ok) router.replace("/");
       else if (resultado.code === "no_session" || resultado.code === "recovery_required") setTemSessao(false);
@@ -92,7 +95,8 @@ export default function NovaSenhaPage() {
       ) : (
         <div className="flex flex-col gap-4">
           <Alert tone="warning">
-            Essa página abre pelo link de recuperação. Peça um em Esqueci minha senha e abra o mais recente. Sabendo a senha atual, troque em Você.
+            Essa página abre pelo link de recuperação. Peça um em Esqueci minha senha e abra o mais recente. Sabendo a
+            senha atual, troque em Você.
           </Alert>
           <Button variant="flat" size="lg" radius="full" className="w-full" onClick={() => router.push("/auth")}>
             Entrar

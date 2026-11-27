@@ -44,7 +44,14 @@ export function ZonaDePerigo({ grupo }: { grupo: Participacao }) {
       >
         {erro && <Alert tone="danger">{erro}</Alert>}
         <div className="flex items-end gap-2">
-          <Input label="Nome do fut" value={nome} onChange={(e) => setNome(e.target.value)} maxLength={60} size="sm" className="min-w-0 flex-1" />
+          <Input
+            label="Nome do fut"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            maxLength={60}
+            size="sm"
+            className="min-w-0 flex-1"
+          />
           <Button type="submit" size="sm" color="primary" isDisabled={!mudou} isLoading={pendente}>
             Salvar
           </Button>
@@ -55,7 +62,9 @@ export function ZonaDePerigo({ grupo }: { grupo: Participacao }) {
       <div className="flex flex-col items-start gap-3 rounded-2xl border border-danger/40 p-4">
         <div className="flex flex-col gap-1">
           <p className="font-semibold text-foreground">Excluir o fut</p>
-          <p className="text-sm text-default-500">Apaga o elenco, as partidas, os times e as fotos, pra todo mundo. Não dá pra desfazer.</p>
+          <p className="text-sm text-default-500">
+            Apaga o elenco, as partidas, os times e as fotos, pra todo mundo. Não dá pra desfazer.
+          </p>
         </div>
         <Button variant="flat" color="danger" startContent={<Trash2 size={16} />} onClick={() => setExcluindo(true)}>
           Excluir o fut

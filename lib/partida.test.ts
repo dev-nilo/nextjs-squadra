@@ -52,7 +52,10 @@ describe("organizarPresencas", () => {
 });
 
 describe("situacaoDoJogador", () => {
-  const lista = organizarPresencas([p("c1", "confirmado", 1), p("e1", "espera", 3), p("e2", "espera", 4), p("n1", "nao_vou")], 1);
+  const lista = organizarPresencas(
+    [p("c1", "confirmado", 1), p("e1", "espera", 3), p("e2", "espera", 4), p("n1", "nao_vou")],
+    1,
+  );
 
   it("gives the place in the lista de espera, starting at 1", () => {
     expect(situacaoDoJogador(lista, "e2")).toEqual({ situacao: "espera", posicao: 2 });
@@ -68,14 +71,18 @@ describe("situacaoDoJogador", () => {
 describe("oQueVouFaz", () => {
   it("confirms while there are free vagas, else joins the lista de espera", () => {
     expect(oQueVouFaz(organizarPresencas([p("a", "confirmado", 1)], 2))).toBe("confirma");
-    expect(oQueVouFaz(organizarPresencas([p("a", "confirmado", 1), p("b", "confirmado", 2)], 2))).toBe("entra-na-espera");
+    expect(oQueVouFaz(organizarPresencas([p("a", "confirmado", 1), p("b", "confirmado", 2)], 2))).toBe(
+      "entra-na-espera",
+    );
   });
 });
 
 describe("estadoDaPartida", () => {
   const agora = new Date("2026-11-10T20:00:00Z");
   it("is cancelled, over once it started, or open", () => {
-    expect(estadoDaPartida({ inicio: "2026-11-12T20:00:00Z", cancelada_em: "2026-11-10T10:00:00Z" }, agora)).toBe("cancelada");
+    expect(estadoDaPartida({ inicio: "2026-11-12T20:00:00Z", cancelada_em: "2026-11-10T10:00:00Z" }, agora)).toBe(
+      "cancelada",
+    );
     expect(estadoDaPartida({ inicio: "2026-11-10T19:00:00Z", cancelada_em: null }, agora)).toBe("encerrada");
     expect(estadoDaPartida({ inicio: "2026-11-12T20:00:00Z", cancelada_em: null }, agora)).toBe("aberta");
   });
@@ -86,7 +93,9 @@ describe("esperaAteComecar", () => {
   it("waits until an open Partida starts, and not at all once it can't change by itself", () => {
     expect(esperaAteComecar({ inicio: "2026-11-10T20:30:00Z", cancelada_em: null }, agora)).toBe(30 * 60_000);
     expect(esperaAteComecar({ inicio: "2026-11-10T19:00:00Z", cancelada_em: null }, agora)).toBeNull();
-    expect(esperaAteComecar({ inicio: "2026-11-10T20:30:00Z", cancelada_em: "2026-11-10T10:00:00Z" }, agora)).toBeNull();
+    expect(
+      esperaAteComecar({ inicio: "2026-11-10T20:30:00Z", cancelada_em: "2026-11-10T10:00:00Z" }, agora),
+    ).toBeNull();
   });
 
   it("caps a far-off start at what setTimeout can wait, so the screen checks again later", () => {
@@ -158,12 +167,21 @@ describe("textoDaPartida", () => {
     const texto = textoDaPartida({ partida, lista, nome, link });
     const [cabecalho, ...resto] = texto.split("\n\n");
     expect(cabecalho).toMatch(/^\*Qui\., 12\/11, 20:00\*\nQuadra do Zé\n2 de 2 vagas, lotada$/);
-    expect(resto).toEqual(["1. Paredão\n2. Xerife", "Lista de espera\n1. Foguete", `Quem já está no fut responde aqui: ${link}`]);
+    expect(resto).toEqual([
+      "1. Paredão\n2. Xerife",
+      "Lista de espera\n1. Foguete",
+      `Quem já está no fut responde aqui: ${link}`,
+    ]);
   });
 
   it("keeps every name and the place on one line, so nobody can add lines to the list", () => {
     const lista = organizarPresencas([p("c1", "confirmado", 1)], 2);
-    const texto = textoDaPartida({ partida: { ...partida, local: "Quadra\ndo Zé" }, lista, nome: () => "X\n2. Falso", link });
+    const texto = textoDaPartida({
+      partida: { ...partida, local: "Quadra\ndo Zé" },
+      lista,
+      nome: () => "X\n2. Falso",
+      link,
+    });
     expect(texto).toContain("\nQuadra do Zé\n");
     expect(texto).toContain("1. X 2. Falso");
     expect(texto).not.toMatch(/^2\. Falso/m);

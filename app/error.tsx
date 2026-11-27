@@ -19,5 +19,11 @@ export default function Erro({ error, reset }: { error: Error & { digest?: strin
       reset();
     });
 
-  return <TelaDeAviso titulo="Não deu pra carregar essa página" texto="Confira a conexão e tente de novo." tentarDeNovo={tentarDeNovo} />;
+  return (
+    <TelaDeAviso
+      titulo="Não deu pra carregar essa página"
+      texto="Confira a conexão e tente de novo."
+      tentarDeNovo={tentarDeNovo}
+    />
+  );
 }

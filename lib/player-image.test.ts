@@ -10,11 +10,16 @@ const PNG = "data:image/png;base64,iVBORw0K";
 /** A Storage client that records uploads and removals. */
 function storage() {
   const upload = vi.fn(async (_caminho: string, _blob: Blob, _opcoes: Record<string, unknown>) => ({ error: null }));
-  const remove = vi.fn(async (caminhos: string[]) => ({ data: caminhos.map((name) => ({ name })) as { name: string }[], error: null as Error | null }));
+  const remove = vi.fn(async (caminhos: string[]) => ({
+    data: caminhos.map((name) => ({ name })) as { name: string }[],
+    error: null as Error | null,
+  }));
   const bucket = {
     upload,
     remove,
-    getPublicUrl: (caminho: string) => ({ data: { publicUrl: `https://projeto.supabase.co/storage/v1/object/public/player-images/${caminho}` } }),
+    getPublicUrl: (caminho: string) => ({
+      data: { publicUrl: `https://projeto.supabase.co/storage/v1/object/public/player-images/${caminho}` },
+    }),
   };
   const supabase = { storage: { from: () => bucket } } as unknown as SupabaseClient;
   return { supabase, upload, remove };

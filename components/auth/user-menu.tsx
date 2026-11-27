@@ -1,33 +1,33 @@
-"use client"
+"use client";
 
-import { useId, useState } from "react"
-import { KeyRound, LogOut } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/hooks/use-auth"
-import { toast } from "sonner"
-import { ChangePasswordModal } from "@/components/auth/change-password-modal"
-import { useMenuFlutuante } from "@/components/ui/use-menu-flutuante"
-import { applySessaoToast } from "@/lib/sessao"
+import { useId, useState } from "react";
+import { KeyRound, LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
+import { ChangePasswordModal } from "@/components/auth/change-password-modal";
+import { useMenuFlutuante } from "@/components/ui/use-menu-flutuante";
+import { applySessaoToast } from "@/lib/sessao";
 
 export function UserMenu() {
-  const { user, logout } = useAuth()
-  const router = useRouter()
-  const menuId = useId()
-  const { menuRef, botaoRef: triggerRef, onBeforeToggle } = useMenuFlutuante()
-  const [passwordOpen, setPasswordOpen] = useState(false)
+  const { user, logout } = useAuth();
+  const router = useRouter();
+  const menuId = useId();
+  const { menuRef, botaoRef: triggerRef, onBeforeToggle } = useMenuFlutuante();
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
-  if (!user) return null
+  if (!user) return null;
 
   const handleLogout = async () => {
-    const result = await logout()
-    applySessaoToast(result, "login", toast)
-    if (!result.ok) return
+    const result = await logout();
+    applySessaoToast(result, "login", toast);
+    if (!result.ok) return;
     // Server-rendered pages render again without the session: the sign-in screen.
-    router.refresh()
-  }
+    router.refresh();
+  };
 
   // No email to take them from: a "?" rather than letters that mean nothing.
-  const initials = user.email?.substring(0, 2).toUpperCase() || "?"
+  const initials = user.email?.substring(0, 2).toUpperCase() || "?";
 
   return (
     <>
@@ -77,11 +77,7 @@ export function UserMenu() {
         </button>
       </div>
 
-      <ChangePasswordModal
-        open={passwordOpen}
-        email={user.email ?? ""}
-        onOpenChange={setPasswordOpen}
-      />
+      <ChangePasswordModal open={passwordOpen} email={user.email ?? ""} onOpenChange={setPasswordOpen} />
     </>
-  )
+  );
 }

@@ -50,9 +50,7 @@ describe("isSupabaseConfigured", () => {
   });
 
   it("is true when both present", () => {
-    expect(isSupabaseConfigured({ url: "https://x.supabase.co", key: "anon" })).toBe(
-      true,
-    );
+    expect(isSupabaseConfigured({ url: "https://x.supabase.co", key: "anon" })).toBe(true);
   });
 });
 
@@ -168,7 +166,8 @@ describe("signup", () => {
 
 const ORIGEM = "https://squadra-eight.vercel.app";
 /** The link the confirmation email carries (supabase/templates/confirm-signup.html). */
-const linkDoEmail = (next: string) => new URL(`${ORIGEM}/auth/confirm?token_hash=abc&type=signup&next=${encodeURIComponent(next)}`);
+const linkDoEmail = (next: string) =>
+  new URL(`${ORIGEM}/auth/confirm?token_hash=abc&type=signup&next=${encodeURIComponent(next)}`);
 
 describe("concluirConfirmacao", () => {
   it("a plain sign-up lands on / in one hop, with one notice", async () => {
@@ -180,7 +179,10 @@ describe("concluirConfirmacao", () => {
   });
 
   it("an invite sign-up lands on the invite", async () => {
-    const { destino } = await concluirConfirmacao(createFakeAuth(), linkDoEmail(`${ORIGEM}/convite/0123456789abcdef0123456789abcdef`));
+    const { destino } = await concluirConfirmacao(
+      createFakeAuth(),
+      linkDoEmail(`${ORIGEM}/convite/0123456789abcdef0123456789abcdef`),
+    );
     expect(destino).toBe("/convite/0123456789abcdef0123456789abcdef");
   });
 
@@ -194,7 +196,9 @@ describe("concluirConfirmacao", () => {
 
   it("an expired link in the URL goes to sign-in without calling auth", async () => {
     const auth = createFakeAuth();
-    const url = new URL(`${ORIGEM}/auth/callback#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired`);
+    const url = new URL(
+      `${ORIGEM}/auth/callback#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired`,
+    );
     const { destino, aviso } = await concluirConfirmacao(auth, url);
     expect(auth.verifyOtp).not.toHaveBeenCalled();
     expect(destino).toBe("/auth");
@@ -202,10 +206,16 @@ describe("concluirConfirmacao", () => {
   });
 
   it("a token Supabase refuses goes to sign-in, saying why", async () => {
-    const auth = createFakeAuth({ verifyOtp: vi.fn(async () => ({ error: { message: "Token has expired or is invalid" } })) });
+    const auth = createFakeAuth({
+      verifyOtp: vi.fn(async () => ({ error: { message: "Token has expired or is invalid" } })),
+    });
     const { destino, aviso } = await concluirConfirmacao(auth, linkDoEmail(`${ORIGEM}/`));
     expect(destino).toBe("/auth");
-    expect(aviso).toMatchObject({ variant: "error", title: "Não deu pra confirmar o email.", description: "O link venceu ou já foi usado. Peça outro." });
+    expect(aviso).toMatchObject({
+      variant: "error",
+      title: "Não deu pra confirmar o email.",
+      description: "O link venceu ou já foi usado. Peça outro.",
+    });
   });
 
   it("exchanges a PKCE code", async () => {
@@ -227,12 +237,17 @@ describe("concluirConfirmacao", () => {
   });
 
   it("a PKCE code that fails with no session is a failure", async () => {
-    const auth = createFakeAuth({ exchangeCodeForSession: vi.fn(async () => ({ error: { message: "invalid flow state" } })) });
+    const auth = createFakeAuth({
+      exchangeCodeForSession: vi.fn(async () => ({ error: { message: "invalid flow state" } })),
+    });
     expect((await concluirConfirmacao(auth, new URL(`${ORIGEM}/auth/callback?code=xyz`))).destino).toBe("/auth");
   });
 
   it("with nothing to confirm and no session, goes to sign-in quietly", async () => {
-    expect(await concluirConfirmacao(createFakeAuth(), new URL(`${ORIGEM}/auth/callback`))).toEqual({ destino: "/auth", aviso: null });
+    expect(await concluirConfirmacao(createFakeAuth(), new URL(`${ORIGEM}/auth/callback`))).toEqual({
+      destino: "/auth",
+      aviso: null,
+    });
   });
 });
 
@@ -263,20 +278,55 @@ describe("sessaoToast", () => {
     expect(sessaoToast({ ok: true, code: "logged_out" })).toMatchObject({ variant: "success" });
   });
 
-  it("never shouts, and never says just \"Erro\" or \"Algo deu errado\"", () => {
+  it('never shouts, and never says just "Erro" or "Algo deu errado"', () => {
     const codigos = [
-      "logged_in", "signed_up", "confirmed", "resent", "logged_out", "password_changed", "recovery_sent", "recovery_verified", "password_set",
+      "logged_in",
+      "signed_up",
+      "confirmed",
+      "resent",
+      "logged_out",
+      "password_changed",
+      "recovery_sent",
+      "recovery_verified",
+      "password_set",
     ] as const;
     const erros = [
-      "recovery_required", "recovery_failed", "recovery_error", "password_set_failed", "password_set_error", "email_unconfirmed",
-      "login_failed", "login_error", "password_mismatch", "password_too_short", "password_unchanged", "wrong_current_password",
-      "password_change_failed", "password_change_error", "signup_failed", "email_taken", "signup_error", "email_required",
-      "resend_failed", "resend_error", "logout_failed", "logout_error", "expired_link", "confirm_url_error", "pkce_failed",
-      "otp_failed", "no_session", "confirm_error",
+      "recovery_required",
+      "recovery_failed",
+      "recovery_error",
+      "password_set_failed",
+      "password_set_error",
+      "email_unconfirmed",
+      "login_failed",
+      "login_error",
+      "password_mismatch",
+      "password_too_short",
+      "password_unchanged",
+      "wrong_current_password",
+      "password_change_failed",
+      "password_change_error",
+      "signup_failed",
+      "email_taken",
+      "signup_error",
+      "email_required",
+      "resend_failed",
+      "resend_error",
+      "logout_failed",
+      "logout_error",
+      "expired_link",
+      "confirm_url_error",
+      "pkce_failed",
+      "otp_failed",
+      "no_session",
+      "confirm_error",
     ] as const;
     const avisos = [
       ...codigos.map((code) => sessaoToast({ ok: true, code })),
-      ...erros.flatMap((code) => (["login", "watcher", "recovery"] as const).map((ctx) => sessaoToast({ ok: false, code, message: "Something odd" }, ctx))),
+      ...erros.flatMap((code) =>
+        (["login", "watcher", "recovery"] as const).map((ctx) =>
+          sessaoToast({ ok: false, code, message: "Something odd" }, ctx),
+        ),
+      ),
     ];
     for (const aviso of avisos) {
       const texto = `${aviso?.title} ${aviso?.description ?? ""}`;
@@ -299,8 +349,12 @@ describe("explicarErro", () => {
     );
     expect(explicarErro("Email rate limit exceeded")).toMatch(/^Muitas tentativas/);
     expect(explicarErro("User already registered")).toMatch(/^Esse email já tem conta/);
-    expect(explicarErro("Password should be at least 6 characters.")).toBe("A senha precisa de pelo menos 6 caracteres.");
-    expect(explicarErro("New password should be different from the old password.")).toBe("A senha nova precisa ser diferente da atual.");
+    expect(explicarErro("Password should be at least 6 characters.")).toBe(
+      "A senha precisa de pelo menos 6 caracteres.",
+    );
+    expect(explicarErro("New password should be different from the old password.")).toBe(
+      "A senha nova precisa ser diferente da atual.",
+    );
     expect(explicarErro("Token has expired or is invalid")).toBe("O link venceu ou já foi usado. Peça outro.");
     expect(explicarErro("Unable to validate email address: invalid format")).toMatch(/^Esse email não parece certo/);
     expect(explicarErro("TypeError: Failed to fetch")).toBe("Confira a conexão e tente de novo.");
@@ -377,21 +431,30 @@ describe("pedirNovaSenha", () => {
     const auth = createFakeAuth();
     const result = await pedirNovaSenha(auth, "  a@b.com ", `${ORIGEM}${RETORNO_DA_RECUPERACAO}`, env);
     expect(result).toEqual({ ok: true, code: "recovery_sent" });
-    expect(auth.resetPasswordForEmail).toHaveBeenCalledWith("a@b.com", { redirectTo: `${ORIGEM}/auth/callback?next=${NOVA_SENHA}` });
+    expect(auth.resetPasswordForEmail).toHaveBeenCalledWith("a@b.com", {
+      redirectTo: `${ORIGEM}/auth/callback?next=${NOVA_SENHA}`,
+    });
   });
 
   it("needs an email, and says the same thing whether or not it has an account", async () => {
     const auth = createFakeAuth();
     expect(await pedirNovaSenha(auth, " ", "https://cb", env)).toEqual({ ok: false, code: "email_required" });
     expect(auth.resetPasswordForEmail).not.toHaveBeenCalled();
-    expect(sessaoToast({ ok: true, code: "recovery_sent" }, "recovery")?.description).toMatch(/^Se esse email tiver conta/);
+    expect(sessaoToast({ ok: true, code: "recovery_sent" }, "recovery")?.description).toMatch(
+      /^Se esse email tiver conta/,
+    );
   });
 
   it("passes on what Supabase refused, e.g. asking again too soon", async () => {
     const auth = createFakeAuth({
-      resetPasswordForEmail: vi.fn(async () => ({ error: { message: "For security purposes, you can only request this after 30 seconds." } })),
+      resetPasswordForEmail: vi.fn(async () => ({
+        error: { message: "For security purposes, you can only request this after 30 seconds." },
+      })),
     });
-    expect(await pedirNovaSenha(auth, "a@b.com", "https://cb", env)).toMatchObject({ ok: false, code: "recovery_failed" });
+    expect(await pedirNovaSenha(auth, "a@b.com", "https://cb", env)).toMatchObject({
+      ok: false,
+      code: "recovery_failed",
+    });
   });
 });
 
@@ -424,7 +487,10 @@ describe("definirNovaSenha", () => {
   const AGORA = 1_800_000_000_000;
   const comAmr = (method: string) =>
     createFakeAuth({
-      getClaims: vi.fn(async () => ({ data: { claims: { amr: [{ method, timestamp: AGORA / 1000 - 60 }] } }, error: null })),
+      getClaims: vi.fn(async () => ({
+        data: { claims: { amr: [{ method, timestamp: AGORA / 1000 - 60 }] } },
+        error: null,
+      })),
     });
   const comSessao = () => comAmr("recovery");
 
@@ -439,28 +505,43 @@ describe("definirNovaSenha", () => {
 
   it("sets the password for the session the recovery link opened, with no current password", async () => {
     const auth = comSessao();
-    expect(await definirNovaSenha(auth, { newPassword: "nova-123", confirmPassword: "nova-123" }, env, AGORA)).toEqual({ ok: true, code: "password_set" });
+    expect(await definirNovaSenha(auth, { newPassword: "nova-123", confirmPassword: "nova-123" }, env, AGORA)).toEqual({
+      ok: true,
+      code: "password_set",
+    });
     expect(auth.updateUser).toHaveBeenCalledWith({ password: "nova-123" });
     expect(auth.signInWithPassword).not.toHaveBeenCalled();
   });
 
   it("checks the two fields before calling auth", async () => {
     const auth = comSessao();
-    expect(await definirNovaSenha(auth, { newPassword: "nova-123", confirmPassword: "outra-123" }, env, AGORA)).toEqual({ ok: false, code: "password_mismatch" });
-    expect(await definirNovaSenha(auth, { newPassword: "curta", confirmPassword: "curta" }, env, AGORA)).toEqual({ ok: false, code: "password_too_short" });
+    expect(await definirNovaSenha(auth, { newPassword: "nova-123", confirmPassword: "outra-123" }, env, AGORA)).toEqual(
+      { ok: false, code: "password_mismatch" },
+    );
+    expect(await definirNovaSenha(auth, { newPassword: "curta", confirmPassword: "curta" }, env, AGORA)).toEqual({
+      ok: false,
+      code: "password_too_short",
+    });
     expect(auth.updateUser).not.toHaveBeenCalled();
   });
 
   it("refuses with no session, as when the page is opened without the link", async () => {
     const auth = createFakeAuth();
-    expect(await definirNovaSenha(auth, { newPassword: "nova-123", confirmPassword: "nova-123" }, env, AGORA)).toEqual({ ok: false, code: "no_session" });
+    expect(await definirNovaSenha(auth, { newPassword: "nova-123", confirmPassword: "nova-123" }, env, AGORA)).toEqual({
+      ok: false,
+      code: "no_session",
+    });
     expect(auth.updateUser).not.toHaveBeenCalled();
   });
 
   it("passes on what Supabase refused", async () => {
     const auth = comSessao();
-    vi.mocked(auth.updateUser).mockResolvedValueOnce({ error: { message: "New password should be different from the old password." } });
-    expect(await definirNovaSenha(auth, { newPassword: "nova-123", confirmPassword: "nova-123" }, env, AGORA)).toMatchObject({
+    vi.mocked(auth.updateUser).mockResolvedValueOnce({
+      error: { message: "New password should be different from the old password." },
+    });
+    expect(
+      await definirNovaSenha(auth, { newPassword: "nova-123", confirmPassword: "nova-123" }, env, AGORA),
+    ).toMatchObject({
       ok: false,
       code: "password_set_failed",
     });
@@ -473,7 +554,10 @@ describe("concluirConfirmacao, for a password recovery link", () => {
 
   it("verifies the recovery token and always goes to the new-password page", async () => {
     const auth = createFakeAuth();
-    const { destino, aviso } = await concluirConfirmacao(auth, linkDeRecuperacao(`&next=${encodeURIComponent(`${ORIGEM}/convite/x`)}`));
+    const { destino, aviso } = await concluirConfirmacao(
+      auth,
+      linkDeRecuperacao(`&next=${encodeURIComponent(`${ORIGEM}/convite/x`)}`),
+    );
     expect(auth.verifyOtp).toHaveBeenCalledWith({ token_hash: "abc", type: "recovery" });
     expect(destino).toBe(NOVA_SENHA);
     expect(aviso).toEqual({ variant: "success", title: "Agora é só criar a senha nova." });
@@ -488,7 +572,9 @@ describe("concluirConfirmacao, for a password recovery link", () => {
   });
 
   it("a used or old link goes to sign-in, saying to ask for another", async () => {
-    const auth = createFakeAuth({ verifyOtp: vi.fn(async () => ({ error: { message: "Email link is invalid or has expired" } })) });
+    const auth = createFakeAuth({
+      verifyOtp: vi.fn(async () => ({ error: { message: "Email link is invalid or has expired" } })),
+    });
     const { destino, aviso } = await concluirConfirmacao(auth, linkDeRecuperacao());
     expect(destino).toBe("/auth");
     expect(aviso).toMatchObject({ variant: "error", title: "Esse link não vale mais." });

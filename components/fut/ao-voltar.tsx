@@ -58,7 +58,10 @@ export function AoVoltar() {
         router.refresh();
         if (guardaOffline(location.pathname)) guardarPagina(location.pathname);
         // An installed app seldom loads a page in full, so it'd only see a new version on a cold start.
-        void navigator.serviceWorker?.getRegistration().then((r) => r?.update()).catch(() => {});
+        void navigator.serviceWorker
+          ?.getRegistration()
+          .then((r) => r?.update())
+          .catch(() => {});
       }
     };
     const voltouAConexao = () => (copia ? void tentarAPaginaDeVerdade() : router.refresh());

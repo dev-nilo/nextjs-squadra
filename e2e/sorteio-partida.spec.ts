@@ -22,22 +22,49 @@ test("the dono draws and publishes the Times; a membro sees them appear, read-on
   const service = admin();
   const { data: partida } = await service
     .from("partidas")
-    .insert({ grupo_id: FUT_DO_DEV, inicio: new Date(Date.now() + 3 * 86_400_000).toISOString(), local: "E2E Sorteio", vagas: 6 })
+    .insert({
+      grupo_id: FUT_DO_DEV,
+      inicio: new Date(Date.now() + 3 * 86_400_000).toISOString(),
+      local: "E2E Sorteio",
+      vagas: 6,
+    })
     .select("id")
     .single()
     .throwOnError();
-  const { data: jogadores } = await service.from("players").select("id, name").eq("grupo_id", FUT_DO_DEV).in("name", [...CONFIRMADOS, "Bagre"]);
+  const { data: jogadores } = await service
+    .from("players")
+    .select("id, name")
+    .eq("grupo_id", FUT_DO_DEV)
+    .in("name", [...CONFIRMADOS, "Bagre"]);
   const id = (n: string) => jogadores!.find((j) => j.name === n)!.id;
   await service
     .from("presencas")
-    .insert(CONFIRMADOS.map((n, i) => ({ partida_id: partida!.id, jogador_id: id(n), situacao: "confirmado", pediu_vaga_em: new Date(Date.now() - (10 - i) * 1000).toISOString() })))
+    .insert(
+      CONFIRMADOS.map((n, i) => ({
+        partida_id: partida!.id,
+        jogador_id: id(n),
+        situacao: "confirmado",
+        pediu_vaga_em: new Date(Date.now() - (10 - i) * 1000).toISOString(),
+      })),
+    )
     .throwOnError();
   // Bagre waits: the Partida is full, and the lista de espera never plays.
-  await service.from("presencas").insert({ partida_id: partida!.id, jogador_id: id("Bagre"), situacao: "espera", pediu_vaga_em: new Date().toISOString() }).throwOnError();
+  await service
+    .from("presencas")
+    .insert({
+      partida_id: partida!.id,
+      jogador_id: id("Bagre"),
+      situacao: "espera",
+      pediu_vaga_em: new Date().toISOString(),
+    })
+    .throwOnError();
 
   const email = `membro-${randomUUID().slice(0, 8)}@squadra.test`;
   const { data: criado } = await service.auth.admin.createUser({ email, password: SEED_PASSWORD, email_confirm: true });
-  await service.from("grupo_membros").insert({ grupo_id: FUT_DO_DEV, user_id: criado.user!.id, papel: "membro" }).throwOnError();
+  await service
+    .from("grupo_membros")
+    .insert({ grupo_id: FUT_DO_DEV, user_id: criado.user!.id, papel: "membro" })
+    .throwOnError();
 
   const caminho = `/g/fut-do-dev/partidas/${partida!.id}`;
   try {
@@ -64,7 +91,9 @@ test("the dono draws and publishes the Times; a membro sees them appear, read-on
     const destino = (await time1.getByText("Paredão").count()) ? "1" : "0";
     await sorteio.getByLabel("Mover Paredão").focus();
     await sorteio.getByLabel("Mover Paredão").selectOption(destino);
-    await expect(sorteio.getByRole("list", { name: `Jogadores do Time ${Number(destino) + 1}` }).getByText("Paredão")).toBeVisible();
+    await expect(
+      sorteio.getByRole("list", { name: `Jogadores do Time ${Number(destino) + 1}` }).getByText("Paredão"),
+    ).toBeVisible();
     // Once the server has moved him, the focus is back on his select, in the new Time (#88).
     await expect(sorteio.getByLabel("Mover Paredão")).toBeFocused();
 
@@ -76,7 +105,9 @@ test("the dono draws and publishes the Times; a membro sees them appear, read-on
     // The membro sees the published Times without reloading, with no controls.
     const doMembro = membro.getByRole("region", { name: "Sorteio" });
     await expect(doMembro.getByRole("list", { name: /^Jogadores do Time/ })).toHaveCount(2);
-    await expect(doMembro.getByRole("list", { name: `Jogadores do Time ${Number(destino) + 1}` }).getByText("Paredão")).toBeVisible();
+    await expect(
+      doMembro.getByRole("list", { name: `Jogadores do Time ${Number(destino) + 1}` }).getByText("Paredão"),
+    ).toBeVisible();
     await expect(doMembro.getByRole("button", { name: /Sortear|Publicar/ })).toHaveCount(0);
   } finally {
     await service.auth.admin.deleteUser(criado.user!.id);

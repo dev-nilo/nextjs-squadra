@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  coerceStat,
-  importPlayersFromCsv,
-  normalizeHeader,
-  parseCsvRows,
-  splitCsvLine,
-} from "@/lib/csv-import";
+import { coerceStat, importPlayersFromCsv, normalizeHeader, parseCsvRows, splitCsvLine } from "@/lib/csv-import";
 
 describe("normalizeHeader", () => {
   it("strips UTF-8 BOM and accents", () => {

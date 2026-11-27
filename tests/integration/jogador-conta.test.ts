@@ -24,7 +24,14 @@ async function fut() {
   await addMembro(grupo.id, membro, "membro");
   const { data: zagueiro } = await addJogador(dono, grupo.id, "Zagueiro");
   const { data: atacante } = await addJogador(dono, grupo.id, "Atacante");
-  return { grupoId: grupo.id as string, dono, adminDoFut, membro, zagueiroId: zagueiro!.id as string, atacanteId: atacante!.id as string };
+  return {
+    grupoId: grupo.id as string,
+    dono,
+    adminDoFut,
+    membro,
+    zagueiroId: zagueiro!.id as string,
+    atacanteId: atacante!.id as string,
+  };
 }
 
 const vincular = (quem: TestUser, jogador: string) => quem.client.rpc("vincular_jogador", { jogador });
@@ -73,20 +80,37 @@ describe("sou esse aqui", () => {
 describe("não estou na lista", () => {
   it("a membro adds themselves with the default attributes, already linked", async () => {
     const { grupoId, membro } = await fut();
-    const { data, error } = await membro.client.rpc("criar_meu_jogador", { grupo: grupoId, nome: "  Novato  ", posicao: "ALA" });
+    const { data, error } = await membro.client.rpc("criar_meu_jogador", {
+      grupo: grupoId,
+      nome: "  Novato  ",
+      posicao: "ALA",
+    });
     expect(error).toBeNull();
-    expect(data).toMatchObject({ name: "Novato", position: "ALA", ovr: 60, velocidade: 60, conta_id: membro.id, user_id: membro.id });
+    expect(data).toMatchObject({
+      name: "Novato",
+      position: "ALA",
+      ovr: 60,
+      velocidade: 60,
+      conta_id: membro.id,
+      user_id: membro.id,
+    });
   });
 
   it("refuses a second Jogador for the same account, a bad position or a blank name", async () => {
     const { grupoId, membro } = await fut();
     await membro.client.rpc("criar_meu_jogador", { grupo: grupoId, nome: "Primeiro", posicao: "ATA" });
 
-    expect((await membro.client.rpc("criar_meu_jogador", { grupo: grupoId, nome: "Segundo", posicao: "ATA" })).error?.hint).toBe("ja-tem-jogador");
+    expect(
+      (await membro.client.rpc("criar_meu_jogador", { grupo: grupoId, nome: "Segundo", posicao: "ATA" })).error?.hint,
+    ).toBe("ja-tem-jogador");
     const outro = await user("outro");
     await addMembro(grupoId, outro, "membro");
-    expect((await outro.client.rpc("criar_meu_jogador", { grupo: grupoId, nome: "X", posicao: "PIVO" })).error).not.toBeNull();
-    expect((await outro.client.rpc("criar_meu_jogador", { grupo: grupoId, nome: "   ", posicao: "ALA" })).error).not.toBeNull();
+    expect(
+      (await outro.client.rpc("criar_meu_jogador", { grupo: grupoId, nome: "X", posicao: "PIVO" })).error,
+    ).not.toBeNull();
+    expect(
+      (await outro.client.rpc("criar_meu_jogador", { grupo: grupoId, nome: "   ", posicao: "ALA" })).error,
+    ).not.toBeNull();
   });
 
   it("someone outside the Grupo can't add themselves", async () => {

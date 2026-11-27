@@ -16,12 +16,17 @@ const opcoes = (acao: string, generica: string) => ({ acao, generica, motivos: M
 
 /** The dono makes someone admin or membro. */
 export const mudarPapel = (supabase: SupabaseClient, slug: unknown, pessoaId: unknown, papel: unknown) =>
-  noGrupo(supabase, slug, opcoes("mudarPapel", "Não deu pra mudar o papel agora. Tenta de novo."), async ({ grupo }) => {
-    const pessoa = validar(idSchema, pessoaId, "Pessoa inválida.");
-    const novo = validar(papelDadoSchema, papel, "Papel inválido.");
-    exigir(await supabase.rpc("mudar_papel", { grupo: grupo.id, pessoa, novo }));
-    return null;
-  });
+  noGrupo(
+    supabase,
+    slug,
+    opcoes("mudarPapel", "Não deu pra mudar o papel agora. Tenta de novo."),
+    async ({ grupo }) => {
+      const pessoa = validar(idSchema, pessoaId, "Pessoa inválida.");
+      const novo = validar(papelDadoSchema, papel, "Papel inválido.");
+      exigir(await supabase.rpc("mudar_papel", { grupo: grupo.id, pessoa, novo }));
+      return null;
+    },
+  );
 
 /** The dono removes someone; their Jogador stays in the Elenco, unlinked. */
 export const removerDoFut = (supabase: SupabaseClient, slug: unknown, pessoaId: unknown) =>
@@ -40,11 +45,16 @@ export const sairDoFut = (supabase: SupabaseClient, slug: unknown) =>
 
 /** The dono hands the fut to an admin and becomes an admin. */
 export const passarPosse = (supabase: SupabaseClient, slug: unknown, pessoaId: unknown) =>
-  noGrupo(supabase, slug, opcoes("passarPosse", "Não deu pra passar o fut agora. Tenta de novo."), async ({ grupo }) => {
-    const pessoa = validar(idSchema, pessoaId, "Pessoa inválida.");
-    exigir(await supabase.rpc("passar_posse", { grupo: grupo.id, pessoa }).then(semValor));
-    return null;
-  });
+  noGrupo(
+    supabase,
+    slug,
+    opcoes("passarPosse", "Não deu pra passar o fut agora. Tenta de novo."),
+    async ({ grupo }) => {
+      const pessoa = validar(idSchema, pessoaId, "Pessoa inválida.");
+      exigir(await supabase.rpc("passar_posse", { grupo: grupo.id, pessoa }).then(semValor));
+      return null;
+    },
+  );
 
 /** The dono renames the fut; the slug (and every link) stays. */
 export const renomearFut = (supabase: SupabaseClient, slug: unknown, nome: unknown) =>

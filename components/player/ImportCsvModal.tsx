@@ -101,12 +101,7 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
           onChange={(e) => void handleFile(e.target.files?.[0])}
         />
 
-        <Button
-          variant="flat"
-          onClick={() => inputRef.current?.click()}
-          isDisabled={importing}
-          className="w-full"
-        >
+        <Button variant="flat" onClick={() => inputRef.current?.click()} isDisabled={importing} className="w-full">
           {fileName ? "Trocar arquivo" : "Escolher arquivo CSV"}
         </Button>
 
@@ -116,30 +111,26 @@ export function ImportCsvModal({ isOpen, onClose, onImport }: ImportCsvModalProp
           </p>
         )}
 
-        {error && (
-          <Alert tone="danger">{error}</Alert>
-        )}
+        {error && <Alert tone="danger">{error}</Alert>}
 
         {preview.length > 0 && (
           <div className="rounded-xl border border-divider bg-default-50 p-3">
             <p className="text-sm font-medium text-foreground mb-2">
               {preview.length === 1 ? "1 jogador pronto" : `${preview.length} jogadores prontos`}
-              {skippedRows === 1 ? ", 1 linha ficou de fora" : skippedRows > 1 ? `, ${skippedRows} linhas ficaram de fora` : ""}
+              {skippedRows === 1
+                ? ", 1 linha ficou de fora"
+                : skippedRows > 1
+                  ? `, ${skippedRows} linhas ficaram de fora`
+                  : ""}
             </p>
             <ul className="max-h-40 overflow-y-auto space-y-1 text-sm text-default-600">
               {preview.slice(0, 12).map((p) => (
                 <li key={p.id} className="flex justify-between gap-2">
                   <span className="truncate">{p.name}</span>
-                  <span className="tabular-nums shrink-0 text-default-400">
-                    OVR {p.rating}
-                  </span>
+                  <span className="tabular-nums shrink-0 text-default-400">OVR {p.rating}</span>
                 </li>
               ))}
-              {preview.length > 12 && (
-                <li className="text-default-400">
-                  e mais {preview.length - 12}
-                </li>
-              )}
+              {preview.length > 12 && <li className="text-default-400">e mais {preview.length - 12}</li>}
             </ul>
           </div>
         )}

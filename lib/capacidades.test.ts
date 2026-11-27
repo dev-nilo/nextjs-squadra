@@ -46,7 +46,11 @@ describe("capacidades", () => {
     for (const papel of PAPEIS) {
       const pode = capacidades(papel, EU);
       const organiza = papel !== "membro";
-      expect([pode.desvincula(meu), pode.desvincula(deOutro), pode.desvincula(semConta)]).toEqual([true, organiza, false]);
+      expect([pode.desvincula(meu), pode.desvincula(deOutro), pode.desvincula(semConta)]).toEqual([
+        true,
+        organiza,
+        false,
+      ]);
     }
   });
 
@@ -70,7 +74,12 @@ describe("SO_LEITURA", () => {
   it("allows no write at all", () => {
     const jogador = { conta_id: "u1" };
     expect(
-      SO_LEITURA.editaElenco || SO_LEITURA.convida || SO_LEITURA.gerePartidas || SO_LEITURA.gerePessoas || SO_LEITURA.gereFut || SO_LEITURA.saiDoFut,
+      SO_LEITURA.editaElenco ||
+        SO_LEITURA.convida ||
+        SO_LEITURA.gerePartidas ||
+        SO_LEITURA.gerePessoas ||
+        SO_LEITURA.gereFut ||
+        SO_LEITURA.saiDoFut,
     ).toBe(false);
     expect(SO_LEITURA.respondePor(jogador, "aberta")).toBe(false);
     expect(SO_LEITURA.desvincula(jogador)).toBe(false);

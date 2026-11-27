@@ -13,7 +13,6 @@ import { capacidades } from "@/lib/capacidades";
 import { useSemConexao } from "@/lib/pwa/conexao";
 import { estadoDaPartida, formatarInicio, type EstadoDaPartida } from "@/lib/partida";
 
-
 const ROTULO: Record<EstadoDaPartida, string | null> = { aberta: null, encerrada: "Encerrada", cancelada: "Cancelada" };
 
 /**
@@ -55,7 +54,10 @@ export function PartidasView({
         )}
       </div>
 
-      <Secao titulo="Próximas" vazio={podeCriar ? "Nenhuma partida marcada. Crie a próxima." : "Nenhuma partida marcada ainda."}>
+      <Secao
+        titulo="Próximas"
+        vazio={podeCriar ? "Nenhuma partida marcada. Crie a próxima." : "Nenhuma partida marcada ainda."}
+      >
         {proximas.map((p) => (
           <ItemDaPartida key={p.id} slug={grupo.slug} partida={p} estado="aberta" />
         ))}
@@ -132,7 +134,9 @@ function ItemDaPartida({
         </span>
         <span className="flex shrink-0 items-center gap-2 text-sm">
           {rotulo ? (
-            <span className="rounded-full bg-default-100 px-2 py-0.5 text-xs font-semibold text-default-600">{rotulo}</span>
+            <span className="rounded-full bg-default-100 px-2 py-0.5 text-xs font-semibold text-default-600">
+              {rotulo}
+            </span>
           ) : (
             <span className="font-semibold tabular-nums text-foreground">
               {partida.confirmados} de {partida.vagas}
@@ -153,7 +157,8 @@ function ItemDaPartida({
             </ul>
           ) : partida.quemFoi.length > 0 ? (
             <p className="text-default-600">
-              <span className="font-semibold text-foreground">Foram ({partida.quemFoi.length}):</span> {partida.quemFoi.join(", ")}
+              <span className="font-semibold text-foreground">Foram ({partida.quemFoi.length}):</span>{" "}
+              {partida.quemFoi.join(", ")}
             </p>
           ) : (
             <p className="text-default-500">Ninguém confirmou.</p>
@@ -170,15 +175,24 @@ function Frequencia({ linhas }: { linhas: FrequenciaDoJogador[] }) {
     <section aria-label="Frequência" className="flex flex-col gap-3">
       <div className="flex flex-col gap-0.5">
         <h2 className="text-label">Frequência</h2>
-        <p className="text-xs text-default-500">Nas últimas 10 partidas, desde que cada um entrou no elenco. Lista de espera conta como falta.</p>
+        <p className="text-xs text-default-500">
+          Nas últimas 10 partidas, desde que cada um entrou no elenco. Lista de espera conta como falta.
+        </p>
       </div>
       <ul className="flex flex-col divide-y divide-divider rounded-2xl border border-divider bg-content1">
         {linhas.map((l) => (
           // Phones: the name and the number on one line, the bar under them across the row.
           // From sm up: name, bar, number side by side.
-          <li key={l.nome} aria-label={`${l.nome}: ${l.frequencia}%`} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2.5">
+          <li
+            key={l.nome}
+            aria-label={`${l.nome}: ${l.frequencia}%`}
+            className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2.5"
+          >
             <span className="min-w-0 flex-1 truncate font-semibold text-foreground sm:w-40 sm:flex-none">{l.nome}</span>
-            <span aria-hidden="true" className="order-last h-2 basis-full overflow-hidden rounded-full bg-default-100 sm:order-none sm:basis-auto sm:flex-1">
+            <span
+              aria-hidden="true"
+              className="order-last h-2 basis-full overflow-hidden rounded-full bg-default-100 sm:order-none sm:basis-auto sm:flex-1"
+            >
               <span className="block h-full rounded-full bg-primary" style={{ width: `${l.frequencia}%` }} />
             </span>
             <span className="shrink-0 whitespace-nowrap text-right text-sm tabular-nums text-default-600 sm:w-28">

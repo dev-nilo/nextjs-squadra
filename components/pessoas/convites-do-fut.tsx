@@ -10,7 +10,12 @@ import { caminhoDoConvite } from "@/lib/convite";
 import type { Participacao } from "@/lib/grupo";
 import { createClient } from "@/lib/supabase/client";
 
-const dataCurta = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+const dataCurta = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 /**
  * The Grupo's working invite links, in Pessoas, for its dono and admins:
@@ -88,7 +93,8 @@ export function ConvitesDoFut({ grupo }: { grupo: Participacao }) {
         </Button>
       </div>
       <p className="text-sm text-default-500">
-        Quem abrir o link entra no <span className="font-semibold text-foreground">{grupo.nome}</span> como membro. Cada link vale 7 dias.
+        Quem abrir o link entra no <span className="font-semibold text-foreground">{grupo.nome}</span> como membro. Cada
+        link vale 7 dias.
       </p>
 
       {erro && <Alert tone="danger">{erro}</Alert>}

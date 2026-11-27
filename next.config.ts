@@ -11,7 +11,10 @@ import { withSentryConfig } from "@sentry/nextjs/config";
  * origins listed; that's a separate change.
  */
 const CABECALHOS_DE_SEGURANCA = [
-  { key: "Content-Security-Policy", value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'" },
+  {
+    key: "Content-Security-Policy",
+    value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'",
+  },
   // frame-ancestors for browsers that predate it.
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },

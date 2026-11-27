@@ -53,7 +53,10 @@ export const slugSchema = z.string().max(80).regex(SLUG);
 
 /** The recent slugs in the cookie's value, ignoring anything that isn't a slug. */
 export function lerFutsRecentes(valor: string | null | undefined): string[] {
-  return (valor ?? "").split(",").filter((slug) => slug.length <= 80 && SLUG.test(slug)).slice(0, MAX_FUTS_RECENTES);
+  return (valor ?? "")
+    .split(",")
+    .filter((slug) => slug.length <= 80 && SLUG.test(slug))
+    .slice(0, MAX_FUTS_RECENTES);
 }
 
 /** The cookie's next value after opening `slug`. */
@@ -86,4 +89,3 @@ export function slugDoCaminho(pathname: string | null): string | null {
   const match = pathname?.match(/^\/g\/([^/?#]+)/);
   return match ? decodeURIComponent(match[1]) : null;
 }
-

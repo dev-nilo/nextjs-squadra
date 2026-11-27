@@ -65,7 +65,11 @@ test("someone new signs up through an invite, confirms the email and joins as me
 
     const { data: conta } = await service.auth.admin.listUsers({ perPage: 1000 });
     const userId = conta.users.find((u) => u.email === email)!.id;
-    const { data: membro } = await service.from("grupo_membros").select("papel").eq("grupo_id", FUT_DO_DEV).eq("user_id", userId);
+    const { data: membro } = await service
+      .from("grupo_membros")
+      .select("papel")
+      .eq("grupo_id", FUT_DO_DEV)
+      .eq("user_id", userId);
     expect(membro).toEqual([{ papel: "membro" }]);
   } finally {
     await service.from("players").delete().eq("grupo_id", FUT_DO_DEV).eq("name", "Convidado Novo");
@@ -75,7 +79,10 @@ test("someone new signs up through an invite, confirms the email and joins as me
   }
 });
 
-test("someone who opened an invite and signs in on / is sent back to it, not to the naming screen", async ({ page, browser }) => {
+test("someone who opened an invite and signs in on / is sent back to it, not to the naming screen", async ({
+  page,
+  browser,
+}) => {
   const service = admin();
   const caminho = await gerarLink(page);
   const email = `voltou-${randomUUID().slice(0, 8)}@squadra.test`;
@@ -96,7 +103,11 @@ test("someone who opened an invite and signs in on / is sent back to it, not to 
       await visitante.getByRole("button", { name: "Entrar no Fut do Dev" }).click();
       await expect(visitante).toHaveURL(/\/g\/fut-do-dev$/);
     }
-    const { data: membros } = await service.from("grupo_membros").select("papel").eq("grupo_id", FUT_DO_DEV).eq("user_id", criado.user!.id);
+    const { data: membros } = await service
+      .from("grupo_membros")
+      .select("papel")
+      .eq("grupo_id", FUT_DO_DEV)
+      .eq("user_id", criado.user!.id);
     expect(membros).toEqual([{ papel: "membro" }]);
 
     // "Sou esse aqui": in Você they claim a seeded Jogador nobody had claimed.
@@ -112,7 +123,12 @@ test("someone who opened an invite and signs in on / is sent back to it, not to 
     page.once("dialog", (d) => d.accept());
     await acaoDaCarta(page, "Paredão", "Desvincular conta");
     await expect(card(page, "Paredão")).not.toHaveAccessibleName(/, com conta/);
-    const { data: paredao } = await service.from("players").select("conta_id").eq("grupo_id", FUT_DO_DEV).eq("name", "Paredão").single();
+    const { data: paredao } = await service
+      .from("players")
+      .select("conta_id")
+      .eq("grupo_id", FUT_DO_DEV)
+      .eq("name", "Paredão")
+      .single();
     expect(paredao?.conta_id).toBeNull();
   } finally {
     await service.from("players").update({ conta_id: null }).eq("grupo_id", FUT_DO_DEV).eq("name", "Paredão");
@@ -124,7 +140,12 @@ test("a cancelled, expired or unknown link says so", async ({ page }) => {
   const service = admin();
   // One insert each: a bulk insert with different keys sends null for the missing ones.
   const inserir = async (campos: Record<string, string>) => {
-    const { data } = await service.from("convites").insert({ grupo_id: FUT_DO_DEV, ...campos }).select("token").single().throwOnError();
+    const { data } = await service
+      .from("convites")
+      .insert({ grupo_id: FUT_DO_DEV, ...campos })
+      .select("token")
+      .single()
+      .throwOnError();
     return data!.token as string;
   };
   const revogado = await inserir({ revogado_em: new Date().toISOString() });

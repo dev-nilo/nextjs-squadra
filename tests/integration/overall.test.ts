@@ -22,7 +22,8 @@ async function grupoCom(dono: TestUser) {
   return data.id as string;
 }
 
-const ovrDe = async (id: string) => (await service().from("players").select("ovr").eq("id", id).single()).data!.ovr as number;
+const ovrDe = async (id: string) =>
+  (await service().from("players").select("ovr").eq("id", id).single()).data!.ovr as number;
 
 describe("the Overall", () => {
   it("is the rounded mean of the attributes, whatever the client sends", async () => {
@@ -56,16 +57,30 @@ describe("the Overall", () => {
 
     const { data: partida } = await dono.client
       .from("partidas")
-      .insert({ grupo_id: grupoId, inicio: new Date(Date.now() + 86_400_000).toISOString(), local: "Quadra", vagas: 10 })
+      .insert({
+        grupo_id: grupoId,
+        inicio: new Date(Date.now() + 86_400_000).toISOString(),
+        local: "Quadra",
+        vagas: 10,
+      })
       .select("id")
       .single()
       .throwOnError();
-    for (const id of ids) await dono.client.rpc("responder_presenca", { partida: partida!.id, jogador: id, vou: true }).throwOnError();
+    for (const id of ids)
+      await dono.client.rpc("responder_presenca", { partida: partida!.id, jogador: id, vou: true }).throwOnError();
     const { data: sorteio } = await dono.client
-      .rpc("salvar_sorteio", { partida: partida!.id, times: [[ids[0], ids[1]], [ids[2], ids[3]]] })
+      .rpc("salvar_sorteio", {
+        partida: partida!.id,
+        times: [
+          [ids[0], ids[1]],
+          [ids[2], ids[3]],
+        ],
+      })
       .throwOnError();
 
-    const a = (sorteio.times as { jogadores: { id: string; rating: number }[] }[])[0].jogadores.find((j) => j.id === ids[0]);
+    const a = (sorteio.times as { jogadores: { id: string; rating: number }[] }[])[0].jogadores.find(
+      (j) => j.id === ids[0],
+    );
     expect(a?.rating).toBe(60);
   });
 

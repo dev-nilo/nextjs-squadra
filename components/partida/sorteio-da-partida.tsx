@@ -21,7 +21,6 @@ import {
   type SorteioSalvo,
 } from "@/lib/sorteio-partida";
 
-
 /** The Partida's Sorteio: drawn and adjusted by the dono and admins, read-only for everyone once published. */
 export function SorteioDaPartida({
   slug,
@@ -153,25 +152,25 @@ export function SorteioDaPartida({
                 </div>
                 <ul className="flex flex-col gap-1" aria-label={`Jogadores do ${time.name}`}>
                   {membrosPorNome(time.members).map((jogador) => (
-                      <li key={jogador.id} className="flex items-center justify-between gap-2 text-sm">
-                        <span className="min-w-0 truncate text-foreground">
-                          {jogador.name} <span className="text-default-500">{jogador.position}</span>
-                        </span>
-                        {editavel && emDia && sorteio && (
-                          <MoverJogador
-                            ref={foco.refDo(jogador.id)}
-                            nome={jogador.name}
-                            indice={indice}
-                            times={times}
-                            disabled={pendente}
-                            onMover={(destino) => {
-                              foco.marcar(jogador.id);
-                              executar(() => moverNoSorteio(slug, partidaId, jogador.id, destino, sorteio.sorteado_em));
-                            }}
-                          />
-                        )}
-                      </li>
-                    ))}
+                    <li key={jogador.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="min-w-0 truncate text-foreground">
+                        {jogador.name} <span className="text-default-500">{jogador.position}</span>
+                      </span>
+                      {editavel && emDia && sorteio && (
+                        <MoverJogador
+                          ref={foco.refDo(jogador.id)}
+                          nome={jogador.name}
+                          indice={indice}
+                          times={times}
+                          disabled={pendente}
+                          onMover={(destino) => {
+                            foco.marcar(jogador.id);
+                            executar(() => moverNoSorteio(slug, partidaId, jogador.id, destino, sorteio.sorteado_em));
+                          }}
+                        />
+                      )}
+                    </li>
+                  ))}
                 </ul>
               </li>
             ))}

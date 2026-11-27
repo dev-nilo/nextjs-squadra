@@ -22,7 +22,10 @@ const eslintConfig = [
         "error",
         ...designTokenRule(RAW_PALETTE, "Use a design token (see DESIGN.md), not a raw Tailwind palette color."),
         ...designTokenRule(ARBITRARY_HEX, "Use a design token (see DESIGN.md), not an arbitrary hex color."),
-        ...designTokenRule(ARBITRARY_FONT_SIZE, "Use the type scale (see DESIGN.md), e.g. text-2xs, not an arbitrary font size."),
+        ...designTokenRule(
+          ARBITRARY_FONT_SIZE,
+          "Use the type scale (see DESIGN.md), e.g. text-2xs, not an arbitrary font size.",
+        ),
       ],
     },
   },

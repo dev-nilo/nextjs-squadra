@@ -18,7 +18,7 @@ const EMPTY_ATTRIBUTES: Attributes = {
   fisico: 0,
 };
 
-const shuffleArray = <T,>(array: T[], random: RandomFn): T[] => {
+const shuffleArray = <T>(array: T[], random: RandomFn): T[] => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
@@ -28,11 +28,7 @@ const shuffleArray = <T,>(array: T[], random: RandomFn): T[] => {
 };
 
 export const teamAverage = (members: Player[]): number =>
-  members.length
-    ? Math.round(
-        members.reduce((sum, p) => sum + (p.rating ?? 0), 0) / members.length,
-      )
-    : 0;
+  members.length ? Math.round(members.reduce((sum, p) => sum + (p.rating ?? 0), 0) / members.length) : 0;
 
 /**
  * Move a Jogador from one post-draw Time to another, recomputing avg for both.
@@ -40,12 +36,7 @@ export const teamAverage = (members: Player[]): number =>
  * or an out-of-range team index. Times other than fromTeam/toTeam keep their
  * reference on a successful move.
  */
-export const moveMember = (
-  teams: Time[],
-  playerId: string,
-  fromTeam: number,
-  toTeam: number,
-): Time[] => {
+export const moveMember = (teams: Time[], playerId: string, fromTeam: number, toTeam: number): Time[] => {
   if (fromTeam === toTeam || !teams[fromTeam] || !teams[toTeam]) return teams;
 
   const playerToMove = teams[fromTeam].members.find((p) => p.id === playerId);
@@ -68,11 +59,7 @@ export const moveMember = (
  * Sorteio: distribute Jogadores into Times with attribute-sum balancing.
  * Caller validates mínimo por time before calling.
  */
-export const sortearTimes = (
-  selectedPlayers: Player[],
-  numTeams: number,
-  options: SorteioOptions = {},
-): Time[] => {
+export const sortearTimes = (selectedPlayers: Player[], numTeams: number, options: SorteioOptions = {}): Time[] => {
   const random = options.random ?? Math.random;
 
   const shuffledPlayers = shuffleArray(selectedPlayers, random);
@@ -94,17 +81,12 @@ export const sortearTimes = (
   }));
 
   sortedPlayers.forEach((player) => {
-    const teamTotals = teamAttributeSums.map((sums) =>
-      Object.values(sums).reduce((a, b) => a + b, 0),
-    );
+    const teamTotals = teamAttributeSums.map((sums) => Object.values(sums).reduce((a, b) => a + b, 0));
 
     const minTotal = Math.min(...teamTotals);
-    const teamsWithMinTotal = teamTotals
-      .map((total, idx) => ({ total, idx }))
-      .filter((t) => t.total === minTotal);
+    const teamsWithMinTotal = teamTotals.map((total, idx) => ({ total, idx })).filter((t) => t.total === minTotal);
 
-    const minIndex =
-      teamsWithMinTotal[Math.floor(random() * teamsWithMinTotal.length)].idx;
+    const minIndex = teamsWithMinTotal[Math.floor(random() * teamsWithMinTotal.length)].idx;
     teams[minIndex].push(player);
 
     const attrs = player.attributes ?? EMPTY_ATTRIBUTES;

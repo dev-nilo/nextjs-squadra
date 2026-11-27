@@ -7,19 +7,35 @@ export type Convite = { id: string; token: string; expira_em: string };
 
 /** A new invite link for the Grupo. RLS only lets its dono and admins create one. */
 export const criarConvite = (supabase: SupabaseClient, slug: unknown) =>
-  noGrupo(supabase, slug, { acao: "criarConvite", generica: "Não deu pra gerar o link agora. Tenta de novo." }, async ({ grupo }) =>
-    exigir(await supabase.from("convites").insert({ grupo_id: grupo.id }).select("id, token, expira_em").single()) as Convite,
+  noGrupo(
+    supabase,
+    slug,
+    { acao: "criarConvite", generica: "Não deu pra gerar o link agora. Tenta de novo." },
+    async ({ grupo }) =>
+      exigir(
+        await supabase.from("convites").insert({ grupo_id: grupo.id }).select("id, token, expira_em").single(),
+      ) as Convite,
   );
 
 /** Stops a link from working. Already-joined Membros stay. */
 export const revogarConvite = (supabase: SupabaseClient, slug: unknown, conviteId: unknown) =>
-  noGrupo(supabase, slug, { acao: "revogarConvite", generica: "Não deu pra cancelar o link agora. Tenta de novo." }, async ({ grupo }) => {
-    const id = validar(idSchema, conviteId, "Convite inválido.");
-    exigirLinhas(
-      await supabase.from("convites").update({ revogado_em: new Date().toISOString() }).eq("id", id).eq("grupo_id", grupo.id).select("id"),
-    );
-    return null;
-  });
+  noGrupo(
+    supabase,
+    slug,
+    { acao: "revogarConvite", generica: "Não deu pra cancelar o link agora. Tenta de novo." },
+    async ({ grupo }) => {
+      const id = validar(idSchema, conviteId, "Convite inválido.");
+      exigirLinhas(
+        await supabase
+          .from("convites")
+          .update({ revogado_em: new Date().toISOString() })
+          .eq("id", id)
+          .eq("grupo_id", grupo.id)
+          .select("id"),
+      );
+      return null;
+    },
+  );
 
 const MOTIVO_DO_CONVITE = {
   inexistente: PROBLEMA_DO_CONVITE.inexistente.titulo,

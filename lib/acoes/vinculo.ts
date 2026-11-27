@@ -12,11 +12,16 @@ const MOTIVOS = {
 
 /** "Sou esse aqui": link the signed-in account to a Jogador with none. */
 export const vincularJogador = (supabase: SupabaseClient, slug: unknown, jogadorId: unknown) =>
-  noGrupo(supabase, slug, { acao: "vincularJogador", generica: "Não deu pra vincular agora. Tenta de novo.", motivos: MOTIVOS }, async () => {
-    const jogador = validar(idSchema, jogadorId, "Jogador inválido.");
-    exigir(await supabase.rpc("vincular_jogador", { jogador }));
-    return null;
-  });
+  noGrupo(
+    supabase,
+    slug,
+    { acao: "vincularJogador", generica: "Não deu pra vincular agora. Tenta de novo.", motivos: MOTIVOS },
+    async () => {
+      const jogador = validar(idSchema, jogadorId, "Jogador inválido.");
+      exigir(await supabase.rpc("vincular_jogador", { jogador }));
+      return null;
+    },
+  );
 
 /** "Não estou na lista": add the signed-in user to the Elenco, already linked. */
 export const criarMeuJogador = (supabase: SupabaseClient, slug: unknown, nome: unknown, posicao: unknown) =>
@@ -33,8 +38,13 @@ export const criarMeuJogador = (supabase: SupabaseClient, slug: unknown, nome: u
 
 /** Unlink a Jogador from its account (dono, admin, or the person themselves). */
 export const desvincularJogador = (supabase: SupabaseClient, slug: unknown, jogadorId: unknown) =>
-  noGrupo(supabase, slug, { acao: "desvincularJogador", generica: "Não deu pra desvincular agora. Tenta de novo.", motivos: MOTIVOS }, async () => {
-    const jogador = validar(idSchema, jogadorId, "Jogador inválido.");
-    exigir(await supabase.rpc("desvincular_jogador", { jogador }));
-    return null;
-  });
+  noGrupo(
+    supabase,
+    slug,
+    { acao: "desvincularJogador", generica: "Não deu pra desvincular agora. Tenta de novo.", motivos: MOTIVOS },
+    async () => {
+      const jogador = validar(idSchema, jogadorId, "Jogador inválido.");
+      exigir(await supabase.rpc("desvincular_jogador", { jogador }));
+      return null;
+    },
+  );

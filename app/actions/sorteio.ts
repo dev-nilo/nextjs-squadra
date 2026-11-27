@@ -10,8 +10,17 @@ export async function sortearDaPartida(slug: string, partidaId: string, numTimes
   return revalidandoOGrupo(slug, await acoes.sortearDaPartida(await createClient(), slug, partidaId, numTimes));
 }
 
-export async function moverNoSorteio(slug: string, partidaId: string, jogadorId: string, paraTime: number, sorteadoEm: string) {
-  return revalidandoOGrupo(slug, await acoes.moverNoSorteio(await createClient(), slug, partidaId, jogadorId, paraTime, sorteadoEm));
+export async function moverNoSorteio(
+  slug: string,
+  partidaId: string,
+  jogadorId: string,
+  paraTime: number,
+  sorteadoEm: string,
+) {
+  return revalidandoOGrupo(
+    slug,
+    await acoes.moverNoSorteio(await createClient(), slug, partidaId, jogadorId, paraTime, sorteadoEm),
+  );
 }
 
 export async function publicarSorteio(slug: string, partidaId: string) {

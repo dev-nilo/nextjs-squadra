@@ -24,7 +24,9 @@ async function sortearRapido(page: Page) {
 
 /** The names listed in one or more Times, from each row's accessible name ("<nome>, <posição>"). */
 const nomes = (times: Locator) =>
-  times.getByRole("listitem").evaluateAll((items) => items.map((li) => li.getAttribute("aria-label")?.split(",")[0] ?? ""));
+  times
+    .getByRole("listitem")
+    .evaluateAll((items) => items.map((li) => li.getAttribute("aria-label")?.split(",")[0] ?? ""));
 
 test("the quick Sorteio puts every selected Jogador in exactly one Time", { tag: "@mobile" }, async ({ page }) => {
   const { result, selected } = await sortearRapido(page);
@@ -39,31 +41,35 @@ test("the quick Sorteio puts every selected Jogador in exactly one Time", { tag:
   expect(new Set(members).size).toBe(selected);
 });
 
-test("a Jogador moves to another Time with the select beside their name, no dragging", { tag: "@mobile" }, async ({ page }) => {
-  const { result } = await sortearRapido(page);
-  const time1 = result.getByRole("region", { name: "Time 1", exact: true });
-  const time2 = result.getByRole("region", { name: "Time 2", exact: true });
-  const antes1 = await nomes(time1);
-  const antes2 = await nomes(time2);
-  const quem = antes1[0];
+test(
+  "a Jogador moves to another Time with the select beside their name, no dragging",
+  { tag: "@mobile" },
+  async ({ page }) => {
+    const { result } = await sortearRapido(page);
+    const time1 = result.getByRole("region", { name: "Time 1", exact: true });
+    const time2 = result.getByRole("region", { name: "Time 2", exact: true });
+    const antes1 = await nomes(time1);
+    const antes2 = await nomes(time2);
+    const quem = antes1[0];
 
-  // As someone using it would: on the select (selectOption alone doesn't focus it).
-  const mover = time1.getByRole("combobox", { name: `Mover ${quem}`, exact: true });
-  await mover.focus();
-  await mover.selectOption({ label: "→ Time 2" });
+    // As someone using it would: on the select (selectOption alone doesn't focus it).
+    const mover = time1.getByRole("combobox", { name: `Mover ${quem}`, exact: true });
+    await mover.focus();
+    await mover.selectOption({ label: "→ Time 2" });
 
-  // Now listed in Time 2, with that Time selected.
-  await expect(time2.getByRole("combobox", { name: `Mover ${quem}`, exact: true })).toHaveValue("1");
-  // The keyboard focus follows them to their new row (#88).
-  await expect(time2.getByRole("combobox", { name: `Mover ${quem}`, exact: true })).toBeFocused();
-  expect(await nomes(time1)).toHaveLength(antes1.length - 1);
-  expect((await nomes(time2)).sort()).toEqual([...antes2, quem].sort());
+    // Now listed in Time 2, with that Time selected.
+    await expect(time2.getByRole("combobox", { name: `Mover ${quem}`, exact: true })).toHaveValue("1");
+    // The keyboard focus follows them to their new row (#88).
+    await expect(time2.getByRole("combobox", { name: `Mover ${quem}`, exact: true })).toBeFocused();
+    expect(await nomes(time1)).toHaveLength(antes1.length - 1);
+    expect((await nomes(time2)).sort()).toEqual([...antes2, quem].sort());
 
-  // Focus somewhere else is left alone: only lost focus comes back.
-  const outro = (await nomes(time1))[0];
-  const baixar = result.getByRole("button", { name: "Baixar PNG" });
-  await baixar.focus();
-  await time1.getByRole("combobox", { name: `Mover ${outro}`, exact: true }).selectOption({ label: "→ Time 2" });
-  await expect(time2.getByRole("combobox", { name: `Mover ${outro}`, exact: true })).toHaveValue("1");
-  await expect(baixar).toBeFocused();
-});
+    // Focus somewhere else is left alone: only lost focus comes back.
+    const outro = (await nomes(time1))[0];
+    const baixar = result.getByRole("button", { name: "Baixar PNG" });
+    await baixar.focus();
+    await time1.getByRole("combobox", { name: `Mover ${outro}`, exact: true }).selectOption({ label: "→ Time 2" });
+    await expect(time2.getByRole("combobox", { name: `Mover ${outro}`, exact: true })).toHaveValue("1");
+    await expect(baixar).toBeFocused();
+  },
+);

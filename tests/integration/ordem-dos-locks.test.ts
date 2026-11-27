@@ -29,7 +29,9 @@ let db: pg.Client;
 let segura: number;
 
 beforeAll(async () => {
-  [dono, admin, membro, deFora] = await Promise.all(["dono", "admin", "membro", "fora"].map((l) => newUser(`locks-${l}`)));
+  [dono, admin, membro, deFora] = await Promise.all(
+    ["dono", "admin", "membro", "fora"].map((l) => newUser(`locks-${l}`)),
+  );
   db = await conexaoDireta();
   segura = await pidDe(db);
 });
@@ -63,7 +65,12 @@ async function fut() {
   await service().from("players").update({ conta_id: membro.id }).eq("id", jogador!.id).throwOnError();
   const { data: partida } = await dono.client
     .from("partidas")
-    .insert({ grupo_id: grupo!.id, inicio: new Date(Date.now() + 86_400_000).toISOString(), local: "Quadra", vagas: 10 })
+    .insert({
+      grupo_id: grupo!.id,
+      inicio: new Date(Date.now() + 86_400_000).toISOString(),
+      local: "Quadra",
+      vagas: 10,
+    })
     .select("id")
     .single()
     .throwOnError();
@@ -95,7 +102,12 @@ describe("someone outside the fut never queues for its locks (#86)", () => {
     const chamadas = {
       responder_presenca: deFora.client.rpc("responder_presenca", { partida, jogador, vou: true }),
       salvar_sorteio: deFora.client.rpc("salvar_sorteio", { partida, times: [[jogador], []] }),
-      mover_no_sorteio: deFora.client.rpc("mover_no_sorteio", { partida, jogador, para_time: 1, sorteado_em: new Date().toISOString() }),
+      mover_no_sorteio: deFora.client.rpc("mover_no_sorteio", {
+        partida,
+        jogador,
+        para_time: 1,
+        sorteado_em: new Date().toISOString(),
+      }),
       publicar_sorteio: deFora.client.rpc("publicar_sorteio", { partida }),
     };
     for (const [nome, chamada] of Object.entries(chamadas)) {

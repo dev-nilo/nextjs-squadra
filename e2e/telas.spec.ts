@@ -57,22 +57,30 @@ test("a form in a modal keeps its buttons reachable on a short screen", { tag: "
   await expect(criar).toBeInViewport({ ratio: 1 });
 });
 
-test("fields are at least 16px under a finger, so iOS doesn't zoom in", { tag: "@telas" }, async ({ page, isMobile }) => {
-  test.skip(!isMobile, "a mouse gets the 14px fields");
-  await signIn(page, DEV_USER);
-  await abrirAba(page, "Elenco");
-  const busca = page.getByPlaceholder(/Buscar jogador/);
-  expect(await busca.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
-});
+test(
+  "fields are at least 16px under a finger, so iOS doesn't zoom in",
+  { tag: "@telas" },
+  async ({ page, isMobile }) => {
+    test.skip(!isMobile, "a mouse gets the 14px fields");
+    await signIn(page, DEV_USER);
+    await abrirAba(page, "Elenco");
+    const busca = page.getByPlaceholder(/Buscar jogador/);
+    expect(await busca.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+  },
+);
 
 test("on a fut's pages the phone's status bar takes the header's color", { tag: "@telas" }, async ({ page }) => {
   await signIn(page, DEV_USER);
   await abrirAba(page, "Elenco");
-  const tema = (esquema: string) => page.locator(`meta[name="theme-color"][media="(prefers-color-scheme: ${esquema})"]`);
+  const tema = (esquema: string) =>
+    page.locator(`meta[name="theme-color"][media="(prefers-color-scheme: ${esquema})"]`);
   await expect(tema("light")).toHaveAttribute("content", "#FFFFFF");
   await expect(tema("dark")).toHaveAttribute("content", "#1B2A4C");
   // The same color the header is painted with (content1 at 95%, over the canvas).
-  const fundo = await page.locator("header").first().evaluate((el) => getComputedStyle(el).backgroundColor);
+  const fundo = await page
+    .locator("header")
+    .first()
+    .evaluate((el) => getComputedStyle(el).backgroundColor);
   expect(fundo).toMatch(/^rgba?\(255, 255, 255/);
 });
 
@@ -85,7 +93,9 @@ test("on a phone a modal is a sheet at the bottom, from edge to edge", { tag: "@
   const caixa = page.locator("dialog[open] > form");
   await expect(caixa).toBeVisible();
   // Once it has slid up.
-  await expect.poll(async () => Math.round((await caixa.boundingBox())!.y + (await caixa.boundingBox())!.height)).toBe(tela.height);
+  await expect
+    .poll(async () => Math.round((await caixa.boundingBox())!.y + (await caixa.boundingBox())!.height))
+    .toBe(tela.height);
   const { x, width } = (await caixa.boundingBox())!;
   expect(x).toBe(0);
   expect(width).toBe(tela.width);
@@ -104,13 +114,22 @@ test.describe("the narrowest phones (280px)", () => {
     await expect(carta).toHaveAttribute("aria-expanded", "true");
     const notas = carta.getByLabel("Atributos do jogador").last();
     await expect(notas).toBeVisible();
-    const tamanho = await notas.locator("dd").first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+    const tamanho = await notas
+      .locator("dd")
+      .first()
+      .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
     expect(tamanho).toBeGreaterThanOrEqual(11);
   });
 
   test("nothing runs past the screen's edge on any of the fut's pages", async ({ page }) => {
     await signIn(page, DEV_USER);
-    for (const caminho of ["/g/fut-do-dev", "/g/fut-do-dev/partidas", "/g/fut-do-dev/elenco", "/g/fut-do-dev/voce", "/g/fut-do-dev/pessoas"]) {
+    for (const caminho of [
+      "/g/fut-do-dev",
+      "/g/fut-do-dev/partidas",
+      "/g/fut-do-dev/elenco",
+      "/g/fut-do-dev/voce",
+      "/g/fut-do-dev/pessoas",
+    ]) {
       await page.goto(caminho);
       await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
       // html clips horizontal overflow, so look for any element past the edge instead.
@@ -143,12 +162,18 @@ test.describe("a tablet standing up (820px)", () => {
   });
 });
 
-test("on a phone lying down the frame shrinks: a 48px header and a tab bar of icons", { tag: "@telas" }, async ({ page }) => {
-  const tela = page.viewportSize()!;
-  test.skip(tela.height > 500, "only on a short screen");
-  await signIn(page, DEV_USER);
-  await abrirAba(page, "Elenco");
-  expect((await page.locator("header > div").first().boundingBox())!.height).toBe(48);
-  // The tab names stay for screen readers.
-  await expect(page.getByRole("navigation", { name: "Seções do fut" }).getByRole("link", { name: "Elenco", exact: true })).toHaveCount(1);
-});
+test(
+  "on a phone lying down the frame shrinks: a 48px header and a tab bar of icons",
+  { tag: "@telas" },
+  async ({ page }) => {
+    const tela = page.viewportSize()!;
+    test.skip(tela.height > 500, "only on a short screen");
+    await signIn(page, DEV_USER);
+    await abrirAba(page, "Elenco");
+    expect((await page.locator("header > div").first().boundingBox())!.height).toBe(48);
+    // The tab names stay for screen readers.
+    await expect(
+      page.getByRole("navigation", { name: "Seções do fut" }).getByRole("link", { name: "Elenco", exact: true }),
+    ).toHaveCount(1);
+  },
+);

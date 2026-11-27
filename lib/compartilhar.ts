@@ -18,7 +18,8 @@ export async function compartilharTexto(texto: string): Promise<ComoCompartilhou
       await navigator.share({ text: texto });
       return "compartilhou";
     } catch (erro) {
-      if (erro instanceof DOMException && (erro.name === "AbortError" || erro.name === "InvalidStateError")) return "desistiu";
+      if (erro instanceof DOMException && (erro.name === "AbortError" || erro.name === "InvalidStateError"))
+        return "desistiu";
     }
   }
   try {

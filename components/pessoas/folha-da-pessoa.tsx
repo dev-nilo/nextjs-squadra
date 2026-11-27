@@ -11,14 +11,27 @@ import type { Participacao } from "@/lib/grupo";
 import { nomeDaPessoa, O_QUE_O_PAPEL_FAZ, type Pessoa } from "@/lib/pessoas";
 import { ConfirmarComNome } from "./confirmar-com-nome";
 
-const desde = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "America/Sao_Paulo" });
+const desde = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  timeZone: "America/Sao_Paulo",
+});
 
 /**
  * The dono's sheet for one person: their papel (admin or membro, each with
  * what it allows), handing the fut over to an admin, removing them. Opened
  * only by the dono, on anyone but themselves.
  */
-export function FolhaDaPessoa({ grupo, pessoa, onClose }: { grupo: Participacao; pessoa: Pessoa; onClose: () => void }) {
+export function FolhaDaPessoa({
+  grupo,
+  pessoa,
+  onClose,
+}: {
+  grupo: Participacao;
+  pessoa: Pessoa;
+  onClose: () => void;
+}) {
   const [erro, setErro] = useState<string | null>(null);
   const [pendente, startTransition] = useTransition();
   const [passando, setPassando] = useState(false);
@@ -63,7 +76,11 @@ export function FolhaDaPessoa({ grupo, pessoa, onClose }: { grupo: Participacao;
           {/* An email as the name (no Jogador yet) has no spaces to break at. */}
           <h2 className="text-title [overflow-wrap:anywhere]">{nome}</h2>
           <p className="text-muted [overflow-wrap:anywhere]">
-            {pessoa.jogador_nome && pessoa.email ? `${pessoa.email}, ` : !pessoa.jogador_nome ? "Sem jogador no elenco, " : ""}
+            {pessoa.jogador_nome && pessoa.email
+              ? `${pessoa.email}, `
+              : !pessoa.jogador_nome
+                ? "Sem jogador no elenco, "
+                : ""}
             no fut desde {desde.format(new Date(pessoa.desde))}
           </p>
         </ModalHeader>
@@ -122,8 +139,8 @@ export function FolhaDaPessoa({ grupo, pessoa, onClose }: { grupo: Participacao;
           titulo={`Passar o fut pra ${nome}?`}
           explicacao={
             <>
-              {nome} vira o dono do <span className="font-semibold text-foreground">{grupo.nome}</span> e você vira admin: continua
-              organizando, mas não mexe mais em papéis nem no fut. Só {nome} consegue desfazer.
+              {nome} vira o dono do <span className="font-semibold text-foreground">{grupo.nome}</span> e você vira
+              admin: continua organizando, mas não mexe mais em papéis nem no fut. Só {nome} consegue desfazer.
             </>
           }
           nome={grupo.nome}
