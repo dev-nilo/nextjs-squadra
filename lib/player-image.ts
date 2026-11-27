@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export const PLAYER_IMAGES_BUCKET = "player-images";
 
 function dataUrlToBlob(dataUrl: string): Blob {
-  const [header, base64] = dataUrl.split(",");
+  const [header = "", base64 = ""] = dataUrl.split(",");
   const mime = /data:(.*?);base64/.exec(header)?.[1] ?? "image/jpeg";
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);

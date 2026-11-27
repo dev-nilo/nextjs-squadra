@@ -69,7 +69,7 @@ export function cabeNoSorteio(confirmados: number, numTimes: number): boolean {
 }
 
 /** Why the database refused a Sorteio, from the functions' HINT. */
-export const MOTIVO_DO_SORTEIO: Record<string, string> = {
+export const MOTIVO_DO_SORTEIO = {
   "nao-encontrada": "Partida não encontrada.",
   cancelada: "Essa partida foi cancelada.",
   publicado: "Os times já foram publicados.",
@@ -79,4 +79,4 @@ export const MOTIVO_DO_SORTEIO: Record<string, string> = {
   "sorteio-mudou": "Os times foram sorteados de novo. Confira e mova outra vez.",
   "fora-do-sorteio": "Esse jogador não está no sorteio.",
   "time-vazio": "Um time não pode ficar vazio.",
-};
+} satisfies Record<string, string>;

@@ -34,13 +34,14 @@ export type ParticipacaoDesde = Participacao & { desde: string };
  * joined.
  */
 export function grupoAtual(participacoes: readonly ParticipacaoDesde[]): Participacao | null {
-  if (participacoes.length === 0) return null;
   const ordenadas = [...participacoes].sort((a, b) => {
     const donoA = a.papel === "dono" ? 0 : 1;
     const donoB = b.papel === "dono" ? 0 : 1;
     return donoA - donoB || a.desde.localeCompare(b.desde);
   });
-  const { desde: _desde, ...grupo } = ordenadas[0];
+  const [primeira] = ordenadas;
+  if (!primeira) return null;
+  const { desde: _desde, ...grupo } = primeira;
   return grupo;
 }
 
@@ -87,5 +88,6 @@ export function grupoParaAbrir(
 /** The Grupo's slug in a pathname like `/g/fut-de-quinta`, or null. */
 export function slugDoCaminho(pathname: string | null): string | null {
   const match = pathname?.match(/^\/g\/([^/?#]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
+  const slug = match?.[1];
+  return slug ? decodeURIComponent(slug) : null;
 }

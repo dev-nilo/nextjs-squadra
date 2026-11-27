@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { addJogador, admin as service, newUser, removeUsers, type TestUser } from "./support";
+import { addJogador, em, admin as service, newUser, removeUsers, type TestUser } from "./support";
 
 // The Overall is the database's: the rounded mean of the 8 attributes,
 // computed by the trigger players_ovr on every insert and update.
@@ -78,7 +78,7 @@ describe("the Overall", () => {
       })
       .throwOnError();
 
-    const a = (sorteio.times as { jogadores: { id: string; rating: number }[] }[])[0].jogadores.find(
+    const a = em(sorteio.times as { jogadores: { id: string; rating: number }[] }[], 0).jogadores.find(
       (j) => j.id === ids[0],
     );
     expect(a?.rating).toBe(60);

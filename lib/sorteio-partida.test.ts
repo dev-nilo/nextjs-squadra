@@ -39,7 +39,7 @@ describe("timesDoSorteio / atribuicao", () => {
       ["Time 1", 70],
       ["Time 2", 71],
     ]);
-    expect(times[0].members[0]).toMatchObject({ id: "a", rating: 80 });
+    expect(times[0]?.members[0]).toMatchObject({ id: "a", rating: 80 });
   });
 
   it("turns Times into what salvar_sorteio takes: one array of Jogador ids per Time", () => {

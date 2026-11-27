@@ -77,7 +77,7 @@ describe("the error table", () => {
       }),
     ).toBe(opcoes.generica);
     expect(Sentry.captureException).toHaveBeenCalledTimes(3);
-    expect(vi.mocked(Sentry.captureException).mock.calls[0][1]).toEqual({ tags: { action: "teste" } });
+    expect(vi.mocked(Sentry.captureException).mock.calls[0]?.[1]).toEqual({ tags: { action: "teste" } });
   });
 });
 

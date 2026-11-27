@@ -8,12 +8,12 @@ export const meuJogadorSchema = z.object({
 });
 
 /** Why the database refused a link, from the function's HINT. */
-export const MOTIVO_DO_VINCULO: Record<string, string> = {
+export const MOTIVO_DO_VINCULO = {
   "nao-membro": "Esse jogador não é do seu fut.",
   "ja-vinculado": "Esse jogador já é de outra pessoa. Fala com quem organiza o fut.",
   "ja-tem-jogador": "Você já tem um jogador nesse fut.",
   "sem-permissao": "Só quem organiza o fut, ou a própria pessoa, desfaz o vínculo.",
-};
+} satisfies Record<string, string>;
 
 /** The Jogador linked to this account in the Elenco, if any. */
 export function meuJogador(players: readonly Player[], userId: string | undefined): Player | null {

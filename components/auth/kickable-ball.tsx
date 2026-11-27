@@ -134,6 +134,7 @@ export function KickableBall() {
     reduced.addEventListener("change", applyMotion);
 
     const ro = new ResizeObserver(([entry]) => {
+      if (!entry) return;
       const s = state.current;
       s.w = entry.contentRect.width;
       s.h = entry.contentRect.height;

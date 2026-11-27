@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { addJogador, addMembro, admin as service, newUser, removeUsers, type TestUser } from "./support";
+import { addJogador, em, addMembro, admin as service, newUser, removeUsers, type TestUser } from "./support";
 
 let users: TestUser[] = [];
 const user = async (label: string) => {
@@ -182,15 +182,19 @@ describe("vou / não vou", () => {
     const id = await partida(dono, grupoId, 10);
 
     await responder(ze.u, id, ze.jogadorId, true);
-    const antes = (await lista(id))[0].pediu_vaga_em;
+    const antes = em(await lista(id), 0).pediu_vaga_em;
     await responder(ze.u, id, ze.jogadorId, true);
-    expect((await lista(id))[0].pediu_vaga_em).toBe(antes);
+    expect(em(await lista(id), 0).pediu_vaga_em).toBe(antes);
   });
 
   it("goes to the lista de espera once the vagas are taken", async () => {
     const dono = await user("dono");
     const grupoId = await grupoCom(dono);
-    const [a, b, c] = await Promise.all(["a", "b", "c"].map((n) => membroComJogador(grupoId, n)));
+    const [a, b, c] = await Promise.all([
+      membroComJogador(grupoId, "a"),
+      membroComJogador(grupoId, "b"),
+      membroComJogador(grupoId, "c"),
+    ]);
     const id = await partida(dono, grupoId, 2);
 
     for (const m of [a, b, c]) await responder(m.u, id, m.jogadorId, true);
@@ -206,7 +210,12 @@ describe("dropping out", () => {
   it("hands the vaga to the first in the lista de espera, in the same call", async () => {
     const dono = await user("dono");
     const grupoId = await grupoCom(dono);
-    const [a, b, c, d] = await Promise.all(["a", "b", "c", "d"].map((n) => membroComJogador(grupoId, n)));
+    const [a, b, c, d] = await Promise.all([
+      membroComJogador(grupoId, "a"),
+      membroComJogador(grupoId, "b"),
+      membroComJogador(grupoId, "c"),
+      membroComJogador(grupoId, "d"),
+    ]);
     const id = await partida(dono, grupoId, 2);
     for (const m of [a, b, c, d]) await responder(m.u, id, m.jogadorId, true);
 
@@ -227,7 +236,11 @@ describe("dropping out", () => {
   it("leaving the lista de espera promotes nobody", async () => {
     const dono = await user("dono");
     const grupoId = await grupoCom(dono);
-    const [a, b, c] = await Promise.all(["a", "b", "c"].map((n) => membroComJogador(grupoId, n)));
+    const [a, b, c] = await Promise.all([
+      membroComJogador(grupoId, "a"),
+      membroComJogador(grupoId, "b"),
+      membroComJogador(grupoId, "c"),
+    ]);
     const id = await partida(dono, grupoId, 2);
     for (const m of [a, b, c]) await responder(m.u, id, m.jogadorId, true);
 
@@ -238,7 +251,12 @@ describe("dropping out", () => {
   it("coming back after não vou goes to the end of the line", async () => {
     const dono = await user("dono");
     const grupoId = await grupoCom(dono);
-    const [a, b, c, d] = await Promise.all(["a", "b", "c", "d"].map((n) => membroComJogador(grupoId, n)));
+    const [a, b, c, d] = await Promise.all([
+      membroComJogador(grupoId, "a"),
+      membroComJogador(grupoId, "b"),
+      membroComJogador(grupoId, "c"),
+      membroComJogador(grupoId, "d"),
+    ]);
     const id = await partida(dono, grupoId, 2);
     for (const m of [a, b, c, d]) await responder(m.u, id, m.jogadorId, true);
 
@@ -254,7 +272,12 @@ describe("dropping out", () => {
   it("deleting a confirmed Jogador hands their vaga to the first in line, not to whoever answers next", async () => {
     const dono = await user("dono");
     const grupoId = await grupoCom(dono);
-    const [a, b, c, d] = await Promise.all(["a", "b", "c", "d"].map((n) => membroComJogador(grupoId, n)));
+    const [a, b, c, d] = await Promise.all([
+      membroComJogador(grupoId, "a"),
+      membroComJogador(grupoId, "b"),
+      membroComJogador(grupoId, "c"),
+      membroComJogador(grupoId, "d"),
+    ]);
     const id = await partida(dono, grupoId, 2);
     for (const m of [a, b, c]) await responder(m.u, id, m.jogadorId, true);
 
@@ -269,7 +292,11 @@ describe("dropping out", () => {
   it("once the Partida started, deleting a confirmed Jogador promotes nobody: the list is what happened", async () => {
     const dono = await user("dono");
     const grupoId = await grupoCom(dono);
-    const [a, b, c] = await Promise.all(["a", "b", "c"].map((n) => membroComJogador(grupoId, n)));
+    const [a, b, c] = await Promise.all([
+      membroComJogador(grupoId, "a"),
+      membroComJogador(grupoId, "b"),
+      membroComJogador(grupoId, "c"),
+    ]);
     const id = await partida(dono, grupoId, 2);
     for (const m of [a, b, c]) await responder(m.u, id, m.jogadorId, true);
     await service()
@@ -287,7 +314,12 @@ describe("changing the vagas", () => {
   it("more vagas promote the lista de espera in order", async () => {
     const dono = await user("dono");
     const grupoId = await grupoCom(dono);
-    const [a, b, c, d] = await Promise.all(["a", "b", "c", "d"].map((n) => membroComJogador(grupoId, n)));
+    const [a, b, c, d] = await Promise.all([
+      membroComJogador(grupoId, "a"),
+      membroComJogador(grupoId, "b"),
+      membroComJogador(grupoId, "c"),
+      membroComJogador(grupoId, "d"),
+    ]);
     const id = await partida(dono, grupoId, 2);
     for (const m of [a, b, c, d]) await responder(m.u, id, m.jogadorId, true);
 
@@ -300,7 +332,11 @@ describe("changing the vagas", () => {
   it("refuses fewer vagas than the Jogadores already confirmed", async () => {
     const dono = await user("dono");
     const grupoId = await grupoCom(dono);
-    const [a, b, c] = await Promise.all(["a", "b", "c"].map((n) => membroComJogador(grupoId, n)));
+    const [a, b, c] = await Promise.all([
+      membroComJogador(grupoId, "a"),
+      membroComJogador(grupoId, "b"),
+      membroComJogador(grupoId, "c"),
+    ]);
     const id = await partida(dono, grupoId, 4);
     for (const m of [a, b, c]) await responder(m.u, id, m.jogadorId, true);
 
@@ -314,7 +350,11 @@ describe("cancelling is final (#87)", () => {
   it("a cancelled Partida can't be reopened or edited, even through the API", async () => {
     const dono = await user("dono");
     const grupoId = await grupoCom(dono);
-    const [a, b, c] = await Promise.all(["a", "b", "c"].map((n) => membroComJogador(grupoId, n)));
+    const [a, b, c] = await Promise.all([
+      membroComJogador(grupoId, "a"),
+      membroComJogador(grupoId, "b"),
+      membroComJogador(grupoId, "c"),
+    ]);
     const id = await partida(dono, grupoId, 2);
     for (const m of [a, b, c]) await responder(m.u, id, m.jogadorId, true);
     const cancelada = new Date().toISOString();
@@ -380,11 +420,11 @@ describe("the last vaga, under concurrency", () => {
     // asked first, and the line has no ties.
     const horarios = depois.map((p) => p.pediu_vaga_em!);
     expect(new Set(horarios).size).toBe(N);
-    expect(confirmados[0].pediu_vaga_em! < espera[0].pediu_vaga_em!).toBe(true);
+    expect(em(confirmados, 0).pediu_vaga_em! < em(espera, 0).pediu_vaga_em!).toBe(true);
 
     // And the line moves in that order: the first one out promotes espera[0].
     await responder(primeiro.u, id, primeiro.jogadorId, false);
-    expect(await situacaoDe(id, espera[0].jogador_id)).toBe("confirmado");
-    expect(await situacaoDe(id, espera[1].jogador_id)).toBe("espera");
+    expect(await situacaoDe(id, em(espera, 0).jogador_id)).toBe("confirmado");
+    expect(await situacaoDe(id, em(espera, 1).jogador_id)).toBe("espera");
   });
 });

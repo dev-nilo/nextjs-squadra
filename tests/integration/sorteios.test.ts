@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { addJogador, addMembro, admin as service, newUser, removeUsers, type TestUser } from "./support";
+import { addJogador, em, addMembro, admin as service, newUser, removeUsers, type TestUser } from "./support";
 
 let users: TestUser[] = [];
 const user = async (label: string) => {
@@ -62,7 +62,7 @@ describe("saving a draw", () => {
     expect(error).toBeNull();
     const times = data.times as Snapshot;
     expect(times.map((t) => t.nome)).toEqual(["Time 1", "Time 2"]);
-    expect(times[0].jogadores.map((j) => [j.name, j.rating])).toEqual([
+    expect(em(times, 0).jogadores.map((j) => [j.name, j.rating])).toEqual([
       ["J0", 60],
       ["J3", 63],
     ]);
@@ -248,11 +248,11 @@ describe("moving a Jogador (mover_no_sorteio)", () => {
     ]);
     await dono.client.from("players").update(atributos(99)).eq("id", ids[0]).throwOnError();
 
-    const { error } = await mover(dono, partidaId, ids[0], 1, sorteio.sorteado_em);
+    const { error } = await mover(dono, partidaId, em(ids, 0), 1, sorteio.sorteado_em);
     expect(error).toBeNull();
     const times = await lido(partidaId);
     expect(idsPorTime(times)).toEqual([[ids[1]], [ids[2], ids[3], ids[0]]]);
-    expect(times[1].jogadores.find((j) => j.id === ids[0])).toMatchObject({ name: "J0", rating: 60 });
+    expect(em(times, 1).jogadores.find((j) => j.id === em(ids, 0))).toMatchObject({ name: "J0", rating: 60 });
   });
 
   it("simultaneous moves by different admins all land: none is lost", async () => {
@@ -267,12 +267,12 @@ describe("moving a Jogador (mover_no_sorteio)", () => {
 
     // Each admin moves a different Jogador out of Time 1, from their own
     // client, so the calls reach Postgres as overlapping transactions.
-    const movimentos = await Promise.all(admins.map((a, i) => mover(a, partidaId, ids[i], 1, sorteio.sorteado_em)));
+    const movimentos = await Promise.all(admins.map((a, i) => mover(a, partidaId, em(ids, i), 1, sorteio.sorteado_em)));
     for (const m of movimentos) expect(m.error).toBeNull();
 
     const [time1, time2] = idsPorTime(await lido(partidaId));
     expect(time1).toEqual([ids[3]]);
-    expect([...time2].sort()).toEqual([...ids.slice(4), ids[0], ids[1], ids[2]].sort());
+    expect([...(time2 ?? [])].sort()).toEqual([...ids.slice(4), ids[0], ids[1], ids[2]].sort());
   });
 
   it("refuses a move made on a draw that was redone since", async () => {
@@ -287,20 +287,20 @@ describe("moving a Jogador (mover_no_sorteio)", () => {
     ]);
     expect(novo.sorteado_em).not.toBe(antigo.sorteado_em);
 
-    expect((await mover(dono, partidaId, ids[0], 1, antigo.sorteado_em)).error?.hint).toBe("sorteio-mudou");
+    expect((await mover(dono, partidaId, em(ids, 0), 1, antigo.sorteado_em)).error?.hint).toBe("sorteio-mudou");
     expect(idsPorTime(await lido(partidaId))).toEqual([
       [ids[0], ids[2]],
       [ids[1], ids[3]],
     ]);
-    expect((await mover(dono, partidaId, ids[0], 1, novo.sorteado_em)).error).toBeNull();
+    expect((await mover(dono, partidaId, em(ids, 0), 1, novo.sorteado_em)).error).toBeNull();
   });
 
   it("never leaves a Time empty, and a move to the same Time changes nothing", async () => {
     const { dono, partidaId, ids } = await partidaComConfirmados(4, 10);
     const { data: sorteio } = await salvar(dono, partidaId, [[ids[0]], [ids[1], ids[2], ids[3]]]);
 
-    expect((await mover(dono, partidaId, ids[0], 1, sorteio.sorteado_em)).error?.hint).toBe("time-vazio");
-    expect((await mover(dono, partidaId, ids[1], 1, sorteio.sorteado_em)).error).toBeNull();
+    expect((await mover(dono, partidaId, em(ids, 0), 1, sorteio.sorteado_em)).error?.hint).toBe("time-vazio");
+    expect((await mover(dono, partidaId, em(ids, 1), 1, sorteio.sorteado_em)).error).toBeNull();
     expect(idsPorTime(await lido(partidaId))).toEqual([[ids[0]], [ids[1], ids[2], ids[3]]]);
   });
 
@@ -312,18 +312,18 @@ describe("moving a Jogador (mover_no_sorteio)", () => {
       [ids[0], ids[1]],
       [ids[2], ids[3], ids[4]],
     ]);
-    const em = sorteio.sorteado_em as string;
+    const sorteadoEm = sorteio.sorteado_em as string;
 
-    expect((await mover(dono, partidaId, ids[0], 2, em)).error?.hint).toBe("times-invalidos");
-    expect((await mover(dono, partidaId, ids[0], -1, em)).error?.hint).toBe("times-invalidos");
-    expect((await mover(dono, partidaId, crypto.randomUUID(), 1, em)).error?.hint).toBe("fora-do-sorteio");
-    expect((await mover(membro, partidaId, ids[0], 1, em)).error?.hint).toBe("sem-permissao");
+    expect((await mover(dono, partidaId, em(ids, 0), 2, sorteadoEm)).error?.hint).toBe("times-invalidos");
+    expect((await mover(dono, partidaId, em(ids, 0), -1, sorteadoEm)).error?.hint).toBe("times-invalidos");
+    expect((await mover(dono, partidaId, crypto.randomUUID(), 1, sorteadoEm)).error?.hint).toBe("fora-do-sorteio");
+    expect((await mover(membro, partidaId, em(ids, 0), 1, sorteadoEm)).error?.hint).toBe("sem-permissao");
 
     await dono.client.rpc("responder_presenca", { partida: partidaId, jogador: ids[4], vou: false }).throwOnError();
-    expect((await mover(dono, partidaId, ids[0], 1, em)).error?.hint).toBe("lista-mudou");
+    expect((await mover(dono, partidaId, em(ids, 0), 1, sorteadoEm)).error?.hint).toBe("lista-mudou");
     await dono.client.rpc("responder_presenca", { partida: partidaId, jogador: ids[4], vou: true }).throwOnError();
 
     expect((await dono.client.rpc("publicar_sorteio", { partida: partidaId })).error).toBeNull();
-    expect((await mover(dono, partidaId, ids[0], 1, em)).error?.hint).toBe("publicado");
+    expect((await mover(dono, partidaId, em(ids, 0), 1, sorteadoEm)).error?.hint).toBe("publicado");
   });
 });

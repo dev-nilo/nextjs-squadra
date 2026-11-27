@@ -125,9 +125,10 @@ export function parseCsvRows(text: string): string[][] {
   if (!normalized) return [];
 
   const lines = normalized.split("\n").filter((line) => line.trim().length > 0);
-  if (lines.length === 0) return [];
+  const [primeira] = lines;
+  if (primeira === undefined) return [];
 
-  const delimiter = detectDelimiter(lines[0]);
+  const delimiter = detectDelimiter(primeira);
   return lines.map((line) => splitCsvLine(line, delimiter).map((c) => c.trim()));
 }
 
@@ -141,11 +142,7 @@ function mapHeaders(rawHeaders: string[]): (string | null)[] {
 
 /** Find the header row (e.g. skip title lines like "FUT - ATRIBUTOS…"). */
 function findHeaderRowIndex(rows: string[][]): number {
-  const limit = Math.min(rows.length, 15);
-  for (let i = 0; i < limit; i++) {
-    if (mapHeaders(rows[i]).includes("name")) return i;
-  }
-  return -1;
+  return rows.slice(0, 15).findIndex((row) => mapHeaders(row).includes("name"));
 }
 
 function parsePosition(value: unknown): PlayerPosition {
@@ -211,7 +208,8 @@ export function importPlayersFromCsv(csvText: string): CsvImportResult {
   }
 
   const headerIndex = findHeaderRowIndex(rows);
-  if (headerIndex < 0) {
+  const headerRow = rows[headerIndex];
+  if (!headerRow) {
     return {
       players: [],
       skippedRows: 0,
@@ -219,18 +217,17 @@ export function importPlayersFromCsv(csvText: string): CsvImportResult {
     };
   }
 
-  const fields = mapHeaders(rows[headerIndex]);
+  const fields = mapHeaders(headerRow);
   const players: Player[] = [];
   let skippedRows = 0;
   const errors: string[] = [];
 
-  for (let i = headerIndex + 1; i < rows.length; i++) {
-    const cells = rows[i];
+  for (const [k, cells] of rows.slice(headerIndex + 1).entries()) {
+    const i = headerIndex + 1 + k;
     const mapped: Record<string, string> = {};
     let hasAnyValue = false;
 
-    for (let c = 0; c < fields.length; c++) {
-      const field = fields[c];
+    for (const [c, field] of fields.entries()) {
       const raw = cells[c] ?? "";
       if (raw !== "") hasAnyValue = true;
       if (!field) continue;
