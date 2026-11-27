@@ -1,4 +1,5 @@
 import type { EmailOtpType, SupabaseClient, User } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/tipos-do-banco";
 
 export type SupabaseEnv = {
   url?: string | null;
@@ -108,8 +109,8 @@ export function isSupabaseConfigured(env: SupabaseEnv = readSupabaseEnv()): bool
   return Boolean(env.url && env.key);
 }
 
-export function toSessaoAuth(client: SupabaseClient): SessaoAuth {
-  return client.auth as unknown as SessaoAuth;
+export function toSessaoAuth(client: SupabaseClient<Database>): SessaoAuth {
+  return client.auth;
 }
 
 export function decodeAuthDescription(description: string | null | undefined): string {

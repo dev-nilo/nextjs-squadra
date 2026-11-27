@@ -1,6 +1,8 @@
 import { z } from "zod";
+import type { Enums } from "@/lib/supabase/tipos-do-banco";
 
-export type Papel = "dono" | "admin" | "membro";
+/** The papel_grupo enum in the database. */
+export type Papel = Enums<"papel_grupo">;
 
 export type Grupo = {
   id: string;

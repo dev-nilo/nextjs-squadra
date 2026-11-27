@@ -1,8 +1,9 @@
 import "server-only";
 import { cache } from "react";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/tipos-do-banco";
 import { createClient } from "@/lib/supabase/server";
-import type { Papel, Participacao, ParticipacaoDesde } from "@/lib/grupo";
+import type { Participacao, ParticipacaoDesde } from "@/lib/grupo";
 
 export type ContextoDoGrupo =
   | { status: "sem-sessao" }
@@ -43,26 +44,23 @@ export const carregarGrupo = cache(async function carregarGrupo(slug: string): P
  * from the browser.
  */
 export async function resolverGrupo(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   userId: string,
   slug: string,
 ): Promise<Participacao | null> {
-  const { data } = await supabase
+  const { data: linha } = await supabase
     .from("grupo_membros")
     .select("papel, grupos!inner(id, slug, nome)")
     .eq("user_id", userId)
     .eq("grupos.slug", slug)
     .maybeSingle();
 
-  const linha = data as { papel: Papel; grupos: { id: string; slug: string; nome: string } } | null;
   return linha?.grupos ? { ...linha.grupos, papel: linha.papel } : null;
 }
 
-type ClienteDoServidor = Awaited<ReturnType<typeof createClient>>;
-
 /** Every Grupo the user is a Membro of, with since when. Null when the query failed. */
 export async function carregarParticipacoes(
-  supabase: ClienteDoServidor,
+  supabase: SupabaseClient<Database>,
   userId: string,
 ): Promise<ParticipacaoDesde[] | null> {
   const { data, error } = await supabase
@@ -70,8 +68,7 @@ export async function carregarParticipacoes(
     .select("papel, created_at, grupos(id, slug, nome)")
     .eq("user_id", userId);
   if (error) return null;
-  type Linha = { papel: Papel; created_at: string; grupos: { id: string; slug: string; nome: string } | null };
-  return ((data ?? []) as unknown as Linha[]).flatMap((linha) =>
+  return (data ?? []).flatMap((linha) =>
     linha.grupos ? [{ ...linha.grupos, papel: linha.papel, desde: linha.created_at }] : [],
   );
 }

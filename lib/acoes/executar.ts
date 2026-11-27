@@ -1,6 +1,7 @@
 import "server-only";
 import * as Sentry from "@sentry/nextjs";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/tipos-do-banco";
 import { z } from "zod";
 import { slugSchema, type Participacao } from "@/lib/grupo";
 import { resolverGrupo } from "@/lib/grupo-server";
@@ -23,7 +24,7 @@ import { resolverGrupo } from "@/lib/grupo-server";
  */
 export type Resultado<T = null> = { ok: true; valor: T } | { ok: false; message: string; inesperado?: true };
 
-export type ContextoDaSessao = { supabase: SupabaseClient; user: User };
+export type ContextoDaSessao = { supabase: SupabaseClient<Database>; user: User };
 export type ContextoDoGrupo = ContextoDaSessao & { grupo: Participacao };
 
 export type Opcoes = {
@@ -85,7 +86,7 @@ export function exigirLinhas<T>(resposta: { data: T[] | null; error: ErroDoBanco
 
 /** An action for whoever is signed in, with no Grupo yet (creating one, accepting a Convite). */
 export async function comSessao<T>(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   opcoes: Opcoes,
   corpo: (ctx: ContextoDaSessao) => Promise<T>,
 ): Promise<Resultado<T>> {
@@ -106,7 +107,7 @@ export async function comSessao<T>(
  * papel allows the write stays with RLS and the database functions.
  */
 export async function noGrupo<T>(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   slug: unknown,
   opcoes: Opcoes,
   corpo: (ctx: ContextoDoGrupo) => Promise<T>,

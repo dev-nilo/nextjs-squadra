@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import type { Database } from "@/lib/supabase/tipos-do-banco";
 import { NextResponse, type NextRequest } from "next/server";
 import { COOKIE_FUTS_RECENTES, lembrarFut, slugDoCaminho } from "@/lib/grupo";
 
@@ -18,7 +19,7 @@ export async function proxy(request: NextRequest) {
   if (!url || !key) return NextResponse.next({ request });
 
   let response = NextResponse.next({ request });
-  const supabase = createServerClient(url, key, {
+  const supabase = createServerClient<Database>(url, key, {
     cookies: {
       getAll() {
         return request.cookies.getAll();

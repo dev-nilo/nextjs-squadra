@@ -1,4 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr";
+import type { Database } from "./tipos-do-banco";
 import { isSupabaseConfigured, readSupabaseEnv } from "@/lib/sessao";
 
 export function createClient() {
@@ -9,5 +10,5 @@ export function createClient() {
     );
   }
 
-  return createBrowserClient(env.url!, env.key!);
+  return createBrowserClient<Database>(env.url!, env.key!);
 }

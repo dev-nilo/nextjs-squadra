@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { MarcaOffline } from "@/components/fut/marca-offline";
 import { ElencoView } from "@/components/elenco/elenco-view";
 import { carregarGrupo } from "@/lib/grupo-server";
-import { COLUNAS_DO_JOGADOR, jogadorDaLinha, type LinhaDoJogador } from "@/lib/jogador";
+import { COLUNAS_DO_JOGADOR, jogadorDaLinha } from "@/lib/jogador";
 
 export const metadata: Metadata = { title: "Elenco · Squadra" };
 
@@ -25,7 +25,7 @@ export default async function ElencoPage({ params }: { params: Promise<{ slug: s
         // A new Grupo starts with a clean search, selection and draw.
         key={grupo.id}
         grupo={grupo}
-        jogadores={((linhas ?? []) as unknown as LinhaDoJogador[]).map(jogadorDaLinha)}
+        jogadores={(linhas ?? []).map(jogadorDaLinha)}
         userId={user.id}
       />
     </>

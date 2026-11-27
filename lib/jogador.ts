@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { Attributes, Player, PlayerPosition } from "@/types";
+import { POSITIONS } from "./constants";
 import { PLAYER_IMAGES_BUCKET } from "./player-image";
+import type { Tables } from "./supabase/tipos-do-banco";
 
 export const DEFAULT_ATTRIBUTES: Attributes = {
   velocidade: 60,
@@ -29,25 +31,37 @@ export const COLUNAS_DO_JOGADOR =
   "id, grupo_id, user_id, conta_id, name, position, nationality, image_url, ovr, versao, velocidade, resistencia, chute, posicionamento, defesa, drible, passe, fisico";
 
 /** A players row, as COLUNAS_DO_JOGADOR reads it. */
-export type LinhaDoJogador = Attributes & {
-  id: string;
-  grupo_id: string;
-  user_id: string | null;
-  conta_id: string | null;
-  name: string;
-  position: PlayerPosition;
-  nationality: string;
-  image_url: string | null;
-  ovr: number;
-  versao: number;
-};
+export type LinhaDoJogador = Pick<
+  Tables<"players">,
+  | "id"
+  | "grupo_id"
+  | "user_id"
+  | "conta_id"
+  | "name"
+  | "position"
+  | "nationality"
+  | "image_url"
+  | "ovr"
+  | "versao"
+  | keyof Attributes
+>;
+
+/**
+ * The column is text; players_posicao_conhecida keeps it to the four
+ * positions, so anything else is a schema change the app hasn't caught up with.
+ */
+function posicaoDaLinha(valor: string): PlayerPosition {
+  const posicao = POSITIONS.find((p) => p === valor);
+  if (!posicao) throw new Error(`Unknown position in players: ${valor}`);
+  return posicao;
+}
 
 /** A players row as the app's Jogador. The rating is the database's, never recomputed here. */
 export function jogadorDaLinha(linha: LinhaDoJogador): Player {
   return {
     id: linha.id,
     name: linha.name,
-    position: linha.position,
+    position: posicaoDaLinha(linha.position),
     nationality: linha.nationality,
     image: linha.image_url,
     attributes: {
