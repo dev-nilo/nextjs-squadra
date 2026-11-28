@@ -79,9 +79,9 @@ Named classes, defined in `@layer components` in `app/globals.css`. Use the clas
 |-------|--------|-----|
 | `.text-title` | `text-2xl font-bold tracking-tight text-foreground` | Page and modal titles (one per screen) |
 | `.text-section` | `text-lg font-semibold text-foreground` | Section headings inside a page/modal |
-| `.text-label` | `text-sm font-medium text-default-500` | A heading over a list or group ("Próximas", "Times", "Não vão"), in sentence case |
+| `.text-label` | `text-base font-semibold text-foreground` | A section's heading, over a list or group ("Quem vai", "Times", "Próximas", "Conta"), in sentence case. Ink, not grey: it's a heading, not helper text. A kicker over a title ("Próxima partida") is `text-sm font-medium text-default-500` instead. |
 | `.text-muted` | `text-sm text-default-500` | Subtitles, helper text, empty states |
-| `.text-numeral` | Bricolage at `wdth 75`, `opsz 96`, weight 800, tabular, tight | **Printed numerals**: OVR, "8 de 14", Time averages, the Sorteio spread. Combine with a size from the scale. |
+| `.text-numeral` | Bricolage at `wdth 75`, `opsz 96`, weight 800, tabular, tight | **Printed numerals**: OVR, "8 de 14" (the Partida's key number, `text-2xl`, with "vagas, faltam 6" small beside it), Time averages, the Sorteio spread. Combine with a size from the scale. |
 | `.text-display` | `text-2xl sm:text-4xl font-normal leading-tight tracking-tight` | **Only** the auth picture caption, in a single weight |
 
 Weights: body 400, labels and names in lists 500, section headings 600, titles 700, numerals 800. `font-black` is left only for the "Squadra" wordmark.
@@ -145,7 +145,7 @@ The **only exception** is the Jogador card (`PlayerCard`): its radii are in `cqw
   - **Docked controls**: the only thing docked above the tab bar is the Elenco's "Sortear rápido" counter bar while selecting. Every primary action goes at the top of its page ("Nova carta", "Nova partida" in the title row; Vou / Não vou in the Partida's card). No floating action button.
 - **The Partida** (`PartidaView`), built so a membro opens it, sees the question and answers:
   - **The card**: "Próxima partida" (on the home), the date, the place, then "Você vai?" with two `size="lg"` buttons. Once answered it shrinks to one pill ("Você vai", "Você está em 2º na lista de espera", "Você não vai") and "Mudar". No Jogador yet: "Escolher meu jogador" in the same spot.
-  - **The list**: "x de y vagas" with a bar, then one numbered "Quem vai" list (the group-chat list), the lista de espera under it (dashed). "Não vão" and "Sem resposta" fold into one line ("2 não vão, 5 sem resposta") that opens on a tap.
+  - **The list**: "x de y vagas" (the count in printed numerals) with a bar, then one numbered "Quem vai" list (the group-chat list), the lista de espera under it (dashed). "Não vão" and "Sem resposta" fold into one line ("2 não vão, 5 sem resposta") that opens on a tap.
   - **Times** appear only when there's something to see: published for everyone, the draft and the Sorteio controls for who organizes. With no Times the page is one centered column.
   - **Sharing**: while the Partida is open, everyone gets a share button (`Share2`, icon-only, left of the ⋯) in the card. It hands the group chat the same numbered list as text, with the date in WhatsApp bold, the vagas, the lista de espera and the link to answer (`textoDaPartida`), so the message reads on its own for someone not in the app yet. On a touch screen it opens the share sheet; elsewhere (desktop, where the sheet seldom lists WhatsApp) it copies ("Lista copiada", for WhatsApp Web). The last line, "Quem já está no fut responde aqui", is honest about who the link works for.
   - **Managing** lives in the card's ⋯ (`MenuDeAcoes`): "Responder por alguém" (a sheet with every Jogador and Vou / Não vou), Editar, Cancelar partida. The list itself has no buttons, for anyone.

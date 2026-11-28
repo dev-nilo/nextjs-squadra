@@ -83,8 +83,9 @@ export function SorteioDaPartida({
 
       {podeGerir && aberta && !publicado && (
         <div className="flex flex-wrap items-end gap-2">
+          {/* Under the "Times" heading, the select's own "2 times" says it: no second label on screen. */}
           <Select
-            label="Quantos times"
+            aria-label="Quantos times"
             size="sm"
             value={numTimes}
             onChange={(e) => setNumTimes(e.target.value)}
