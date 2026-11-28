@@ -1,8 +1,8 @@
 /** @type {import('postcss-load-config').Config} */
 const config = {
   plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
+    // Tailwind 4 adds vendor prefixes itself (Lightning CSS): no autoprefixer.
+    "@tailwindcss/postcss": {},
   },
 };
 

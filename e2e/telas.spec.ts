@@ -76,12 +76,19 @@ test("on a fut's pages the phone's status bar takes the header's color", { tag: 
     page.locator(`meta[name="theme-color"][media="(prefers-color-scheme: ${esquema})"]`);
   await expect(tema("light")).toHaveAttribute("content", "#FFFFFF");
   await expect(tema("dark")).toHaveAttribute("content", "#1B2A4C");
-  // The same color the header is painted with (content1 at 95%, over the canvas).
-  const fundo = await page
+  // The same color the header is painted with (content1 at 95%, over the canvas). Read as
+  // painted, through a canvas, since the CSS may write it as rgb() or oklab() (Tailwind 4).
+  const [r, g, b, a] = await page
     .locator("header")
     .first()
-    .evaluate((el) => getComputedStyle(el).backgroundColor);
-  expect(fundo).toMatch(/^rgba?\(255, 255, 255/);
+    .evaluate((el) => {
+      const ctx = document.createElement("canvas").getContext("2d")!;
+      ctx.fillStyle = getComputedStyle(el).backgroundColor;
+      ctx.fillRect(0, 0, 1, 1);
+      return [...ctx.getImageData(0, 0, 1, 1).data];
+    });
+  expect([r, g, b]).toEqual([255, 255, 255]);
+  expect(a).toBeGreaterThanOrEqual(240);
 });
 
 test("on a phone a modal is a sheet at the bottom, from edge to edge", { tag: "@telas" }, async ({ page }) => {

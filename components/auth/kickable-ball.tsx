@@ -246,7 +246,7 @@ export function KickableBall() {
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         onKeyDown={onKeyDown}
-        className="pointer-events-auto absolute left-0 top-0 h-7 w-7 cursor-grab touch-none select-none rounded-full opacity-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-panel-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-panel active:cursor-grabbing"
+        className="pointer-events-auto absolute left-0 top-0 h-7 w-7 cursor-grab touch-none select-none rounded-full opacity-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-panel-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-panel active:cursor-grabbing"
       >
         <svg viewBox="-14 -14 28 28" className="h-full w-full" aria-hidden="true">
           <circle r="13" className="fill-panel-foreground" />

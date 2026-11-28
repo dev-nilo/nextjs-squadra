@@ -33,7 +33,7 @@ export function GrupoSwitcher({
         value={grupo.slug}
         onChange={(e) => onTrocar(e.target.value)}
         title={grupo.nome}
-        className="w-full min-w-0 cursor-pointer appearance-none truncate rounded-lg bg-transparent py-1.5 pl-1 pr-6 text-base font-bold mouse:text-sm text-foreground hover:bg-default-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="w-full min-w-0 cursor-pointer appearance-none truncate rounded-lg bg-transparent py-1.5 pl-1 pr-6 text-base font-bold mouse:text-sm text-foreground hover:bg-default-100 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
       >
         {ordenadas.map((p) => (
           <option key={p.id} value={p.slug}>

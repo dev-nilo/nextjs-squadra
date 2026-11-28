@@ -1,6 +1,112 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind 4. The scan covers the same folders as v3's `content` did, plus src/ for the modules. */
+@import "tailwindcss" source(none);
+@source "../app";
+@source "../components";
+@source "../lib";
+@source "../hooks";
+@source "../src";
+
+/*
+ * The design tokens as Tailwind colours. `inline`, because each one reads a
+ * variable that .dark changes: the utility must use the variable itself, not a
+ * value fixed on :root. The RGB channels stay below (and in DESIGN.md), so
+ * `bg-content1/95` keeps working: v4 mixes the colour with transparent.
+ */
+@theme inline {
+  --font-sans: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --color-background: rgb(var(--background));
+  --color-foreground: rgb(var(--foreground));
+  --color-focus: rgb(var(--focus));
+  --color-divider: rgb(var(--divider));
+  --color-overlay: rgb(var(--overlay));
+  --color-team-1: rgb(var(--team-1));
+  --color-team-2: rgb(var(--team-2));
+  --color-team-3: rgb(var(--team-3));
+  --color-team-4: rgb(var(--team-4));
+  --color-team-5: rgb(var(--team-5));
+  --color-team-6: rgb(var(--team-6));
+  --color-paper: rgb(var(--paper));
+  --color-paper-foreground: rgb(var(--paper-foreground));
+  --color-paper-borda: rgb(var(--paper-borda));
+  --color-paper-ouro: rgb(var(--paper-ouro));
+  --color-panel: rgb(var(--panel));
+  --color-panel-foreground: rgb(var(--panel-foreground));
+  --color-brand: rgb(var(--brand));
+  --color-brand-foreground: rgb(var(--brand-foreground));
+  --color-content1: rgb(var(--content1));
+  --color-content1-foreground: rgb(var(--content1-foreground));
+  --color-content2: rgb(var(--content2));
+  --color-content2-foreground: rgb(var(--content2-foreground));
+  --color-content3: rgb(var(--content3));
+  --color-content3-foreground: rgb(var(--content3-foreground));
+  --color-content4: rgb(var(--content4));
+  --color-content4-foreground: rgb(var(--content4-foreground));
+  --color-default-50: rgb(var(--default-50));
+  --color-default-100: rgb(var(--default-100));
+  --color-default-200: rgb(var(--default-200));
+  --color-default-300: rgb(var(--default-300));
+  --color-default-400: rgb(var(--default-400));
+  --color-default-500: rgb(var(--default-500));
+  --color-default-600: rgb(var(--default-600));
+  --color-default-700: rgb(var(--default-700));
+  --color-default-800: rgb(var(--default-800));
+  --color-default-900: rgb(var(--default-900));
+  --color-default: rgb(var(--default));
+  --color-default-foreground: rgb(var(--default-foreground));
+  --color-primary-50: rgb(var(--primary-50));
+  --color-primary-100: rgb(var(--primary-100));
+  --color-primary-200: rgb(var(--primary-200));
+  --color-primary-300: rgb(var(--primary-300));
+  --color-primary-400: rgb(var(--primary-400));
+  --color-primary-500: rgb(var(--primary-500));
+  --color-primary-600: rgb(var(--primary-600));
+  --color-primary-700: rgb(var(--primary-700));
+  --color-primary-800: rgb(var(--primary-800));
+  --color-primary-900: rgb(var(--primary-900));
+  --color-primary: rgb(var(--primary));
+  --color-primary-foreground: rgb(var(--primary-foreground));
+  --color-accent: rgb(var(--accent));
+  --color-accent-foreground: rgb(var(--accent-foreground));
+  --color-secondary: rgb(var(--secondary));
+  --color-secondary-foreground: rgb(var(--secondary-foreground));
+  --color-success: rgb(var(--success));
+  --color-success-foreground: rgb(var(--success-foreground));
+  --color-danger: rgb(var(--danger));
+  --color-danger-foreground: rgb(var(--danger-foreground));
+  --color-warning: rgb(var(--warning));
+  --color-warning-600: rgb(var(--warning-600));
+  --color-warning-foreground: rgb(var(--warning-foreground));
+}
+
+/* A mouse or trackpad, not a finger: `mouse:text-sm`. Never decide that by width. */
+@custom-variant mouse (@media (pointer: fine));
+/* A short screen (a phone lying down): the frame gives the content more room. `baixa:h-12`. */
+@custom-variant baixa (@media (max-height: 500px));
+/* Theme by class (next-themes puts .dark on <html>), as v3's darkMode: "class". */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * v3's defaults that v4 changed, kept so nothing looks different: borders
+ * default to v3's gray-200 (v4: currentColor), placeholders to v3's gray-400,
+ * and buttons get the pointer cursor.
+ */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: #e5e7eb;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #9ca3af;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
 
 /* "Quadra à noite": chalk-white court (Giz) and navy night (Noite), with the Jogador card as the
    one warm, printed object (Papel). Colete orange marks "you / live / active"; Gramado is the
@@ -202,7 +308,8 @@ html [data-sonner-toaster][data-theme] {
     @apply text-sm text-default-500;
   }
   .text-display {
-    @apply text-2xl font-normal leading-tight tracking-tight sm:text-4xl;
+    /* v4: an explicit leading wins over a text size's own line-height, so sm states v3's 2.5rem. */
+    @apply text-2xl font-normal leading-tight tracking-tight sm:text-4xl sm:leading-10;
   }
   /* Printed numerals: OVR, "8 de 14", Time averages. Bricolage condensed at display size. */
   .text-numeral {
@@ -237,7 +344,7 @@ html [data-sonner-toaster][data-theme] {
   }
   /* A range slider: a thin track, and a 24px thumb inside a 44px-tall touch area. */
   .slider {
-    @apply h-11 cursor-pointer appearance-none bg-transparent focus:outline-none;
+    @apply h-11 cursor-pointer appearance-none bg-transparent focus:outline-hidden;
   }
   .slider::-webkit-slider-runnable-track {
     @apply h-1.5 rounded-full bg-default-200;
@@ -246,10 +353,10 @@ html [data-sonner-toaster][data-theme] {
     @apply h-1.5 rounded-full bg-default-200;
   }
   .slider::-webkit-slider-thumb {
-    @apply -mt-[9px] h-6 w-6 appearance-none rounded-full border-[3px] border-content1 bg-primary shadow-sm;
+    @apply -mt-[9px] h-6 w-6 appearance-none rounded-full border-[3px] border-content1 bg-primary shadow-xs;
   }
   .slider::-moz-range-thumb {
-    @apply h-6 w-6 rounded-full border-[3px] border-content1 bg-primary shadow-sm;
+    @apply h-6 w-6 rounded-full border-[3px] border-content1 bg-primary shadow-xs;
   }
   .slider:focus-visible::-webkit-slider-thumb {
     @apply ring-2 ring-primary ring-offset-2 ring-offset-content1;

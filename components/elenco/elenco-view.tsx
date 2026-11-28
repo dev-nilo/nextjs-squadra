@@ -330,7 +330,7 @@ export function ElencoView({
       {selecionando && (
         <section
           aria-label="Sortear rápido"
-          className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 baixa:bottom-[calc(3rem+env(safe-area-inset-bottom))] border-t border-divider bg-content1/95 shadow-2xl backdrop-blur-sm md:bottom-0 md:pb-[env(safe-area-inset-bottom)]"
+          className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 baixa:bottom-[calc(3rem+env(safe-area-inset-bottom))] border-t border-divider bg-content1/95 shadow-2xl backdrop-blur-xs md:bottom-0 md:pb-[env(safe-area-inset-bottom)]"
         >
           <div className="margem-lateral mx-auto flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 py-3">
             <p className="text-sm text-default-600">

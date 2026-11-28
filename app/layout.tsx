@@ -10,7 +10,7 @@ import { Providers } from "./providers";
 // Variable axes: wdth (75–100) for the condensed printed numerals, opsz for display sizes.
 const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-bricolage",
   axes: ["wdth", "opsz"],
 });
 

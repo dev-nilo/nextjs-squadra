@@ -48,7 +48,7 @@ export function TelaDeAviso({
           <Link
             href="/"
             onClick={aoIrProInicio}
-            className="area-de-toque rounded font-semibold text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="area-de-toque rounded-sm font-semibold text-foreground underline-offset-4 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
           >
             {inicio}
           </Link>

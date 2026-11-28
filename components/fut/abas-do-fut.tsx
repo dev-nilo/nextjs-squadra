@@ -39,7 +39,7 @@ export function BarraDeAbas({ slug }: { slug: string }) {
   return (
     <nav
       aria-label="Seções do fut"
-      className="fixed inset-x-0 bottom-0 z-40 select-none border-t border-divider bg-content1/95 pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur-sm [-webkit-touch-callout:none] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 select-none border-t border-divider bg-content1/95 pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur-xs [-webkit-touch-callout:none] md:hidden"
     >
       {/* On a short screen (a phone on its side) the bar keeps its icons and drops the words, which stay for screen readers. */}
       <ul className="mx-auto grid h-16 max-w-md grid-cols-3 baixa:h-12">

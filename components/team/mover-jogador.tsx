@@ -32,7 +32,7 @@ export const MoverJogador = forwardRef<
         value={indice}
         disabled={disabled}
         onChange={(e) => onMover(Number(e.target.value))}
-        className="absolute -inset-1.5 cursor-pointer appearance-none text-base opacity-0 focus:outline-none disabled:cursor-not-allowed"
+        className="absolute -inset-1.5 cursor-pointer appearance-none text-base opacity-0 focus:outline-hidden disabled:cursor-not-allowed"
       >
         {times.map((destino, i) => (
           <option key={destino.name} value={i}>

@@ -24,7 +24,7 @@ interface AuthFormProps {
 }
 
 const linkDiscreto =
-  "area-de-toque rounded text-sm font-medium text-default-500 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  "area-de-toque rounded-sm text-sm font-medium text-default-500 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary";
 
 export function LoginForm({ onSuccess, onEsqueci }: AuthFormProps & { onEsqueci?: () => void }) {
   const [email, setEmail] = useState("");
@@ -70,7 +70,7 @@ export function LoginForm({ onSuccess, onEsqueci }: AuthFormProps & { onEsqueci?
         autoComplete="current-password"
       />
 
-      <Button type="submit" color="primary" size="lg" radius="full" className="mt-2 w-full" isLoading={loading}>
+      <Button type="submit" color="primary" size="lg" radius="full" className="w-full" isLoading={loading}>
         {loading ? "Entrando…" : "Entrar"}
       </Button>
 
@@ -121,7 +121,7 @@ export function RecoveryForm() {
         autoComplete="email"
       />
 
-      <Button type="submit" color="primary" size="lg" radius="full" className="mt-2 w-full" isLoading={loading}>
+      <Button type="submit" color="primary" size="lg" radius="full" className="w-full" isLoading={loading}>
         {loading ? "Enviando…" : "Enviar link"}
       </Button>
     </form>
@@ -205,7 +205,7 @@ export function SignUpForm({ onSuccess, redirectPath }: AuthFormProps) {
         autoComplete="new-password"
       />
 
-      <Button type="submit" color="primary" size="lg" radius="full" className="mt-2 w-full" isLoading={loading}>
+      <Button type="submit" color="primary" size="lg" radius="full" className="w-full" isLoading={loading}>
         {loading ? "Criando conta…" : "Criar conta"}
       </Button>
 

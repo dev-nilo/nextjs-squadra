@@ -136,7 +136,7 @@ export function PartidaView({
       {!naInicio && (
         <Link
           href={`${fut}/partidas`}
-          className="flex w-fit items-center gap-1 text-sm font-medium text-default-500 hover:text-foreground area-de-toque rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="flex w-fit items-center gap-1 text-sm font-medium text-default-500 hover:text-foreground area-de-toque rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
         >
           <ArrowLeft size={16} aria-hidden="true" /> Partidas
         </Link>
@@ -324,7 +324,7 @@ function SuaPresenca({
         <p className="font-semibold text-foreground">Escolha seu jogador para responder.</p>
         <Link
           href={escolherHref}
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-center text-base font-medium sm:px-6 text-primary-foreground transition-colors hover:bg-primary-600 active:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-center text-base font-medium sm:px-6 text-primary-foreground transition-colors hover:bg-primary-600 active:bg-primary-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <UserCheck size={18} aria-hidden="true" /> Escolher meu jogador
         </Link>
@@ -371,7 +371,7 @@ function SuaPresenca({
           <button
             type="button"
             onClick={() => setMudando(false)}
-            className="self-center text-sm font-medium text-default-500 hover:text-foreground area-de-toque rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="self-center text-sm font-medium text-default-500 hover:text-foreground area-de-toque rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
           >
             Deixar como está
           </button>

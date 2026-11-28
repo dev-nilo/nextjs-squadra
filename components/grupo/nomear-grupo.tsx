@@ -61,7 +61,7 @@ export function NomearGrupo({ onCriado }: { onCriado: (grupo: Participacao) => v
             </div>
           )}
 
-          <Button type="submit" color="primary" size="lg" radius="full" className="mt-2 w-full" isLoading={pending}>
+          <Button type="submit" color="primary" size="lg" radius="full" className="w-full" isLoading={pending}>
             {pending ? "Criando…" : "Criar fut"}
           </Button>
         </form>

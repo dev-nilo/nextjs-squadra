@@ -115,7 +115,7 @@ export function ConvitesDoFut({ grupo }: { grupo: Participacao }) {
                   readOnly
                   value={link(convite.token)}
                   onFocus={(e) => e.currentTarget.select()}
-                  className="w-full truncate rounded-lg border border-default-200 bg-default-50 px-2 py-1.5 font-mono text-base text-foreground mouse:text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full truncate rounded-lg border border-default-200 bg-default-50 px-2 py-1.5 font-mono text-base text-foreground mouse:text-xs focus:outline-hidden focus:ring-2 focus:ring-primary"
                 />
               </label>
               <div className="flex flex-wrap gap-2">
