@@ -151,7 +151,14 @@ export const PlayerModal = ({ isOpen, onClose, onSave, initialData }: PlayerModa
                   </Button>
                 )}
               </div>
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                aria-label="Foto do jogador"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
               {image && (
                 <div className="mt-2 p-3 sm:p-4 bg-default-100 rounded-lg flex justify-center">
                   <img src={image} alt="Prévia" className="max-h-32 sm:max-h-40 object-cover rounded-lg" />
