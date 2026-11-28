@@ -300,9 +300,10 @@ html [data-sonner-toaster][data-theme] {
   .text-section {
     @apply text-lg font-semibold text-foreground;
   }
-  /* A heading over a list or group, in sentence case (no tracked-out caps). */
+  /* A section's heading, over a list or group, in sentence case (no tracked-out caps). Ink and
+     semibold, so it reads as a heading and not as the grey helper text around it. */
   .text-label {
-    @apply text-sm font-medium text-default-500;
+    @apply text-base font-semibold text-foreground;
   }
   .text-muted {
     @apply text-sm text-default-500;

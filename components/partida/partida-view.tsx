@@ -157,7 +157,8 @@ export function PartidaView({
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 flex-col gap-1">
-                {naInicio && <p className="text-label">Próxima partida</p>}
+                {/* A kicker over the date, not a section: small and grey. */}
+                {naInicio && <p className="text-sm font-medium text-default-500">Próxima partida</p>}
                 <h1 className="text-title capitalize">{formatarInicio(partida.inicio)}</h1>
                 <p className="flex items-center gap-1 text-default-500">
                   <MapPin size={16} aria-hidden="true" /> {partida.local}
@@ -445,8 +446,9 @@ function QuemVai({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2" aria-live="polite">
-        <p className="text-sm text-default-600">
-          <span className="font-semibold tabular-nums text-foreground">
+        {/* The Partida's key number, printed; the rest of the sentence small beside it. */}
+        <p className="flex flex-wrap items-baseline gap-x-2 text-sm text-default-600">
+          <span className="text-numeral text-2xl text-foreground">
             {confirmados} de {vagas}
           </span>{" "}
           vagas, {quantoFalta(lista)}
