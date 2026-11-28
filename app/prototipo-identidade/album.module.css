@@ -1,0 +1,496 @@
+/* PROTOTYPE (#146), direction A "Álbum". */
+
+.raiz {
+  --papel: #f4f6f1;
+  --tinta: #14213d;
+  --suave: #566173;
+  --faixa: #0f7a47;
+  --faixa-tinta: #f4f6f1;
+  --linha: #b9c3b6;
+  --figurinha: #ffffff;
+  --foto-fundo: #d9e4d6;
+  --foto-figura: #93a79b;
+  --ouro: #a8841a;
+  --voce: #ff5b14;
+  --time-1: #e4572e;
+  --time-2: #2a62c9;
+
+  font-family: var(--album-fonte), system-ui, sans-serif;
+  background: var(--papel);
+  color: var(--tinta);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.raiz[data-tema="escuro"] {
+  --papel: #0e1712;
+  --tinta: #e8efe6;
+  --suave: #97a69c;
+  --faixa: #136c42;
+  --faixa-tinta: #e8efe6;
+  --linha: #34463b;
+  --figurinha: #18241d;
+  --foto-fundo: #22332a;
+  --foto-figura: #4c6656;
+  --ouro: #d8b24a;
+}
+
+/* The album's green band: the cover strip, with the mark. */
+.faixa {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+  background: var(--faixa);
+  color: var(--faixa-tinta);
+}
+.nomeDoApp {
+  font-size: 18px;
+  font-weight: 900;
+  font-stretch: 140%;
+  letter-spacing: -0.01em;
+}
+.fut {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 600;
+  font-stretch: 80%;
+  opacity: 0.9;
+}
+
+.pagina {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 20px 16px 120px;
+}
+
+.cabecalho {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dia {
+  font-size: 16px;
+  font-weight: 600;
+  font-stretch: 80%;
+  color: var(--suave);
+}
+.data {
+  font-size: 48px;
+  line-height: 1;
+  font-weight: 900;
+  font-stretch: 150%;
+  letter-spacing: -0.03em;
+}
+.hora {
+  font-size: 24px;
+  font-stretch: 110%;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--faixa);
+}
+.raiz[data-tema="escuro"] .hora {
+  color: #4cc487;
+}
+.local {
+  margin-top: 4px;
+  font-size: 16px;
+  color: var(--suave);
+}
+
+.pergunta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.perguntaTexto {
+  font-size: 24px;
+  font-weight: 800;
+  font-stretch: 120%;
+}
+.botoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.vou,
+.naoVou {
+  min-height: 52px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  font-stretch: 120%;
+  cursor: pointer;
+}
+.vou {
+  background: var(--tinta);
+  color: var(--papel);
+  border: 0;
+}
+.naoVou {
+  background: transparent;
+  color: var(--tinta);
+  border: 2px solid var(--linha);
+}
+.dica {
+  font-size: 14px;
+  color: var(--suave);
+}
+.respondido {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--figurinha);
+  border: 2px solid var(--faixa);
+  font-size: 16px;
+}
+.respondido b {
+  font-stretch: 140%;
+  font-weight: 900;
+}
+.mudar {
+  font: inherit;
+  font-weight: 700;
+  color: var(--faixa);
+  background: none;
+  border: 0;
+  padding: 8px 4px;
+  cursor: pointer;
+}
+.raiz[data-tema="escuro"] .mudar {
+  color: #4cc487;
+}
+
+.contagem {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: var(--suave);
+}
+.contagemNumero {
+  font-size: 24px;
+  font-weight: 900;
+  font-stretch: 140%;
+  color: var(--tinta);
+}
+
+/* The page of slots: one per vaga. A filled slot is a sticker, an empty one its printed outline. */
+.slots {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.slot,
+.slotVazio {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px;
+}
+.slot {
+  background: var(--figurinha);
+  box-shadow:
+    0 1px 0 rgb(0 0 0 / 0.08),
+    0 3px 8px -4px rgb(0 0 0 / 0.35);
+  border-top: 6px solid var(--faixa);
+}
+.slot[data-voce] {
+  border-top-color: var(--voce);
+  outline: 2px solid var(--voce);
+}
+.slotVazio {
+  border: 2px dashed var(--linha);
+  color: var(--suave);
+}
+.slotNumero {
+  font-size: 14px;
+  font-weight: 900;
+  font-stretch: 140%;
+}
+.slotNome {
+  font-size: 14px;
+  font-weight: 700;
+  font-stretch: 62%;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.slotInicial {
+  align-self: center;
+  font-size: 36px;
+  line-height: 1;
+  font-weight: 900;
+  font-stretch: 150%;
+  color: color-mix(in srgb, var(--faixa) 35%, transparent);
+}
+.slotLivre {
+  font-size: 12px;
+  font-stretch: 80%;
+}
+
+.rotulo {
+  font-size: 14px;
+  font-weight: 700;
+  font-stretch: 90%;
+  color: var(--suave);
+  margin-bottom: 8px;
+}
+.esperaLista {
+  display: flex;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-wrap: wrap;
+}
+.esperaItem {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 2px dashed var(--ouro);
+  font-size: 16px;
+  font-weight: 700;
+  font-stretch: 80%;
+}
+.recolhidos {
+  font-size: 14px;
+  color: var(--suave);
+  border-top: 2px dashed var(--linha);
+  padding-top: 12px;
+}
+
+.timesGrade {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.time {
+  background: var(--figurinha);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 3px 10px -6px rgb(0 0 0 / 0.4);
+}
+.time ul {
+  list-style: none;
+  margin: 0;
+  padding: 6px 10px 10px;
+}
+.timeFaixa {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 10px;
+  color: #fff;
+  font-weight: 800;
+  font-stretch: 110%;
+}
+.time[data-time="1"] .timeFaixa {
+  background: var(--time-1);
+}
+.time[data-time="2"] .timeFaixa {
+  background: var(--time-2);
+}
+.timeMedia {
+  font-size: 24px;
+  font-stretch: 150%;
+  font-weight: 900;
+}
+.timeJogador {
+  padding: 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  font-stretch: 80%;
+}
+.timeJogador[data-voce] {
+  color: var(--voce);
+}
+
+.titulo {
+  font-size: 36px;
+  font-weight: 900;
+  font-stretch: 150%;
+  letter-spacing: -0.02em;
+}
+.tituloConta {
+  font-size: 24px;
+  color: var(--suave);
+  font-weight: 600;
+}
+.album {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.voceCarta {
+  max-width: 300px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* The figurinha: a printed sticker with a coloured frame. A brilhante has a foil frame. */
+.figurinha {
+  container-type: inline-size;
+  border-radius: 6cqw;
+  padding: 3cqw;
+  background: var(--faixa);
+  box-shadow: 0 4px 14px -8px rgb(0 0 0 / 0.5);
+}
+.figurinha[data-brilhante] {
+  background: conic-gradient(from 210deg, #d9b443, #fff3c4, #b98d1d, #f6e08a, #9c7412, #ffe9a3, #d9b443);
+}
+.figMoldura {
+  background: var(--figurinha);
+  border-radius: 4cqw;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.figTopo {
+  display: flex;
+  align-items: baseline;
+  gap: 3cqw;
+  padding: 3cqw 4cqw 1cqw;
+}
+.figOvr {
+  font-size: 18cqw;
+  line-height: 0.9;
+  font-weight: 900;
+  font-stretch: 150%;
+  letter-spacing: -0.04em;
+}
+.figurinha[data-brilhante] .figOvr {
+  color: var(--ouro);
+}
+.figPos {
+  font-size: 7cqw;
+  font-weight: 800;
+  font-stretch: 120%;
+}
+.figPais {
+  margin-left: auto;
+  font-size: 6cqw;
+  font-weight: 700;
+  padding: 0.5cqw 2cqw;
+  border-radius: 2cqw;
+  border: 0.6cqw solid currentColor;
+}
+.figFoto {
+  position: relative;
+  aspect-ratio: 5 / 4;
+  margin: 0 4cqw;
+  border-radius: 3cqw;
+  overflow: hidden;
+  background: var(--foto-fundo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.figInicial {
+  font-size: 40cqw;
+  font-weight: 900;
+  font-stretch: 150%;
+  color: var(--foto-figura);
+}
+.figNumero {
+  position: absolute;
+  right: 2cqw;
+  bottom: 2cqw;
+  font-size: 6cqw;
+  font-weight: 800;
+  background: var(--figurinha);
+  border-radius: 2cqw;
+  padding: 0.5cqw 2cqw;
+}
+.figNome {
+  display: flex;
+  align-items: center;
+  gap: 2cqw;
+  padding: 3cqw 4cqw 1cqw;
+  font-size: 10cqw;
+  font-weight: 800;
+  font-stretch: 70%;
+  line-height: 1;
+}
+.figVoce {
+  font-size: 6cqw;
+  font-stretch: 100%;
+  font-weight: 800;
+  color: #fff;
+  background: var(--voce);
+  border-radius: 99px;
+  padding: 0.8cqw 2.5cqw;
+}
+.figAtributos {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5cqw 2cqw;
+  margin: 0;
+  padding: 2cqw 4cqw 4cqw;
+}
+.figAtributos div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.figAtributos dt {
+  font-size: 5.5cqw;
+  font-weight: 700;
+  font-stretch: 90%;
+  color: var(--suave);
+}
+.figAtributos dd {
+  margin: 0;
+  font-size: 8.5cqw;
+  font-weight: 900;
+  font-stretch: 130%;
+}
+
+/* The album's index tabs, standing up from the bottom edge like a binder's. */
+.abas {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: min(100%, 430px);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 0 12px env(safe-area-inset-bottom);
+  background: var(--faixa);
+  z-index: 6;
+}
+.aba {
+  margin-top: -10px;
+  min-height: 56px;
+  border: 0;
+  border-radius: 10px 10px 0 0;
+  background: color-mix(in srgb, var(--faixa) 70%, #000);
+  color: var(--faixa-tinta);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  font-stretch: 110%;
+  cursor: pointer;
+}
+.aba[aria-current="true"] {
+  background: var(--papel);
+  color: var(--tinta);
+}

@@ -1,0 +1,43 @@
+/* PROTOTYPE (#146): the frame around the directions, deliberately plain system UI. */
+.fundo {
+  min-height: 100dvh;
+  background: #6b6f76;
+}
+.trocador {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: calc(6px + env(safe-area-inset-top)) 8px 6px;
+  background: #000;
+  color: #fff;
+  font:
+    600 14px/1 system-ui,
+    sans-serif;
+}
+.trocador button {
+  min-width: 40px;
+  min-height: 36px;
+  border: 1px solid #555;
+  border-radius: 999px;
+  background: #1c1c1c;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+.nome {
+  min-width: 72px;
+  text-align: center;
+}
+.trocador .opcao {
+  padding: 0 12px;
+}
+.espaco {
+  flex: 1;
+}
+.celular {
+  max-width: 430px;
+  margin: 0 auto;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.2);
+}

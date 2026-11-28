@@ -1,0 +1,352 @@
+/* PROTOTYPE (#146), direction C "Lista". No boxes: space and type do the structure. */
+
+.raiz {
+  --papel: #ffffff;
+  --tinta: #101935;
+  --suave: #5a6379;
+  --linha: #e3e6ec;
+  --laranja: #e8500f; /* the mark's centre spot, darkened to hold on white */
+  --laranja-tinta: #ffffff;
+  --time-1: #e8500f;
+  --time-2: #2a62c9;
+
+  font-family: var(--lista-fonte), system-ui, sans-serif;
+  background: var(--papel);
+  color: var(--tinta);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.raiz[data-tema="escuro"] {
+  --papel: #0b1530;
+  --tinta: #f3f5f9;
+  --suave: #9aa4bf;
+  --linha: #22305a;
+  --laranja: #ff6a26;
+  --laranja-tinta: #0b1530;
+}
+
+.topo {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: calc(12px + env(safe-area-inset-top)) 20px 12px;
+  background: var(--papel);
+}
+.nomeDoApp {
+  font-size: 18px;
+  font-weight: 800;
+  font-stretch: 75%;
+}
+.fut {
+  margin-left: auto;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--suave);
+}
+
+.conteudo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 8px 20px 200px;
+}
+
+.dia {
+  font-size: 60px;
+  line-height: 0.95;
+  font-weight: 800;
+  font-stretch: 62%;
+  letter-spacing: -0.01em;
+}
+.diaNumero {
+  color: var(--laranja);
+}
+.detalhe {
+  margin-top: 8px;
+  font-size: 18px;
+  line-height: 1.35;
+  color: var(--suave);
+}
+.contagem {
+  font-size: 18px;
+  color: var(--suave);
+}
+.contagemNumero {
+  font-size: 36px;
+  font-weight: 800;
+  font-stretch: 62%;
+  color: var(--tinta);
+}
+
+/* The list itself: the number is set like a shirt number, the name beside it. */
+.nomes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.nome {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  align-items: baseline;
+  min-height: 48px;
+}
+.numero {
+  font-size: 36px;
+  font-weight: 800;
+  font-stretch: 62%;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+}
+.quem {
+  font-size: 24px;
+  font-weight: 600;
+  font-stretch: 85%;
+}
+.nome[data-voce] {
+  color: var(--laranja);
+}
+.nome[data-livre] .numero {
+  color: var(--linha);
+}
+.nome[data-livre] .quem {
+  border-bottom: 2px solid var(--linha);
+  align-self: center;
+}
+.nome[data-espera] .numero {
+  color: var(--suave);
+}
+
+.secao {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.recolhidos {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--suave);
+}
+
+.times {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.time {
+  border-left: 6px solid var(--time-1);
+  padding-left: 12px;
+}
+.time[data-time="2"] {
+  border-left-color: var(--time-2);
+}
+.timeTopo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 16px;
+  font-weight: 700;
+}
+.timeMedia {
+  font-size: 36px;
+  font-weight: 800;
+  font-stretch: 62%;
+}
+.timeNomes {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1.7;
+  font-stretch: 85%;
+}
+.timeNomes [data-voce] {
+  color: var(--laranja);
+  font-weight: 700;
+}
+
+/* The answer bar, under the thumb. */
+.resposta {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(60px + env(safe-area-inset-bottom));
+  width: min(100%, 430px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--papel);
+  border-top: 2px solid var(--tinta);
+  z-index: 6;
+}
+.respostaPergunta {
+  margin-right: auto;
+  font-size: 24px;
+  font-weight: 800;
+  font-stretch: 75%;
+}
+.vou,
+.naoVou {
+  min-height: 52px;
+  padding: 0 20px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.vou {
+  background: var(--laranja);
+  color: var(--laranja-tinta);
+  border: 0;
+  padding: 0 28px;
+}
+.naoVou {
+  background: transparent;
+  color: var(--tinta);
+  border: 2px solid var(--tinta);
+}
+
+.titulo {
+  font-size: 60px;
+  line-height: 1;
+  font-weight: 800;
+  font-stretch: 62%;
+}
+.tituloConta {
+  color: var(--suave);
+}
+.grade {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 16px;
+}
+.voceCarta {
+  max-width: 320px;
+}
+
+/* The ficha. Brilhante: printed in negative, white on ink. */
+.ficha {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 3cqw;
+  padding-top: 4cqw;
+  border-top: 2cqw solid var(--tinta);
+}
+.ficha[data-brilhante] {
+  background: var(--tinta);
+  color: var(--papel);
+  padding: 5cqw;
+  border-radius: 3cqw;
+  border-top: 0;
+}
+.fichaTopo {
+  display: flex;
+  align-items: flex-start;
+  gap: 3cqw;
+}
+.fichaOvr {
+  font-size: 34cqw;
+  line-height: 0.8;
+  font-weight: 800;
+  font-stretch: 62%;
+  letter-spacing: -0.02em;
+}
+.fichaPos {
+  display: flex;
+  flex-direction: column;
+  font-size: 8cqw;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.fichaPais {
+  font-weight: 500;
+  opacity: 0.7;
+}
+.fichaFoto {
+  margin-left: auto;
+  width: 34cqw;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.fichaNome {
+  font-size: 12cqw;
+  line-height: 1;
+  font-weight: 700;
+  font-stretch: 75%;
+  overflow-wrap: anywhere;
+}
+.fichaVoce {
+  color: var(--laranja);
+  font-size: 8cqw;
+}
+.fichaAtributos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2cqw 6cqw;
+}
+.fichaAtributos div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.fichaAtributos dt {
+  font-size: 7cqw;
+  font-weight: 600;
+  opacity: 0.7;
+}
+.fichaAtributos dd {
+  margin: 0;
+  font-size: 9cqw;
+  font-weight: 800;
+  font-stretch: 75%;
+  display: contents;
+}
+.trilho {
+  flex-basis: 100%;
+  height: 1.2cqw;
+  background: color-mix(in srgb, currentColor 15%, transparent);
+}
+.trilho span {
+  display: block;
+  height: 100%;
+  background: currentColor;
+}
+
+.abas {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: min(100%, 430px);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--papel);
+  border-top: 2px solid var(--linha);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 7;
+}
+.aba {
+  min-height: 60px;
+  background: none;
+  border: 0;
+  color: var(--suave);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  font-stretch: 85%;
+  cursor: pointer;
+}
+.aba[aria-current="true"] {
+  color: var(--tinta);
+  box-shadow: inset 0 4px 0 var(--laranja);
+}
