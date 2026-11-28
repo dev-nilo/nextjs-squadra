@@ -2,7 +2,7 @@
 
 The visual contract for Squadra. Every page and modal is built from the tokens, scales and primitives below. If something you need isn't here, add it here first, then use it.
 
-Stack: Tailwind CSS 4, configured in CSS (there is no `tailwind.config.ts`). The tokens are RGB channels in `app/globals.css` (`:root` and `.dark`), mapped to Tailwind colours in its `@theme inline` block, so `bg-content1/95` still works. The variants `mouse:`, `baixa:` and `dark:` are `@custom-variant`s in the same file, and a small `@layer base` keeps the three v3 defaults v4 changed (border colour, placeholder colour, the pointer cursor on buttons). Font: **Bricolage Grotesque** (`font-sans`, the `--font-bricolage` variable from `app/layout.tsx`). Icons: **lucide-react**.
+Stack: Tailwind CSS 4, configured in CSS (there is no `tailwind.config.ts`). The tokens are RGB channels in `app/globals.css` (`:root` and `.dark`), mapped to Tailwind colours in its `@theme inline` block, so `bg-content1/95` still works. The variants `mouse:`, `baixa:` and `dark:` are `@custom-variant`s in the same file, and a small `@layer base` keeps the three v3 defaults v4 changed (border colour, placeholder colour, the pointer cursor on buttons). Font: **Anybody** (`font-sans`, the `--font-anybody` variable from `app/layout.tsx`). Icons: **lucide-react**.
 
 Two v4 behaviours that differ from v3, found in the upgrade (#147):
 - An explicit `leading-*` wins over a text size's own line-height, at every breakpoint. `leading-tight sm:text-4xl` keeps 1.25 at `sm`; write the line-height for each size you mean (`sm:text-4xl sm:leading-10`).
@@ -12,79 +12,82 @@ Two v4 behaviours that differ from v3, found in the upgrade (#147):
 
 ## Brand
 
-The mark is **Meio-campo**: the pitch's center circle seen from above, split by an S into two equal halves, with the halfway line above and below and the center spot. One drawing says S for Squadra, two Times and a balanced split. Navy (`#14213D`) and cream (`#F4EDE0`), with the center spot in Colete orange (`#FF5B14`). The mark keeps those exact colors; the app palette around it is "a quadra à noite" (see **Color tokens**).
+The mark is **Meio-campo**: the pitch's center circle seen from above, split by an S into two equal halves, with the halfway line above and below and the center spot. One drawing says S for Squadra, two Times and a balanced split. Navy ink (`#14213D`) and the album's paper (`#F4F6F1`), with the center spot in the mark's orange (`#FF5B14`). The wordmark "Squadra" is Anybody at weight 900 and 140% width.
 
-- **Component**: `Logo` (`components/ui/logo.tsx`), inline geometric SVG on a 100×100 grid: circle r34 with a 5-unit ring, S halves of r17, halfway stubs, center spot. The spot is the one literal color in a component (`fill="#FF5B14"`): an SVG attribute survives the PNG export, a class wouldn't (see the export notes below). `BrandLockup` is mark + "Squadra" wordmark (`font-black tracking-tight text-brand`); `size`: `sm` (header) · `lg` + `stacked`. The auth panel builds its own larger lockup.
+- **Component**: `Logo` (`components/ui/logo.tsx`), inline geometric SVG on a 100×100 grid: circle r34 with a 5-unit ring, S halves of r17, halfway stubs, center spot. The spot is the one literal color in a component (`fill="#FF5B14"`): an SVG attribute survives the PNG export, a class wouldn't (see the export notes below). `BrandLockup` is mark + "Squadra" wordmark (`font-black`, `[font-stretch:140%]`, `text-brand`), in the fut's header.
 - **Small variant** for 16/32px (`public/icon.svg`, `icon-*-32x32.png`): no stubs and no spot, circle r44 with a 9-unit ring, so the S survives at tab size. Don't use the full mark below ~24px.
-- **Where it appears**: home header (lockup left of the search), the auth panel (inverted via `.on-panel`), the exported Times Sorteados PNG, the loader (`LoadingState` flips the mark like a coin toss, `animate-coin-toss`, still under `prefers-reduced-motion`), and the empty Elenco state.
-- **Not** used as a decorative motif elsewhere. The Jogador card and the OVR stay as they are.
-- **Static assets** (`public/icon.svg`, `icon-*-32x32.png`, `apple-icon.png`, `icon-192/512.png`, `icon-maskable-192/512.png`, `app/opengraph-image.png`) follow the same geometry, on cream. The SVG favicon inverts under `prefers-color-scheme: dark`.
-- No paper texture: the canvas is flat.
+- **Where it appears**: the fut's header, the auth panel (inverted via `.on-panel`), the exported Times Sorteados PNG, the loader (`LoadingState` flips the mark like a coin toss, `animate-coin-toss`, still under `prefers-reduced-motion`), `TelaDeAviso` and the empty Elenco state.
+- **Not** used as a decorative motif elsewhere.
+- **Static assets** (`public/icon.svg`, `icon-*-32x32.png`, `apple-icon.png`, `icon-192/512.png`, `icon-maskable-192/512.png`, `app/opengraph-image.png`) still carry the previous cream; they're redrawn in the album's colors with the shell (#150).
 
-## Theme
+## Theme: Álbum
 
-- Light and dark follow the OS (`next-themes`, `defaultTheme="system"`, class strategy). There is no toggle.
-- The idea is **a quadra à noite**: light is Giz (chalk-white court lines, `#F2F4F7`) with navy ink; dark is the brand navy itself (`#14213D`) with Giz text, never a tinted near-black.
-- The Jogador card is the **one warm, printed object** in the app (Papel, `#FBF6EA`, same in both themes). Everything around it stays quiet.
-- **The figurinha** (`PlayerCard`), printed in **two inks**: navy on Papel, inside a white die-cut border (`paper-borda`, both themes). Nothing on it that a cheap sticker printer couldn't print: no gradients, no glow.
-  - **No photo** (most of the pelada): no empty photo window. The OVR, printed huge (`.text-numeral`, 54cqw), is the card's face; the position in words top-right ("atacante", "ala", "fixo", "goleiro").
-  - **With a photo**: a real album sticker. The photo fills the card down to a name strip (the OVR at 22cqw, the name on one line, flag and position), behind one navy rule. It prints in the same ink (a navy/Papel duotone: grayscale multiplied onto Papel, navy lightened in), so phone photos of every kind sit together, anchored at the top so the face stays in. In the album that's all, and its attributes come up over the photo (the back of the sticker): on **hover** where there's a mouse (`@media (hover: hover)`), on a **tap** anywhere (another tap turns it back). In Você the card is `completa`: the photo becomes 4:5 and the attribute table sits under the strip. Uploads are cropped to 3:4, 600×800, keeping the top (`lib/player-image-processing.ts`).
+Chosen on 2026-11-28 from three prototyped directions (#146). **The fut is an album the group fills every week**: each Partida is a page whose vagas are slots, each Jogador a sticker. Everything follows from that:
+
+- **Light** is the album's page: cool paper (`#F4F6F1`, never cream) printed in navy ink (`#14213D`). Cards, modals, menus and the header are **white stickers** on it (`content1`).
+- **Dark** is the album at night: a deep green-black page (`#0E1712`), the ink turned light (`#E8EFE6`), stickers in a lifted green-grey (`#18241D`). Never a tinted near-black.
+- **The album's green** (`#0F7A47`) is the band around every figurinha and the Sorteio's action. **Gold** is only the brilhante's foil. **The mark's orange** only marks "you". Nothing else is colored.
+- Light and dark follow the OS (`next-themes`, `defaultTheme="system"`, class strategy). There is no toggle. Every token has a light value under `:root` and a dark value under `.dark`; only use tokens, so both themes stay correct for free. Any change must be checked in **both** themes.
+- What carried over from the previous identity: the name, the mark, the carta with OVR and attributes, the three tabs. The layouts of the album idea (vagas as slots, the figurinha's photo window, the binder-index tabs) arrive module by module (M3–M7) and with the shell (#150); this file describes what's built.
+
+**The figurinha** (`PlayerCard`): a **white sticker in the album's green frame** (`paper`, `paper-borda`), printed in one navy ink, the same in both themes because it's printed. Nothing on it that a cheap sticker printer couldn't print: no gradients, no glow.
+  - **No photo** (most of the pelada): no empty photo window. The OVR, printed huge (`.text-numeral`, 36cqw), is the card's face; the position in words under it ("atacante", "ala", "fixo", "goleiro").
+  - **With a photo**: the photo fills the card down to a name strip (the OVR at 17cqw, the name on one line, flag and position), behind one navy rule. It prints in the same ink (a navy/white duotone: grayscale multiplied onto the paper, navy lightened in), so phone photos of every kind sit together, anchored at the top so the face stays in. Its attributes come up over the photo (the back of the sticker): on **hover** where there's a mouse, on a **tap** anywhere (another tap turns it back). In Você the card is `completa`: the photo becomes 4:5 and the attribute table sits under the strip. Uploads are cropped to 3:4, 600×800, keeping the top (`lib/player-image-processing.ts`).
   - The name in sentence case, bold, left-aligned, then one navy rule.
-  - The attributes in one ink, lowercase labels: the Jogador's **two best** (`pontosFortes`) in full weight, the rest at 70% ink (5.8:1 on Papel, so they pass WCAG AA; 55% was 3.6:1). The flag and position line is at 70% too. It says what they're good at. No traffic-light colors.
-  - The flag, small, next to the position (every nationality, Brazil's too).
-  - From OVR 85 (`OVR_BRILHANTE`) it's a **brilhante**: the OVR, the rule and a double frame printed in gold ink (`paper-ouro`). Flat, never animated.
-  - "você" is a Colete pill after the name; selected is a Colete ring plus a check.
+  - The attributes in one ink, lowercase labels: the Jogador's **two best** (`pontosFortes`) in full weight, the rest at 70% ink (AA on white). The flag and position line is at 70% too. No traffic-light colors.
+  - From OVR 85 (`OVR_BRILHANTE`) it's a **brilhante**: the OVR, the rule and a double frame printed in gold foil (`paper-ouro`, 5.4:1 on white). Flat, never animated.
+  - "você" is an orange pill after the name; selected is an orange ring plus a check. The card's ⋯ is a green button with white dots, in the frame's color.
   - Every size is in `cqw` (the card is its own inline-size container), so the same card works in the 2-column album, opened, and in Você. No hover scale.
-  - **A small card** (under 160px wide: the 2-column album on a 280–340px phone) shows only its face: OVR, flag and position, name. Its attribute table would print at 7px. Like a photo card, it turns on a tap (or hover with a mouse). The back shows the attributes in larger type, anchored to the bottom so they clear the ⋯. CSS (`@container(max-width:160px)`) hides the table on the first paint, and a `ResizeObserver` makes the card a button that turns.
-- Every token has a light value under `:root` and a dark value under `.dark`. Only use tokens, so both themes stay correct for free.
-- Any change must be checked in **both** themes.
+  - **A small card** (under 160px wide: the 2-column album on a 280–340px phone) shows only its face: OVR, flag and position, name. Like a photo card, it turns on a tap (or hover with a mouse). CSS (`@container(max-width:160px)`) hides the table on the first paint, and a `ResizeObserver` makes the card a button that turns.
 
 ## Color tokens
 
+The names describe a role, not a hue, and every pair below meets WCAG AA in both themes (checked by `e2e/acessibilidade.spec.ts`, axe on every page of a fut).
+
 | Token | Use |
 |-------|-----|
-| `background` / `foreground` | Page canvas (Giz `#F2F4F7` / navy `#14213D`) and default text (navy ink / Giz) |
-| `panel` / `panel-foreground` | The auth "pitch" panel: navy with cream in light, a deeper navy than the canvas in dark (so the auth card still floats). Wrap it in `.on-panel` so the mark inverts on it. |
-| `paper` / `paper-foreground` | Papel `#FBF6EA` with navy ink. **Only** the Jogador card (figurinha card stock). Same in both themes. |
-| `paper-borda`, `paper-ouro` | The figurinha's white die-cut edge and the brilhante's gold ink (5:1 on Papel). Same in both themes. **Only** the Jogador card. |
-| `brand` / `brand-foreground` | **Logo only**: the mark's navy half and ring, and its cream half. Navy/cream in light, swapped in dark. Never use for UI actions (that's `primary`). |
-| `content1` | Surfaces: modals, header, menus (white in light, a lifted navy in dark) |
-| `content2`–`content4` | Nested / raised fills |
-| `default-50…900`, `default` | Neutrals (cool, navy-biased grays):  input fills (`default-100`), borders (`default-200/300`), muted text (`default-400/500/600`) |
+| `background` / `foreground` | The album's page (`#F4F6F1` / `#0E1712`) and the ink (navy `#14213D` / `#E8EFE6`) |
+| `content1` | **Stickers**: cards, modals, menus, the header (white / `#18241D`) |
+| `content2`–`content4` | Nested and raised fills, in the page's green-grey |
+| `default-50…900`, `default` | Neutrals, cool greys leaning to the page's green: input fills (`default-100`), borders (`default-200/300`), muted text (`default-400/500/600`, all ≥5.4:1 on the page) |
 | `divider` | Hairlines and borders between regions |
-| `primary` (+ `50…900`) | Navy `#14213D` in light; periwinkle `#96ACE0` in dark (navy would vanish on the navy canvas). Main action, selection, focus. `primary-600` is the solid hover. |
-| `accent` / `accent-foreground` | Colete `#FF5B14` (`#FF7A40` in dark), the fluorescent bib that splits teams in a pelada. **"You / live / active" only**: the active tab's underline, the "Você" badge, the "Ao vivo" dot, the "Qual desses é você?" banner (`bg-accent/10`) and the logo's center spot. A fill under navy text (`accent-foreground`, 5.1:1) or a non-text mark. **Never as text on Giz** (2.8:1); Colete text only on navy. Never for actions (`primary`) or errors (`danger`). |
-| `secondary` | Gramado `#43AA54` (artificial turf; `#5FC46E` in dark) with navy text (5.4:1). **Reserved for Sorteio actions** ("Sortear times", "Sortear", "Sortear de novo"). |
+| `primary` (+ `50…900`) | **The ink**: navy in light, the light ink in dark. Main action, selection, focus. `primary-600` is the solid hover. |
+| `secondary` | **The album's green** (`#0F7A47`, white text 5.4:1; `#4CC487` with dark text in dark). **Only the Sorteio's actions** ("Sortear times", "Sortear", "Sortear de novo"). |
+| `accent` / `accent-foreground` | **The mark's orange** (`#FF5B14`; `#FF7A40` in dark): **"you" only**: the active tab's mark, the "você" pill, your row, the "Qual desses é você?" banner (`bg-accent/10`) and the logo's center spot. A fill under navy text (5.1:1) or a non-text mark. **Never text on the page.** Never for actions (`primary`) or errors (`danger`). |
+| `paper` / `paper-foreground` | **Only the figurinha**: the white sticker and its navy ink. Same in both themes. |
+| `paper-borda`, `paper-ouro` | **Only the figurinha**: the album-green frame, and the brilhante's gold foil. Same in both themes. |
+| `brand` / `brand-foreground` | **Logo only**: the mark's ink and paper, swapped in dark. Never for UI actions (that's `primary`). |
+| `panel` / `panel-foreground` | The auth picture: the court at night, deeper than the page in dark. Wrap it in `.on-panel` so the mark inverts on it. |
 | `danger` | Brick red. Destructive actions and errors |
 | `warning` / `warning-600` | Ochre. Warnings (`warning-600` for text on `warning/10`) |
-| `success` | Deep teal-green, kept distinct from the bright Gramado. Positive confirmation |
-| `overlay` | Modal backdrop scrim (near-black navy in both themes), used as `backdrop:bg-overlay/50` |
-| `team-1…6` | Vintage kit colors for Times, by index: navy, brick, pitch green, ochre, petrol, wine. Lighter in dark. **Only** for team identity (the crest), never semantic. |
+| `success` | Petrol, kept apart from the album's green. Positive confirmation and high attributes |
+| `overlay` | Modal backdrop scrim, used as `backdrop:bg-overlay/50` |
+| `team-1…6` | Kit colors for Times, by index: navy, brick, pitch green, ochre, petrol, wine. Lighter in dark. **Only** for team identity (the crest), never semantic. |
 
 Rules:
-- No raw Tailwind palette colors (`gray-*`, `zinc-*`, `white`, `black`, `red-*`…) and no arbitrary hex classes (`bg-[#…]`) in `app/`, `components/` or `lib/`; ESLint enforces this on class strings. The only hex literals are the manifest and theme colors and the logo's center spot.
+- No raw Tailwind palette colors (`gray-*`, `zinc-*`, `white`, `black`, `red-*`…) and no arbitrary hex classes (`bg-[#…]`) in `app/`, `components/`, `lib/` or `src/`; ESLint enforces this on class strings. The only hex literals are the manifest and theme colors and the logo's center spot.
 - Tints use opacity on a token: `bg-primary/10`, `border-danger/20`.
 - Team colors (`getTeamPresentation` in `lib/constants.ts`) cycle through `team-1…6`. Never use `danger`/`success` for a Time: a red team reads as an error.
 - Attribute values use `getStatColor` (`lib/stat-color.ts`): ≥80 `success`, ≥70 `primary`, ≥50 `warning-600`, else `danger`.
 
 ## Typography
 
-One family, **Bricolage Grotesque**, loaded with its variable `wdth` and `opsz` axes. Its personality comes from using the axes, not from bolding everything.
+One family, **Anybody**, loaded with its variable width axis (`wdth` 50–150, `next/font`, `--font-anybody`). **Its width carries the voice**: wide for what you read at a glance (titles, numerals, the wordmark), normal for reading, condensed for a name that has to fit. Anybody's lowercase is tall: its capital S stands barely above the s. That's the face, not a bug.
 
-Scale (Bringhurst): **12 · 14 · 16 · 18 · 24 · 36 · 48** (`text-xs`, `sm`, `base`, `lg`, `2xl`, `4xl`, `5xl`). Don't use `text-xl` (20) or `text-3xl` (30). Arbitrary sizes (`text-[10px]`) are banned by ESLint.
+Scale (Bringhurst): **12 · 14 · 16 · 18 · 24 · 36 · 48** (`text-xs`, `sm`, `base`, `lg`, `2xl`, `4xl`, `5xl`). ESLint bans `text-xl` (20), `text-3xl` (30) and `text-6xl` up, arbitrary sizes (`text-[10px]`; `cqw` sizes on the figurinha are fine) and arbitrary families (`font-[…]`).
 
 Named classes, defined in `@layer components` in `app/globals.css`. Use the class, not the raw utilities.
 
 | Class | Equals | Use |
 |-------|--------|-----|
-| `.text-title` | `text-2xl font-bold tracking-tight text-foreground` | Page and modal titles (one per screen) |
-| `.text-section` | `text-lg font-semibold text-foreground` | Section headings inside a page/modal |
-| `.text-label` | `text-sm font-medium text-default-500` | A heading over a list or group ("Próximas", "Times", "Não vão"), in sentence case |
+| `.text-title` | `text-2xl font-extrabold tracking-tight`, width 115% | Page and modal titles (one per screen). The Partida's date, the longest title, is at 100% on phones so it stays on one line. |
+| `.text-section` | `text-lg font-bold`, width 110% | Section headings inside a page/modal |
+| `.text-label` | `text-sm font-semibold text-default-500`, width 90% | A heading over a list or group ("Próximas", "Times", "Não vão"), in sentence case |
 | `.text-muted` | `text-sm text-default-500` | Subtitles, helper text, empty states |
-| `.text-numeral` | Bricolage at `wdth 75`, `opsz 96`, weight 800, tabular, tight | **Printed numerals**: OVR, "8 de 14", Time averages, the Sorteio spread. Combine with a size from the scale. |
+| `.text-numeral` | weight 900, width 135%, tabular, tight | **Printed numerals**, like an album's sticker numbers: OVR, "8 de 14", Time averages, the Sorteio spread. Combine with a size from the scale. |
 | `.text-display` | `text-2xl sm:text-4xl font-normal leading-tight tracking-tight` | **Only** the auth picture caption, in a single weight |
 
-Weights: body 400, labels and names in lists 500, section headings 600, titles 700, numerals 800. `font-black` is left only for the "Squadra" wordmark.
+Weights: body 400, labels and names in lists 500–600, section headings 700, titles 800, numerals and the wordmark 900.
 
 ## Copy
 
@@ -175,14 +178,14 @@ The **only exception** is the Jogador card (`PlayerCard`): its radii are in `cqw
 ## Interaction
 
 - Focus: `focus-visible:ring-2 ring-primary` on every interactive element, menu items included.
-- **Touch**: hover styles only apply where there's a mouse (`future.hoverOnlyWhenSupported`), so nothing stays "hovered" after a tap. Pressed feedback is `active:`. There's no tap highlight (`-webkit-tap-highlight-color: transparent`). The header and tab bar can't be selected or long-pressed into a link preview. Installed, the page doesn't rubber-band (`overscroll-behavior-y: none` under `display-mode: standalone`).
+- **Touch**: hover styles only apply where there's a mouse (Tailwind 4's `hover:` checks `(hover: hover)`), so nothing stays "hovered" after a tap. Pressed feedback is `active:`. There's no tap highlight (`-webkit-tap-highlight-color: transparent`). The header and tab bar can't be selected or long-pressed into a link preview. Installed, the page doesn't rubber-band (`overscroll-behavior-y: none` under `display-mode: standalone`).
 - **Tap areas are 44px or more.** Where the visible control is smaller (⋯, share, back links, "Criar conta"), an invisible area makes up the rest without moving the layout: `Button`'s own `::after`, `.area-de-toque` for text links and inline buttons, and `.slider` for ranges (24px thumb, 44px tall).
 - `mouse:` (`pointer: fine`) is for what only makes sense with a mouse ("ou arraste", 14px fields). Never decide that by width: a tablet is wide and has no mouse. `mouse:` and `baixa:` are `@custom-variant`s in `app/globals.css`, not breakpoints, so they never interfere with `sm:` or `max-*`.
 - `Button` heights are minimums: a long label ("Passar o fut pra …") wraps inside the button. `lg` is `px-4` on phones, so "Não vou" fits half the Partida's card.
 - Selection: `ring-2 ring-primary` plus a `primary/10` tint.
 - Hover on rows: border shifts toward `primary/40–50`. Hover is a desktop extra, never the only way to reach an action. Cards don't scale on hover.
 - Dragging is a desktop extra too. A Jogador moves between Times with a select beside their name ("Mover <nome>"), in the Partida's Sorteio and in the quick one; the quick one also lets a mouse drag the row.
-- Motion: `transition-colors` / `transition-opacity`; `animate-scale-in` for elements that pop in (selection badge); `animate-coin-toss` only for the loader mark.
+- Motion: `transition-colors` / `transition-opacity` for state, `subir` for a phone's sheet, `animate-coin-toss` only for the loader mark. All off under `prefers-reduced-motion`.
 
 ## Export (Times Sorteados PNG)
 

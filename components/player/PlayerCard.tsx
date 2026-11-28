@@ -219,7 +219,7 @@ export const PlayerCard = ({
                 className={`shrink-0 border-t-[0.6cqw] ${regua} ${brilhante ? "mx-[3cqw]" : ""}`}
               />
               <div className="flex shrink-0 items-center gap-[3.5cqw] px-[5cqw] py-[3.5cqw]">
-                <span className={`text-numeral text-[22cqw] leading-[0.82] ${tinta}`}>{player.rating}</span>
+                <span className={`text-numeral text-[17cqw] leading-[0.82] ${tinta}`}>{player.rating}</span>
                 <div className="flex min-w-0 flex-col gap-[1cqw]">
                   <span className="flex min-w-0 items-center gap-[2cqw]">
                     <span className="truncate text-[9cqw] font-bold leading-[1.05] tracking-tight">{player.name}</span>
@@ -232,7 +232,7 @@ export const PlayerCard = ({
             </>
           ) : (
             <div className="flex flex-1 flex-col px-[6cqw] pb-[5cqw] pt-[4.5cqw]">
-              <span className={`text-numeral -ml-[1cqw] text-[54cqw] leading-[0.82] ${tinta}`}>{player.rating}</span>
+              <span className={`text-numeral -ml-[1cqw] text-[36cqw] leading-[0.82] ${tinta}`}>{player.rating}</span>
               <span className="mt-[2.5cqw]">{posicao}</span>
               <div className="mt-auto flex items-end gap-[2.5cqw]">
                 <p className="line-clamp-2 min-w-0 text-[9.5cqw] font-bold leading-[1.02] tracking-tight [overflow-wrap:anywhere]">
@@ -272,7 +272,7 @@ export const PlayerCard = ({
             nome={`Ações da carta de ${player.name}`}
             rotulo={`Ações da carta de ${player.name}`}
             acoes={acoes}
-            classeDoBotao="rounded-full bg-paper-borda/90 text-paper-foreground shadow-xs hover:bg-paper-borda"
+            classeDoBotao="rounded-full bg-paper-borda text-paper shadow-xs hover:bg-paper-borda/90"
           />
         </div>
       )}

@@ -45,7 +45,8 @@ export function PartidasView({
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8">
-      <div className="flex items-center justify-between gap-3">
+      {/* On the narrowest phones the button goes under the title rather than off the screen. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <h1 className="text-title">Partidas</h1>
         {podeCriar && !semConexao && (
           <Button color="primary" size="sm" startContent={<CalendarPlus size={16} />} onClick={() => setCriando(true)}>

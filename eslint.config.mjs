@@ -8,6 +8,9 @@ const RAW_PALETTE =
   "(bg|text|border|ring|ring-offset|from|via|to|fill|stroke|outline|divide|placeholder|shadow|accent|caret|decoration)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|white|black)\\b";
 const ARBITRARY_HEX = "-\\[#[0-9a-fA-F]{3,8}\\]";
 const ARBITRARY_FONT_SIZE = "text-\\[\\d+(\\.\\d+)?(px|rem)\\]";
+// Off the type scale (DESIGN.md: 12 · 14 · 16 · 18 · 24 · 36 · 48), and any font but the one family.
+const OFF_SCALE_SIZE = "(^|[\\s:])text-(xl|3xl|6xl|7xl|8xl|9xl)(?![\\w-])";
+const ARBITRARY_FONT = "font-\\[";
 
 const designTokenRule = (pattern, message) => [
   { selector: `Literal[value=/${pattern}/]`, message },
@@ -26,10 +29,9 @@ const eslintConfig = [
         "error",
         ...designTokenRule(RAW_PALETTE, "Use a design token (see DESIGN.md), not a raw Tailwind palette color."),
         ...designTokenRule(ARBITRARY_HEX, "Use a design token (see DESIGN.md), not an arbitrary hex color."),
-        ...designTokenRule(
-          ARBITRARY_FONT_SIZE,
-          "Use the type scale (see DESIGN.md), e.g. text-2xs, not an arbitrary font size.",
-        ),
+        ...designTokenRule(ARBITRARY_FONT_SIZE, "Use the type scale (see DESIGN.md), not an arbitrary font size."),
+        ...designTokenRule(OFF_SCALE_SIZE, "Use the type scale (see DESIGN.md): 12, 14, 16, 18, 24, 36 or 48."),
+        ...designTokenRule(ARBITRARY_FONT, "Use the one family, Anybody (font-sans), not an arbitrary font."),
       ],
     },
   },

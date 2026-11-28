@@ -158,7 +158,8 @@ export function PartidaView({
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 flex-col gap-1">
                 {naInicio && <p className="text-label">Próxima partida</p>}
-                <h1 className="text-title capitalize">{formatarInicio(partida.inicio)}</h1>
+                {/* The longest title in the app: at normal width on a phone, so the date stays on one line. */}
+                <h1 className="text-title capitalize max-sm:[font-stretch:100%]">{formatarInicio(partida.inicio)}</h1>
                 <p className="flex items-center gap-1 text-default-500">
                   <MapPin size={16} aria-hidden="true" /> {partida.local}
                 </p>

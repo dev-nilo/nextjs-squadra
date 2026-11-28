@@ -1,17 +1,17 @@
 import type React from "react";
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque } from "next/font/google";
+import { Anybody } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { RegistrarServiceWorker } from "@/components/pwa/registrar-sw";
 import { Providers } from "./providers";
 
-// Variable axes: wdth (75–100) for the condensed printed numerals, opsz for display sizes.
-const bricolage = Bricolage_Grotesque({
+// Anybody, with its width axis (50–150): wide for titles and printed numerals, condensed for names.
+const anybody = Anybody({
   subsets: ["latin"],
-  variable: "--font-bricolage",
-  axes: ["wdth", "opsz"],
+  variable: "--font-anybody",
+  axes: ["wdth"],
 });
 
 export const metadata: Metadata = {
@@ -63,7 +63,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${bricolage.variable} font-sans antialiased bg-background text-foreground`}>
+      <body className={`${anybody.variable} font-sans antialiased bg-background text-foreground`}>
         <Providers>
           {children}
           <Toaster position="top-center" richColors theme="system" />

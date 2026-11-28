@@ -13,7 +13,7 @@
  * `bg-content1/95` keeps working: v4 mixes the colour with transparent.
  */
 @theme inline {
-  --font-sans: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-anybody), ui-sans-serif, system-ui, sans-serif;
   --color-background: rgb(var(--background));
   --color-foreground: rgb(var(--foreground));
   --color-focus: rgb(var(--focus));
@@ -108,52 +108,54 @@
   }
 }
 
-/* "Quadra à noite": chalk-white court (Giz) and navy night (Noite), with the Jogador card as the
-   one warm, printed object (Papel). Colete orange marks "you / live / active"; Gramado is the
-   Sorteio action. See DESIGN.md. */
+/* "Álbum": the fut is an album the group fills each week. Light is the album's page (cool paper,
+   never cream) printed in navy ink, with white stickers on it. The album's green is the Sorteio's
+   action; the mark's orange marks "you"; gold is only the brilhante's foil. See DESIGN.md. */
 :root {
-  --background: 242 244 247;
-  --foreground: 18 27 48;
-  --divider: 221 226 234;
+  --background: 244 246 241; /* the album page, #F4F6F1 */
+  --foreground: 20 33 61; /* navy ink, #14213D */
+  --divider: 220 226 216;
   --focus: 20 33 61;
-  --overlay: 5 8 18;
+  --overlay: 6 12 9;
 
-  /* The mark keeps its own navy and cream in both themes (only swapped). */
+  /* The mark: navy ink and the album's paper (swapped in dark). */
   --brand: 20 33 61;
-  --brand-foreground: 244 237 224;
+  --brand-foreground: 244 246 241;
 
-  /* The auth "pitch" panel: navy with cream on top. */
+  /* The auth picture: the court at night. */
   --panel: 20 33 61;
-  --panel-foreground: 244 237 224;
+  --panel-foreground: 244 246 241;
 
-  /* Papel: figurinha card stock. Same in both themes, it's a physical object. */
-  --paper: 251 246 234;
+  /* The figurinha: a white sticker in the album's green frame. Same in both themes, it's printed. */
+  --paper: 255 255 255;
   --paper-foreground: 20 33 61;
-  --paper-borda: 255 255 255; /* the white die-cut edge */
-  --paper-ouro: 154 116 32; /* the brilhante's gold ink, 5:1 on Papel */
+  --paper-borda: 15 122 71; /* the album green frame, #0F7A47 */
+  --paper-ouro: 136 100 20; /* the brilhante's gold foil, 5.4:1 on white */
 
-  --content1: 255 255 255;
-  --content1-foreground: 18 27 48;
-  --content2: 233 237 243;
-  --content2-foreground: 36 44 62;
-  --content3: 221 226 234;
-  --content3-foreground: 55 64 84;
-  --content4: 203 210 221;
-  --content4-foreground: 66 76 96;
+  --content1: 255 255 255; /* stickers: cards, modals, menus, the header */
+  --content1-foreground: 20 33 61;
+  --content2: 233 237 230;
+  --content2-foreground: 34 42 48;
+  --content3: 220 226 216;
+  --content3-foreground: 52 61 68;
+  --content4: 197 204 194;
+  --content4-foreground: 64 74 82;
 
-  --default-50: 247 248 250;
-  --default-100: 233 237 243;
-  --default-200: 221 226 234;
-  --default-300: 203 210 221;
-  --default-400: 96 106 126;
-  --default-500: 80 90 110;
-  --default-600: 66 76 96;
-  --default-700: 55 64 84;
-  --default-800: 36 44 62;
-  --default-900: 22 29 45;
-  --default: 203 210 221;
-  --default-foreground: 18 27 48;
+  /* Neutrals: cool greys leaning to the page's green. */
+  --default-50: 247 248 245;
+  --default-100: 233 237 230;
+  --default-200: 220 226 216;
+  --default-300: 197 204 194;
+  --default-400: 92 102 108;
+  --default-500: 80 90 100;
+  --default-600: 64 74 82;
+  --default-700: 52 61 68;
+  --default-800: 34 42 48;
+  --default-900: 22 28 33;
+  --default: 197 204 194;
+  --default-foreground: 20 33 61;
 
+  /* Primary: the navy ink. Main action, selection, focus. */
   --primary-50: 236 240 247;
   --primary-100: 217 225 239;
   --primary-200: 178 193 219;
@@ -165,24 +167,24 @@
   --primary-800: 9 15 28;
   --primary-900: 5 9 18;
   --primary: 20 33 61;
-  --primary-foreground: 242 244 247;
+  --primary-foreground: 244 246 241;
 
-  /* Colete: fluorescent bib orange. A fill under navy text (5.1:1), never text on Giz (2.8:1). */
+  /* The mark's orange: "you". A fill under navy text (5.1:1), never text on the page. */
   --accent: 255 91 20;
   --accent-foreground: 20 33 61;
 
-  /* Gramado: artificial-turf green, only for Sorteio actions. Navy text on it (5.4:1). */
-  --secondary: 67 170 84;
-  --secondary-foreground: 20 33 61;
-  --success: 31 122 92;
+  /* The album's green: only the Sorteio's actions. White text on it (5.4:1). */
+  --secondary: 15 122 71;
+  --secondary-foreground: 255 255 255;
+  --success: 22 112 118; /* petrol, kept apart from the album green */
   --success-foreground: 255 255 255;
   --warning: 214 148 40;
   --warning-600: 142 92 16;
-  --warning-foreground: 18 27 48;
+  --warning-foreground: 20 33 61;
   --danger: 178 50 40;
   --danger-foreground: 255 255 255;
 
-  /* Team colors: vintage kit colors, assigned by Time index. Not semantic. */
+  /* Team colors: kit colors, assigned by Time index. Not semantic. */
   --team-1: 20 33 61;
   --team-2: 168 58 42;
   --team-3: 70 120 40;
@@ -191,73 +193,74 @@
   --team-6: 118 42 72;
 }
 
-/* Dark is the night itself: the brand navy is the canvas (no tinted near-black). */
+/* Dark is the album at night: a deep green-black page, the ink turned light. Stickers stay printed. */
 .dark {
-  --background: 20 33 61;
-  --foreground: 242 244 247;
-  --divider: 40 56 92;
-  --focus: 150 172 224;
-  --overlay: 5 8 18;
+  --background: 14 23 18; /* #0E1712 */
+  --foreground: 232 239 230; /* #E8EFE6 */
+  --divider: 42 59 49;
+  --focus: 232 239 230;
+  --overlay: 2 5 3;
 
-  --brand: 244 237 224;
-  --brand-foreground: 20 33 61;
+  --brand: 232 239 230;
+  --brand-foreground: 14 23 18;
 
-  /* Deeper than the canvas, so the auth card still floats over it. */
-  --panel: 11 19 36;
-  --panel-foreground: 244 237 224;
+  /* Deeper than the page, so the auth card still floats over it. */
+  --panel: 8 14 11;
+  --panel-foreground: 232 239 230;
 
-  --paper: 251 246 234;
+  --paper: 255 255 255;
   --paper-foreground: 20 33 61;
-  --paper-borda: 255 255 255; /* the white die-cut edge */
-  --paper-ouro: 154 116 32; /* the brilhante's gold ink, 5:1 on Papel */
+  --paper-borda: 15 122 71;
+  --paper-ouro: 136 100 20;
 
-  --content1: 27 42 76;
-  --content1-foreground: 242 244 247;
-  --content2: 35 52 90;
-  --content2-foreground: 236 239 244;
-  --content3: 48 66 108;
-  --content3-foreground: 222 227 236;
-  --content4: 64 84 128;
-  --content4-foreground: 200 208 222;
+  --content1: 24 36 29; /* #18241D */
+  --content1-foreground: 232 239 230;
+  --content2: 31 45 37;
+  --content2-foreground: 222 230 224;
+  --content3: 42 59 49;
+  --content3-foreground: 205 214 208;
+  --content4: 52 70 59;
+  --content4-foreground: 190 201 194;
 
-  --default-50: 27 42 76;
-  --default-100: 35 52 90;
-  --default-200: 48 66 108;
-  --default-300: 64 84 128;
-  --default-400: 150 162 186;
-  --default-500: 176 186 206;
-  --default-600: 200 208 222;
-  --default-700: 222 227 236;
-  --default-800: 236 239 244;
-  --default-900: 246 247 250;
-  --default: 48 66 108;
-  --default-foreground: 242 244 247;
+  --default-50: 24 36 29;
+  --default-100: 31 45 37;
+  --default-200: 42 59 49;
+  --default-300: 52 70 59;
+  --default-400: 145 160 150;
+  --default-500: 166 180 171;
+  --default-600: 190 201 194;
+  --default-700: 214 222 216;
+  --default-800: 232 239 230;
+  --default-900: 244 247 242;
+  --default: 42 59 49;
+  --default-foreground: 232 239 230;
 
-  --primary-50: 24 38 70;
-  --primary-100: 30 46 84;
-  --primary-200: 40 60 108;
-  --primary-300: 62 82 136;
-  --primary-400: 104 126 184;
-  --primary-500: 150 172 224;
-  --primary-600: 178 195 234;
-  --primary-700: 203 215 242;
-  --primary-800: 225 232 248;
-  --primary-900: 240 244 252;
-  --primary: 150 172 224;
-  --primary-foreground: 20 33 61;
+  /* The ink turned light: the main action is light on the dark page. */
+  --primary-50: 24 36 29;
+  --primary-100: 31 45 37;
+  --primary-200: 52 70 59;
+  --primary-300: 92 110 99;
+  --primary-400: 160 174 165;
+  --primary-500: 232 239 230;
+  --primary-600: 208 218 211;
+  --primary-700: 188 200 192;
+  --primary-800: 160 174 165;
+  --primary-900: 130 145 136;
+  --primary: 232 239 230;
+  --primary-foreground: 14 23 18;
 
   --accent: 255 122 64;
-  --accent-foreground: 20 33 61;
+  --accent-foreground: 14 23 18;
 
-  --secondary: 95 196 110;
-  --secondary-foreground: 20 33 61;
-  --success: 86 190 150;
-  --success-foreground: 20 33 61;
+  --secondary: 76 196 135; /* the album green, lit */
+  --secondary-foreground: 14 23 18;
+  --success: 86 190 190;
+  --success-foreground: 14 23 18;
   --warning: 232 170 70;
   --warning-600: 240 192 112;
-  --warning-foreground: 20 33 61;
+  --warning-foreground: 14 23 18;
   --danger: 236 112 98;
-  --danger-foreground: 20 33 61;
+  --danger-foreground: 14 23 18;
 
   --team-1: 150 172 224;
   --team-2: 232 128 108;
@@ -293,16 +296,20 @@ html [data-sonner-toaster][data-theme] {
 }
 
 @layer components {
-  /* Type scale (Bringhurst): 12 · 14 · 16 · 18 · 24 · 36 · 48. See DESIGN.md. */
+  /* Type scale (Bringhurst): 12 · 14 · 16 · 18 · 24 · 36 · 48. One family, Anybody, and its width
+     axis carries the voice: wide for what you read at a glance, condensed for names in a list. */
   .text-title {
-    @apply text-2xl font-bold tracking-tight text-foreground;
+    @apply text-2xl font-extrabold tracking-tight text-foreground;
+    font-stretch: 115%;
   }
   .text-section {
-    @apply text-lg font-semibold text-foreground;
+    @apply text-lg font-bold text-foreground;
+    font-stretch: 110%;
   }
   /* A heading over a list or group, in sentence case (no tracked-out caps). */
   .text-label {
-    @apply text-sm font-medium text-default-500;
+    @apply text-sm font-semibold text-default-500;
+    font-stretch: 90%;
   }
   .text-muted {
     @apply text-sm text-default-500;
@@ -311,14 +318,12 @@ html [data-sonner-toaster][data-theme] {
     /* v4: an explicit leading wins over a text size's own line-height, so sm states v3's 2.5rem. */
     @apply text-2xl font-normal leading-tight tracking-tight sm:text-4xl sm:leading-10;
   }
-  /* Printed numerals: OVR, "8 de 14", Time averages. Bricolage condensed at display size. */
+  /* Printed numerals: OVR, "8 de 14", Time averages. Wide and heavy, like an album's sticker numbers. */
   .text-numeral {
-    font-variation-settings:
-      "wdth" 75,
-      "opsz" 96;
-    font-weight: 800;
+    font-stretch: 135%;
+    font-weight: 900;
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.03em;
     line-height: 1;
   }
   /* The frame's side padding, or the notch's inset when an iPhone lies on its side (whichever is wider). */

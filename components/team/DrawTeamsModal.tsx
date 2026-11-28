@@ -149,7 +149,7 @@ export const DrawTeamsModal = ({ isOpen, onClose, generatedTeams, onMover, onRed
               <div className="flex items-center gap-3 min-w-0">
                 <Logo className="h-10 w-10 sm:h-12 sm:w-12" />
                 <div className="min-w-0">
-                  <p className="text-lg sm:text-2xl font-black text-brand tracking-tight leading-tight sm:leading-8">
+                  <p className="text-lg sm:text-2xl font-black text-brand tracking-tight leading-tight sm:leading-8 [font-stretch:140%]">
                     Squadra
                   </p>
                   <p className="text-xs text-default-500 font-medium">

@@ -444,7 +444,7 @@ A second rule keeps Supabase out of the legacy UI: `components/` and `hooks/` ma
 
 ## 14. UI and design system
 
-- A new visual identity (M2), chosen from three prototyped directions. It keeps the Squadra name and brand, the carta with OVR and attributes, and the three-tab mobile shell.
+- A new visual identity (M2), **Álbum**, chosen by the owner from three prototyped directions (#146): the fut as an album filled each week, white stickers on cool paper, navy ink, the album's green for the Sorteio, Anybody with its width axis. Its tokens and DESIGN.md landed in #148; the layouts follow module by module. It keeps the Squadra name and brand, the carta with OVR and attributes, and the three-tab mobile shell.
 - Tailwind 4 since #147, configured in CSS: `@theme inline` maps the RGB-channel tokens of `app/globals.css` to colours, `@custom-variant` declares `mouse:`, `baixa:` and `dark:`, and `tailwind.config.ts` is gone. The ESLint rule that bans raw colours and sizes stays.
 - Primitives (dialog and sheet, menu, select, popover, button, input) built on Radix UI and styled in the repo, under `src/compartilhado/ui`.
 
