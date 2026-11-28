@@ -120,7 +120,7 @@ export const PlayerCard = ({
   const label = `Carta de ${player.name}, ${player.position}, rating ${player.rating}${isSelected ? ", selecionado" : ""}${isMine ? ", você" : player.conta_id ? ", com conta" : ""}`;
 
   const posicao = (
-    <span className="flex items-center gap-[2cqw] text-[6cqw] font-semibold text-paper-foreground/70 [@container(max-width:160px)]:text-[8cqw]">
+    <span className="flex items-center gap-[2cqw] text-[7cqw] font-semibold text-paper-foreground/70 [@container(max-width:160px)]:text-[8cqw]">
       <img
         src={getFlagUrl(countryCode)}
         crossOrigin="anonymous"
@@ -129,7 +129,7 @@ export const PlayerCard = ({
         alt={getCountryName(countryCode)}
         width={24}
         height={16}
-        className="h-[4.5cqw] w-[6.75cqw] shrink-0 rounded-[0.6cqw] object-cover"
+        className="h-[5.2cqw] w-[7.8cqw] shrink-0 rounded-[0.6cqw] object-cover"
       />
       {POSICAO_POR_EXTENSO[player.position]}
     </span>
@@ -147,18 +147,18 @@ export const PlayerCard = ({
   // `grande`: the back of a small card, in larger type, so it reads at 125px wide.
   const atributos = (borda: boolean, grande = false) => (
     <dl
-      className={`grid grid-cols-2 ${grande ? "gap-x-[7cqw] gap-y-[1.5cqw]" : "gap-x-[8cqw]"} ${borda ? `border-t-[0.6cqw] pt-[2cqw] ${regua}` : ""}`}
+      className={`grid grid-cols-2 ${grande ? "gap-x-[7cqw] gap-y-[1.5cqw]" : "gap-x-[6cqw]"} ${borda ? `border-t-[0.6cqw] pt-[2cqw] ${regua}` : ""}`}
       aria-label="Atributos do jogador"
     >
       {ORDEM.map((chave) => {
         const forte = fortes.has(chave);
         return (
           <div key={chave} className="flex items-baseline justify-between py-[0.5cqw]">
-            <dt className={`${grande ? "text-[8cqw]" : "text-[5.5cqw]"} font-medium text-paper-foreground/70`}>
+            <dt className={`${grande ? "text-[8cqw]" : "text-[7cqw]"} font-medium text-paper-foreground/70`}>
               {labels[chave].toLowerCase()}
             </dt>
             <dd
-              className={`${grande ? "text-[9.5cqw]" : "text-[7cqw]"} tabular-nums ${forte ? "font-extrabold text-paper-foreground" : "font-medium text-paper-foreground/70"}`}
+              className={`${grande ? "text-[9.5cqw]" : "text-[9cqw]"} tabular-nums ${forte ? "font-extrabold text-paper-foreground" : "font-medium text-paper-foreground/70"}`}
             >
               {player.attributes[chave]}
             </dd>
