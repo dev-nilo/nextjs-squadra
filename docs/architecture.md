@@ -91,6 +91,7 @@ There is no `src/`. The layers exist by convention, not by folder:
 | `hooks/` | `use-auth`, `use-partida-ao-vivo`, `use-sorteio-rapido`, `use-foco-ao-mover` | UI state |
 | `types/index.ts` | `Player`, `Attributes`, `Time`, `PlayerPosition` | Domain types (English names) |
 | `supabase/` | 28 migrations, seed, email templates, config | The database, where most rules live |
+| `*.test.ts`, `*.test.tsx` beside the code | Vitest, two projects in one `npm test`: plain logic in Node, components in happy-dom with Testing Library | Safety net |
 | `tests/integration/`, `e2e/` | Vitest against a real local Supabase; Playwright | Safety net |
 
 ### Routes
@@ -353,7 +354,7 @@ These are what the rewrite exists to fix.
 - The Sorteio snapshot doesn't store nationality, so the UI fills in `"BR"`.
 
 **Tooling**
-- No component tests. (Prettier came in #139, the stricter TypeScript checks in #131 and the boundary lint in #133.)
+- The four big views have characterization tests (#134): `partida-view`, `elenco-view`, `DrawTeamsModal`, `PlayerModal`. They pin what a person sees and does, by role and accessible name, so they survive the M2 restyle and the module moves. Server Actions are mocked (`tests/componentes/acoes.ts` builds their results), and `usePartidaAoVivo` is replaced by a fake whose `servidor` stands for the database (`tests/componentes/partida-ao-vivo.ts`). The other components have none yet. (Prettier came in #139, the stricter TypeScript checks in #131 and the boundary lint in #133.)
 
 **Leftovers**
 - `TEAM_COLORS` (internal only), `GK_LABELS` and `OUTFIELD_LABELS` (identical), `America/Sao_Paulo` written three times, constants copied by hand between `public/sw.js` and `lib/pwa/paginas.ts`, and comments that mention a removed backfill and a dropped policy.

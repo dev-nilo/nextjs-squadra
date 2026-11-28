@@ -133,7 +133,7 @@ Attendance, in turn, is a `security_invoker` view, `frequencia_jogadores`, so it
 | --- | --- |
 | App | Next.js 16 (App Router, Server Components, Server Actions), React 19, TypeScript, Tailwind CSS, Zod |
 | Data | Supabase: Postgres with RLS, plpgsql functions, Realtime, Auth, Storage; Supabase CLI migrations |
-| Tests | Vitest (unit, plus integration against a local Supabase), Playwright (E2E) |
+| Tests | Vitest (unit, components with Testing Library, and integration against a local Supabase), Playwright (E2E) |
 | Delivery | GitHub Actions, Vercel (previews against staging, production deployed from CI), Sentry tagged by environment |
 
 ## Running it locally
@@ -160,7 +160,7 @@ Then run `npm run dev` and open http://localhost:3000. The seed users all use th
 
 | Command | |
 | --- | --- |
-| `npm test` | Unit tests |
+| `npm test` | Unit and component tests |
 | `npm run test:local` | What the CI's database job runs, against the local Supabase: RLS and integration tests, then a production build and Playwright. `-- integration` or `-- e2e` runs one half |
 | `npm run test:integration` / `npm run test:e2e` | The same halves without the setup: export `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL` (integration only) and the two `NEXT_PUBLIC_` ones from `npx supabase status` yourself, and run `npm run build` before E2E |
 | `npm run lint` / `npm run typecheck` | |
