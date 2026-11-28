@@ -1,5 +1,6 @@
 import nextConfig from "eslint-config-next";
 import prettierConfig from "eslint-config-prettier/flat";
+import { fronteiras, uiSemSupabase } from "./eslint.fronteiras.mjs";
 
 // DESIGN.md: only design tokens. Bans raw Tailwind palette colors,
 // arbitrary hex colors and arbitrary pixel font sizes in class strings.
@@ -14,6 +15,9 @@ const designTokenRule = (pattern, message) => [
 ];
 
 const eslintConfig = [
+  // Files that break the dependency rule on purpose: tests/fronteiras lints
+  // them with that rule alone and checks that each one fails.
+  { ignores: ["tests/fronteiras/projeto/**"] },
   ...nextConfig,
   {
     files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}", "src/**/*.{ts,tsx}"],
@@ -48,6 +52,8 @@ const eslintConfig = [
       ],
     },
   },
+  fronteiras,
+  uiSemSupabase,
   // Last, so it turns off any style rule above that Prettier now owns.
   prettierConfig,
 ];

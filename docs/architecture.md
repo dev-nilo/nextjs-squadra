@@ -334,7 +334,7 @@ These are what the rewrite exists to fix.
 **Structure**
 - `lib/` is flat and mixes domain, read models, infrastructure and client-only hooks (`lib/pwa/*` is `"use client"`).
 - God modules: `lib/sessao.ts` (733 lines: config, auth flows, redirect safety, error decoding, about 150 lines of toast copy); `components/partida/partida-view.tsx` (550, five components and PWA install logic); `components/elenco/elenco-view.tsx` (368, four modals, Storage calls, filter and sort); `DrawTeamsModal.tsx` (298); `PlayerModal.tsx` (280).
-- Supabase is called from UI code: `elenco-view` (Storage), `convites-do-fut` (reads `convites` in a `useEffect`, against ADR 0006), `auth-form`, `change-password-modal`, `use-auth`, `use-partida-ao-vivo`. No lint rule prevents it.
+- Supabase is called from UI code: `elenco-view` (Storage), `convites-do-fut` (reads `convites` in a `useEffect`, against ADR 0006), `auth-form`, `change-password-modal`, `use-auth`, `use-partida-ao-vivo`. Since #133 a lint rule stops new ones, and these six are an allowlist that may only shrink (§12).
 - Inline page queries (`elenco`, `voce`, `pessoas`) duplicate the `players.select(COLUNAS_DO_JOGADOR)` → `jogadorDaLinha` sequence in four places.
 
 **Types**
@@ -353,7 +353,7 @@ These are what the rewrite exists to fix.
 - The Sorteio snapshot doesn't store nationality, so the UI fills in `"BR"`.
 
 **Tooling**
-- No boundary lint, no component tests. (Prettier came in #139 and the stricter TypeScript checks in #131.)
+- No component tests. (Prettier came in #139, the stricter TypeScript checks in #131 and the boundary lint in #133.)
 
 **Leftovers**
 - `TEAM_COLORS` (internal only), `GK_LABELS` and `OUTFIELD_LABELS` (identical), `America/Sao_Paulo` written three times, constants copied by hand between `public/sw.js` and `lib/pwa/paginas.ts`, and comments that mention a removed backfill and a dropped policy.
@@ -403,7 +403,27 @@ flowchart TB
   APL --> CAPL[compartilhado/aplicacao]
 ```
 
-**The dependency rule.** Arrows point inward. `dominio` depends on nothing but other domain code. `ui` never imports `infra`: it reaches the server through Server Actions. Another module is used only through its `index.ts`. `eslint-plugin-boundaries` enforces all of it (M1). The decision and the alternatives rejected are in [ADR 0009](adr/0009-modules-by-context-with-layers.md).
+**The dependency rule.** Arrows point inward. `dominio` depends on nothing but other domain code. `ui` never imports `infra`: it reaches the server through Server Actions. Another module is used only through its `index.ts`. The decision and the alternatives rejected are in [ADR 0009](adr/0009-modules-by-context-with-layers.md).
+
+`eslint-plugin-boundaries` enforces it ([eslint.fronteiras.mjs](../eslint.fronteiras.mjs)), so a violation fails `npm run lint` and CI. Anything not listed is refused:
+
+| From | May import |
+|------|-----------|
+| `modulos/X/dominio` | `X/dominio`, `compartilhado/dominio`, another module's `index.ts`; packages, except React, Next, `@supabase/*`, `@sentry/*`, `server-only` and `sonner` |
+| `modulos/X/aplicacao` | `X/dominio`, `X/infra`, `compartilhado/aplicacao`, `compartilhado/dominio`, another module's `index.ts` |
+| `modulos/X/infra` | `X/dominio`, `compartilhado/infra`, `compartilhado/dominio`, another module's `index.ts` |
+| `modulos/X/ui` | `X/dominio`, `compartilhado/ui`, `compartilhado/dominio`, another module's `index.ts` |
+| `modulos/X/index.ts` | `X/ui`, `X/aplicacao`, `X/dominio`, another module's `index.ts` |
+| `compartilhado/*` | `compartilhado/dominio`; `compartilhado/aplicacao` may also use `compartilhado/infra`. Never a module |
+| `app/` | a module's `index.ts`, any part of `compartilhado` |
+
+Until M8 deletes the legacy tree (`lib/`, `components/`, `hooks/`, `types/`):
+- the legacy tree imports itself freely, and reaches modules only through their `index.ts`, like `app/`;
+- the new layers may import it. `dominio` may import types from it, never values.
+
+A second rule keeps Supabase out of the legacy UI: `components/` and `hooks/` may not import `@supabase/*` or `@/lib/supabase/*`. The six files that still do are an allowlist in `eslint.fronteiras.mjs` (`AINDA_CHAMAM_O_SUPABASE`), and the list may only shrink.
+
+[tests/fronteiras](../tests/fronteiras) proves every rule fires. It lints a small tree with this layout, in which each `viola-*` file breaks exactly one rule and every other file is clean. The repository's own lint skips that tree.
 
 **What stays in SQL.** Authorization, concurrency, and the invariants that need a transaction or must hold for any client: RLS, the security-definer functions, the triggers, the lock order. Clean architecture usually puts every rule in the domain layer. Here that would mean moving the last-vaga lock into application code, which can't give the same guarantee. So the TypeScript domain holds the algorithms (Sorteio balancing), the shaping of what screens show, validation for fast feedback, and the rules for what the UI offers. The database holds the rules that must never break.
 
