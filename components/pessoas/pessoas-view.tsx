@@ -56,7 +56,7 @@ export function PessoasView({ grupo, pessoas, userId }: { grupo: Participacao; p
       <div className="flex flex-col gap-3">
         <Link
           href={caminhoDaAba(grupo.slug, "voce")}
-          className="flex w-fit items-center gap-1 text-sm font-medium text-default-500 hover:text-foreground area-de-toque rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="flex w-fit items-center gap-1 text-sm font-medium text-default-500 hover:text-foreground area-de-toque rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
         >
           <ArrowLeft size={16} aria-hidden="true" /> Você
         </Link>
@@ -136,7 +136,7 @@ function LinhaDaPessoa({
           type="button"
           onClick={onAbrir}
           aria-label={`${nome}, ${O_QUE_O_PAPEL_FAZ[pessoa.papel].nome.toLowerCase()}`}
-          className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-default-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+          className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-default-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
         >
           {conteudo}
         </button>

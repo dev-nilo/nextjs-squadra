@@ -75,7 +75,7 @@ export function Modal({ isOpen, onClose, children, className = "max-w-md", onSub
       onClick={(e) => {
         if (e.target === dialogRef.current) dialogRef.current?.close();
       }}
-      className="m-auto max-h-none w-full max-w-none bg-transparent p-0 backdrop:bg-overlay/50 backdrop:backdrop-blur-sm max-sm:mb-0"
+      className="m-auto max-h-none w-full max-w-none bg-transparent p-0 backdrop:bg-overlay/50 backdrop:backdrop-blur-xs max-sm:mb-0"
     >
       {onSubmit ? (
         <form noValidate={noValidate} onSubmit={onSubmit} className={`${CAIXA} ${className}`}>

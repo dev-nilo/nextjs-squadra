@@ -25,12 +25,12 @@ export function CabecalhoDoFut({
   const trocar = useCallback((slug: string) => router.push(caminhoNoOutroFut(pathname, slug)), [router, pathname]);
 
   return (
-    <header className="sticky top-0 z-40 select-none border-b border-divider bg-content1/95 pt-[env(safe-area-inset-top)] backdrop-blur-sm [-webkit-touch-callout:none]">
+    <header className="sticky top-0 z-40 select-none border-b border-divider bg-content1/95 pt-[env(safe-area-inset-top)] backdrop-blur-xs [-webkit-touch-callout:none]">
       <div className="margem-lateral mx-auto flex h-14 max-w-5xl items-center gap-2 sm:gap-3 baixa:h-12">
         <Link
           href={`/g/${encodeURIComponent(grupo.slug)}`}
           aria-label="Squadra, próxima partida"
-          className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="shrink-0 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
         >
           <BrandLockup compactOnMobile />
         </Link>

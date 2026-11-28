@@ -272,7 +272,7 @@ export const PlayerCard = ({
             nome={`Ações da carta de ${player.name}`}
             rotulo={`Ações da carta de ${player.name}`}
             acoes={acoes}
-            classeDoBotao="rounded-full bg-paper-borda/90 text-paper-foreground shadow-sm hover:bg-paper-borda"
+            classeDoBotao="rounded-full bg-paper-borda/90 text-paper-foreground shadow-xs hover:bg-paper-borda"
           />
         </div>
       )}

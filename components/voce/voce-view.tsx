@@ -209,7 +209,7 @@ function EsteFut({ grupo, pessoas, semConexao }: { grupo: Participacao; pessoas:
         </div>
         <Link
           href={caminhoDasPessoas(grupo.slug)}
-          className="flex items-center gap-3 px-4 py-3 text-foreground transition-colors hover:bg-default-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+          className="flex items-center gap-3 px-4 py-3 text-foreground transition-colors hover:bg-default-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
         >
           <Users size={18} aria-hidden="true" className="text-default-500" />
           <span className="flex-1 font-medium">Pessoas</span>

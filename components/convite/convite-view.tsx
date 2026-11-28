@@ -22,7 +22,7 @@ import {
 } from "@/lib/convite";
 
 const linkClass =
-  "rounded font-semibold text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  "rounded-sm font-semibold text-foreground underline-offset-4 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary";
 
 /** `/convite/<token>`: sign in or sign up, then join the Grupo as membro. */
 export function ConviteView({

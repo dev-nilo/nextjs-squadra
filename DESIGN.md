@@ -2,7 +2,11 @@
 
 The visual contract for Squadra. Every page and modal is built from the tokens, scales and primitives below. If something you need isn't here, add it here first, then use it.
 
-Stack: Tailwind CSS 3, tokens as RGB channels in `app/globals.css`, mapped in `tailwind.config.ts`. Font: **Bricolage Grotesque** (`font-sans`, loaded in `app/layout.tsx`). Icons: **lucide-react**.
+Stack: Tailwind CSS 4, configured in CSS (there is no `tailwind.config.ts`). The tokens are RGB channels in `app/globals.css` (`:root` and `.dark`), mapped to Tailwind colours in its `@theme inline` block, so `bg-content1/95` still works. The variants `mouse:`, `baixa:` and `dark:` are `@custom-variant`s in the same file, and a small `@layer base` keeps the three v3 defaults v4 changed (border colour, placeholder colour, the pointer cursor on buttons). Font: **Bricolage Grotesque** (`font-sans`, the `--font-bricolage` variable from `app/layout.tsx`). Icons: **lucide-react**.
+
+Two v4 behaviours that differ from v3, found in the upgrade (#147):
+- An explicit `leading-*` wins over a text size's own line-height, at every breakpoint. `leading-tight sm:text-4xl` keeps 1.25 at `sm`; write the line-height for each size you mean (`sm:text-4xl sm:leading-10`).
+- `space-y-*` puts its margin on the earlier sibling and no longer overrides a child's own margin. A `mt-2` inside a `space-y-4` adds up (24px). Use the container's `gap` or `space-y` alone.
 
 ---
 
@@ -173,7 +177,7 @@ The **only exception** is the Jogador card (`PlayerCard`): its radii are in `cqw
 - Focus: `focus-visible:ring-2 ring-primary` on every interactive element, menu items included.
 - **Touch**: hover styles only apply where there's a mouse (`future.hoverOnlyWhenSupported`), so nothing stays "hovered" after a tap. Pressed feedback is `active:`. There's no tap highlight (`-webkit-tap-highlight-color: transparent`). The header and tab bar can't be selected or long-pressed into a link preview. Installed, the page doesn't rubber-band (`overscroll-behavior-y: none` under `display-mode: standalone`).
 - **Tap areas are 44px or more.** Where the visible control is smaller (⋯, share, back links, "Criar conta"), an invisible area makes up the rest without moving the layout: `Button`'s own `::after`, `.area-de-toque` for text links and inline buttons, and `.slider` for ranges (24px thumb, 44px tall).
-- `mouse:` (`pointer: fine`) is for what only makes sense with a mouse ("ou arraste", 14px fields). Never decide that by width: a tablet is wide and has no mouse. `mouse:` and `baixa:` are variants (`addVariant` in `tailwind.config.ts`), not screens: a raw media query among the screens silently turns off Tailwind's `max-*` variants.
+- `mouse:` (`pointer: fine`) is for what only makes sense with a mouse ("ou arraste", 14px fields). Never decide that by width: a tablet is wide and has no mouse. `mouse:` and `baixa:` are `@custom-variant`s in `app/globals.css`, not breakpoints, so they never interfere with `sm:` or `max-*`.
 - `Button` heights are minimums: a long label ("Passar o fut pra …") wraps inside the button. `lg` is `px-4` on phones, so "Não vou" fits half the Partida's card.
 - Selection: `ring-2 ring-primary` plus a `primary/10` tint.
 - Hover on rows: border shifts toward `primary/40–50`. Hover is a desktop extra, never the only way to reach an action. Cards don't scale on hover.
